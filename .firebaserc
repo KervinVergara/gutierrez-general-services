@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "fuerzapp"
+  },
+  "targets": {
+    "fuerzapp": {
+      "hosting": {
+        "main": [
+          "gutierrez-general-services"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
