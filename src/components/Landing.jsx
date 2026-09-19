@@ -72,9 +72,9 @@ export default function Landing({ lang, setLang }) {
         {open && (
           <nav className="lg:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
             {[['#services', t.nav.services], ['#services', t.nav.seasonal], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
-              <a key={l} href={h} onClick={() => setOpen(false)} className="py-3 border-b border-ink/10 last:border-0 hover:text-gold-2">{l}</a>
+              <a key={l} href={h} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg border-b border-ink/10 last:border-0 hover:bg-mist">{l}</a>
             ))}
-            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="py-3 text-left hover:text-gold-2">EN / ES</button>
+            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="px-3 py-3 rounded-lg text-left hover:bg-mist">EN / ES</button>
           </nav>
         )}
       </header>
@@ -90,7 +90,7 @@ export default function Landing({ lang, setLang }) {
             <p className="mt-6 text-lg text-steel max-w-md">{t.hero.sub}</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
               <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
-              <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:text-gold-2">
+              <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
                 <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
                 {PHONE_DISPLAY}
               </a>
@@ -110,7 +110,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* SERVICES */}
       <section id="services" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.servicesEyebrow}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.servicesEyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -131,7 +131,7 @@ export default function Landing({ lang, setLang }) {
                 </div>
                 <h3 className="mt-5 text-xl font-bold text-ink">{g.title}</h3>
                 <p className="mt-2 text-steel">{g.lead}</p>
-                <button onClick={() => setActiveGroup(key)} className="mt-4 text-sm font-bold text-ink hover:text-gold-2 inline-flex items-center gap-1">{t.details} <Icon name="arrowRight" size={15} /></button>
+                <button onClick={() => setActiveGroup(key)} className="mt-4 text-sm font-bold text-ink hover:underline inline-flex items-center gap-1">{t.details} <Icon name="arrowRight" size={15} /></button>
               </div>
             )
           })}
@@ -154,16 +154,16 @@ export default function Landing({ lang, setLang }) {
                 <div key={s.id} className="border-t border-ink/10 pt-4 first:border-0 first:pt-0">
                   <div className="flex items-start justify-between gap-3">
                     <h4 className="font-bold text-ink">{s.title}</h4>
-                    {s.priceType === 'from' && <span className="shrink-0 text-sm font-bold text-gold-2">{t.from} {s.price}</span>}
+                    {s.priceType === 'from' && <span className="shrink-0 text-sm font-bold text-ink">{t.from} {s.price}</span>}
                     {s.priceType === 'quote' && <span className="shrink-0 text-xs font-semibold text-steel">{t.quote}</span>}
                     {s.priceType === 'free' && <span className="shrink-0 text-xs font-semibold text-steel">{t.freeQuote}</span>}
                   </div>
                   <p className="mt-1.5 text-sm text-steel">{s.lead}</p>
                   <ul className="mt-2 grid gap-1 text-sm text-ink/80">
-                    {s.items.map((i) => <li key={i} className="flex items-start gap-2"><Icon name="check" size={15} className="text-gold-2 mt-0.5 shrink-0" /> {i}</li>)}
+                    {s.items.map((i) => <li key={i} className="flex items-start gap-2"><Icon name="check" size={15} className="text-ink/50 mt-0.5 shrink-0" /> {i}</li>)}
                   </ul>
                   {s.note && <p className="mt-2 text-xs text-steel">{s.note}</p>}
-                  <a href="#contact" onClick={() => quoteFor(s.id)} className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-gold-2 hover:text-ink">{t.nav.quote} <Icon name="arrowRight" size={14} /></a>
+                  <a href="#contact" onClick={() => quoteFor(s.id)} className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-ink hover:underline">{t.nav.quote} <Icon name="arrowRight" size={14} /></a>
                 </div>
               ))}
             </div>
@@ -206,7 +206,7 @@ export default function Landing({ lang, setLang }) {
       <footer className="bg-sand text-steel text-sm border-t border-ink/10">
         <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col md:flex-row justify-between gap-2">
           <p>© {new Date().getFullYear()} {BUSINESS}. {t.footer.rights}</p>
-          <p><a href={`tel:${PHONE_TEL}`} className="hover:text-gold-2">{PHONE_DISPLAY}</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:text-gold-2">SistemasKV</a></p>
+          <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
         </div>
       </footer>
 
