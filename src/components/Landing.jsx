@@ -109,10 +109,9 @@ export default function Landing({ lang, setLang }) {
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {byGroup.map(({ key, items }) => {
+          {byGroup.map(({ key }) => {
             const g = t.groups[key]
             const img = groupImages[key]
-            const primaryId = items[0]?.id
             return (
               <div key={key} id={key === 'seasonal' ? 'seasonal' : undefined}>
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-mist flex items-center justify-center">
@@ -124,10 +123,7 @@ export default function Landing({ lang, setLang }) {
                 </div>
                 <h3 className="mt-5 text-xl font-bold text-ink">{g.title}</h3>
                 <p className="mt-2 text-steel">{g.lead}</p>
-                <div className="mt-4 flex items-center gap-5 text-sm font-bold">
-                  <button onClick={() => setActiveGroup(key)} className="text-ink hover:text-gold-2 inline-flex items-center gap-1">{t.details} <Icon name="arrowRight" size={15} /></button>
-                  <a href="#contact" onClick={() => quoteFor(primaryId)} className="text-gold-2 hover:text-ink">{t.nav.quote}</a>
-                </div>
+                <button onClick={() => setActiveGroup(key)} className="mt-4 text-sm font-bold text-ink hover:text-gold-2 inline-flex items-center gap-1">{t.details} <Icon name="arrowRight" size={15} /></button>
               </div>
             )
           })}
