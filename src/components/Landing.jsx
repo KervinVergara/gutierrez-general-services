@@ -50,12 +50,12 @@ export default function Landing({ lang, setLang }) {
           <a href="#top" className="flex items-center shrink-0">
             <img src={logo} alt={BUSINESS} className="h-11 md:h-14 w-auto object-contain" />
           </a>
-          <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink">
-            <a href="#services" className="hover:text-gold-2">{t.nav.services}</a>
-            <a href="#work" className="hover:text-gold-2">{t.nav.ourWork}</a>
-            <a href="#seasonal" className="hover:text-gold-2">{t.nav.seasonal}</a>
-            <a href="#contact" className="hover:text-gold-2">{t.nav.contact}</a>
-            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="hover:text-gold-2" aria-label="Switch language">EN / ES</button>
+          <nav className="hidden lg:flex items-center gap-1 text-[15px] font-semibold text-ink">
+            <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.services}</a>
+            <a href="#work" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.ourWork}</a>
+            <a href="#seasonal" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.seasonal}</a>
+            <a href="#contact" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.contact}</a>
+            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
           </nav>
           <div className="flex items-center gap-3 shrink-0">
             <a href="#contact" className="hidden sm:inline-flex items-center h-11 px-5 rounded-full bg-gold text-ink font-bold text-sm whitespace-nowrap hover:bg-gold-2">{t.nav.quote}</a>
