@@ -83,7 +83,7 @@ export default function Landing({ lang, setLang }) {
       <section id="top" className="bg-mist">
         <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-start">
           <div className="md:pt-4">
-            <p className="eyebrow text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.hero.kicker}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
             <h1 className="mt-4 text-[2.6rem] sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.05] text-ink">
               {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
             </h1>
@@ -110,7 +110,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* SERVICES */}
       <section id="services" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <p className="eyebrow text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.servicesEyebrow}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.servicesEyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -174,7 +174,7 @@ export default function Landing({ lang, setLang }) {
       {/* OUR WORK */}
       <section id="work" className="bg-mist">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-          <p className="eyebrow text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.gallery.eyebrow}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.gallery.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">

@@ -18,9 +18,6 @@ html { scroll-behavior: smooth; }
 body { font-family: var(--font-body); background: var(--color-sand); color: var(--color-ink); }
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.01em; }
 
-.eyebrow {
-  text-shadow: 0 1px 1.5px rgba(18, 59, 85, 0.55);
-}
 
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--color-ink);
