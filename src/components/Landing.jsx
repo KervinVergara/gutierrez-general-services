@@ -77,8 +77,8 @@ export default function Landing({ lang, setLang }) {
 
       {/* HERO */}
       <section id="top" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-center">
-          <div>
+        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-start">
+          <div className="md:pt-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.hero.kicker}</p>
             <h1 className="mt-4 text-[2.6rem] sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.05] text-ink">
               {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
@@ -92,7 +92,7 @@ export default function Landing({ lang, setLang }) {
               </a>
             </div>
           </div>
-          <div className="relative max-w-sm md:max-w-none mx-auto">
+          <div className="relative max-w-sm mx-auto md:mx-0 md:ml-auto">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
             </div>
