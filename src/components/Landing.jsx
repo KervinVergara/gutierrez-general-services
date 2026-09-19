@@ -18,6 +18,11 @@ import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 const groupImages = { exterior: svcExterior, seasonal: svcSeasonal, vehicle: svcVehicle }
 const groupIcons = { exterior: 'water', seasonal: 'leaf', vehicle: 'car' }
 const groupOrder = ['exterior', 'seasonal', 'vehicle']
+const groupCaptions = {
+  exterior: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
+  seasonal: { en: 'Leaf cleanup', es: 'Recogida de hojas' },
+  vehicle: { en: 'Paint detailing', es: 'Detallado de pintura' },
+}
 
 export default function Landing({ lang, setLang }) {
   const t = content[lang]
@@ -34,12 +39,12 @@ export default function Landing({ lang, setLang }) {
   }
 
   const galleryItems = [
-    { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada' },
-    { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado' },
-    { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio' },
-    { id: 'boat', photo: galBoat, fit: 'contain', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
-    { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso' },
-    { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura' },
+    { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada', caption: lang === 'en' ? 'Detailed truck' : 'Camioneta detallada' },
+    { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado', caption: lang === 'en' ? 'Leather interior' : 'Interior de cuero' },
+    { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio', caption: lang === 'en' ? 'Clean SUV' : 'SUV limpio' },
+    { id: 'boat', photo: galBoat, fit: 'contain', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
+    { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso', caption: lang === 'en' ? 'Wash in progress' : 'Lavado en proceso' },
+    { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura', caption: lang === 'en' ? 'Paint polishing' : 'Pulido de pintura' },
   ]
 
   return (
@@ -95,6 +100,7 @@ export default function Landing({ lang, setLang }) {
           <div className="relative max-w-sm mx-auto md:mx-0 md:ml-auto">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
+              <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Exterior cleaning' : 'Limpieza exterior'}</span>
             </div>
             <div className="hidden sm:block absolute -bottom-6 -right-4 md:-right-8 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
               <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
@@ -114,9 +120,12 @@ export default function Landing({ lang, setLang }) {
             const img = groupImages[key]
             return (
               <div key={key} id={key === 'seasonal' ? 'seasonal' : undefined}>
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-mist flex items-center justify-center">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-mist flex items-center justify-center">
                   {img ? (
-                    <img src={img} alt={g.title} className="w-full h-full object-cover" loading="lazy" />
+                    <>
+                      <img src={img} alt={g.title} className="w-full h-full object-cover" loading="lazy" />
+                      <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{groupCaptions[key][lang]}</span>
+                    </>
                   ) : (
                     <Icon name={groupIcons[key]} size={56} className="text-ink/20" />
                   )}
@@ -171,8 +180,9 @@ export default function Landing({ lang, setLang }) {
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
             {galleryItems.map((g) => (
-              <div key={g.id} className="aspect-square rounded-xl overflow-hidden bg-white">
+              <div key={g.id} className="relative aspect-square rounded-xl overflow-hidden bg-white">
                 <img src={g.photo} alt={g.alt} className={`w-full h-full ${g.fit === 'contain' ? 'object-contain' : `object-cover ${g.pos}`}`} loading="lazy" />
+                <span className="absolute bottom-2 left-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{g.caption}</span>
               </div>
             ))}
           </div>
