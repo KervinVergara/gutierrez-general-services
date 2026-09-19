@@ -10,7 +10,7 @@ export const content = {
     hero: {
       kicker: 'Cleaner spaces. Brighter days.',
       titleLines: ['Clean spaces.', 'Peace of mind.'],
-      sub: 'Exterior cleaning, seasonal care, and snow removal in Warsaw, Indiana and nearby areas.',
+      sub: 'Exterior cleaning, seasonal care, and vehicle detailing in Warsaw, Indiana and nearby areas.',
       cta1: 'Request a free quote',
     },
     details: 'View details', close: 'Close',
@@ -109,7 +109,7 @@ export const content = {
     hero: {
       kicker: 'Espacios más limpios. Días más brillantes.',
       titleLines: ['Espacios limpios.', 'Tranquilidad.'],
-      sub: 'Limpieza exterior, cuidado de temporada y limpieza de nieve en Warsaw, Indiana y áreas cercanas.',
+      sub: 'Limpieza exterior, cuidado de temporada y detallado de vehículos en Warsaw, Indiana y áreas cercanas.',
       cta1: 'Solicitar cotización gratis',
     },
     details: 'Ver detalles', close: 'Cerrar',

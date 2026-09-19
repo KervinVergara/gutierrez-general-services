@@ -58,7 +58,7 @@ export default function QuoteForm({ t, services, lang, presetService, id }) {
         <p className="text-xl font-semibold">{t.ok}</p>
         <div className="border-t border-ink/10 pt-4">
           <p className="text-sm text-steel">{t.okWa}</p>
-          <a href={waLink(form, serviceName)} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-gold text-white font-bold hover:bg-gold-2">{t.waBtn}</a>
+          <a href={waLink(form, serviceName)} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-gold text-ink font-bold hover:bg-gold-2">{t.waBtn}</a>
         </div>
       </div>
     )
@@ -102,7 +102,7 @@ export default function QuoteForm({ t, services, lang, presetService, id }) {
       {state === 'err' && (
         <p role="alert" className="text-sm font-medium text-red-600">{t.err} <a className="underline font-bold" href={`tel:${PHONE_TEL}`}>{PHONE_DISPLAY}</a>.</p>
       )}
-      <button disabled={state === 'sending'} aria-busy={state === 'sending'} className="h-13 rounded-full bg-gold text-white font-bold text-lg hover:bg-gold-2 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+      <button disabled={state === 'sending'} aria-busy={state === 'sending'} className="h-13 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
         {state === 'sending' ? t.sending : t.send}
       </button>
     </form>

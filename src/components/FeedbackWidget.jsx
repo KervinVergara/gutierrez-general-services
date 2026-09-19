@@ -41,7 +41,7 @@ export default function FeedbackWidget({ t }) {
       <button
         onClick={() => setOpen(true)}
         aria-label={t.title}
-        className="fixed bottom-5 right-5 z-40 grid place-items-center w-14 h-14 rounded-full bg-gold text-white shadow-lg hover:bg-gold-2"
+        className="fixed bottom-5 right-5 z-40 grid place-items-center w-14 h-14 rounded-full bg-gold text-ink shadow-lg hover:bg-gold-2"
       >
         <Icon name="plus" size={26} />
       </button>
@@ -61,7 +61,7 @@ export default function FeedbackWidget({ t }) {
                 placeholder={t.placeholder}
                 className="flex-1 h-11 rounded-lg bg-white text-ink px-3 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold"
               />
-              <button className="h-11 w-11 shrink-0 grid place-items-center rounded-lg bg-gold text-white hover:bg-gold-2"><Icon name="plus" size={18} /></button>
+              <button className="h-11 w-11 shrink-0 grid place-items-center rounded-lg bg-gold text-ink hover:bg-gold-2"><Icon name="plus" size={18} /></button>
             </form>
 
             <div className="grid gap-2 overflow-y-auto">

@@ -64,7 +64,6 @@ export default function Landing({ lang, setLang }) {
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
           </nav>
           <div className="flex items-center gap-3 shrink-0">
-            <a href="#contact" className="hidden sm:inline-flex items-center h-11 px-5 rounded-full bg-gold text-white font-bold text-sm whitespace-nowrap hover:bg-gold-2">{t.nav.quote}</a>
             <button onClick={() => setOpen(!open)} className="lg:hidden grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
               <Icon name={open ? 'x' : 'menu'} size={20} />
             </button>
@@ -75,8 +74,7 @@ export default function Landing({ lang, setLang }) {
             {[['#services', t.nav.services], ['#services', t.nav.seasonal], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
               <a key={l} href={h} onClick={() => setOpen(false)} className="py-3 border-b border-ink/10 last:border-0 hover:text-gold-2">{l}</a>
             ))}
-            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="py-3 text-left border-b border-ink/10 hover:text-gold-2">EN / ES</button>
-            <a href="#contact" onClick={() => setOpen(false)} className="mt-3 inline-flex items-center justify-center h-12 rounded-full bg-gold text-white font-bold">{t.nav.quote}</a>
+            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="py-3 text-left hover:text-gold-2">EN / ES</button>
           </nav>
         )}
       </header>
@@ -91,7 +89,7 @@ export default function Landing({ lang, setLang }) {
             </h1>
             <p className="mt-6 text-lg text-steel max-w-md">{t.hero.sub}</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-white font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
+              <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
               <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:text-gold-2">
                 <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
                 {PHONE_DISPLAY}
@@ -103,7 +101,7 @@ export default function Landing({ lang, setLang }) {
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
               <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Exterior cleaning' : 'Limpieza exterior'}</span>
             </div>
-            <div className="hidden sm:block absolute -bottom-6 -right-4 md:-right-8 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
+            <div className="hidden sm:block absolute -bottom-6 right-2 md:right-4 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
               <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
             </div>
           </div>
