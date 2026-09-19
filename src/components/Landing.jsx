@@ -3,9 +3,9 @@ import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../conten
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import logo from '../assets/photos/logo-new.png'
-import heroMain from '../assets/photos/stock-exterior-hero.jpeg'
+import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
-import svcExterior from '../assets/photos/stock-exterior-roof.jpeg'
+import svcExterior from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
 import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
@@ -37,7 +37,7 @@ export default function Landing({ lang, setLang }) {
     { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada' },
     { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado' },
     { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio' },
-    { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
+    { id: 'boat', photo: galBoat, fit: 'contain', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
     { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso' },
     { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura' },
   ]
@@ -175,8 +175,8 @@ export default function Landing({ lang, setLang }) {
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
             {galleryItems.map((g) => (
-              <div key={g.id} className="aspect-square rounded-xl overflow-hidden">
-                <img src={g.photo} alt={g.alt} className={`w-full h-full object-cover ${g.pos}`} loading="lazy" />
+              <div key={g.id} className="aspect-square rounded-xl overflow-hidden bg-white">
+                <img src={g.photo} alt={g.alt} className={`w-full h-full ${g.fit === 'contain' ? 'object-contain' : `object-cover ${g.pos}`}`} loading="lazy" />
               </div>
             ))}
           </div>

@@ -9,7 +9,7 @@ export const content = {
     nav: { services: 'Services', ourWork: 'Our Work', seasonal: 'Seasonal Care', contact: 'Contact', quote: 'Get a Free Quote', call: 'Call now' },
     hero: {
       kicker: 'Cleaner spaces. Brighter days.',
-      titleLines: ['Your clean spaces.', 'Your peace of mind,', 'first.'],
+      titleLines: ['Clean spaces.', 'Peace of mind.'],
       sub: 'Exterior cleaning, seasonal care, and vehicle & equipment detailing in Warsaw, Indiana and nearby areas.',
       cta1: 'Request a free quote',
     },
@@ -76,7 +76,7 @@ export const content = {
     gallery: {
       eyebrow: 'Our work',
       title: 'Real jobs, real results.',
-      sub: "Photos from completed jobs. New categories are added here as we photograph that work.",
+      sub: "Photos from completed jobs.",
       all: 'All',
       before: 'Before', after: 'After',
       catExterior: 'Exterior', catSeasonal: 'Seasonal', catVehicle: 'Vehicle & equipment',
@@ -100,7 +100,7 @@ export const content = {
     nav: { services: 'Servicios', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', call: 'Llamar' },
     hero: {
       kicker: 'Espacios más limpios. Días más brillantes.',
-      titleLines: ['Sus espacios limpios.', 'Su tranquilidad,', 'primero.'],
+      titleLines: ['Espacios limpios.', 'Tranquilidad.'],
       sub: 'Limpieza exterior, cuidado de temporada y detallado de vehículos y equipos en Warsaw, Indiana y áreas cercanas.',
       cta1: 'Solicitar cotización gratis',
     },
@@ -167,7 +167,7 @@ export const content = {
     gallery: {
       eyebrow: 'Nuestro trabajo',
       title: 'Trabajos reales, resultados reales.',
-      sub: 'Fotos de trabajos completados. Aquí se agregan nuevas categorías a medida que fotografiamos ese trabajo.',
+      sub: 'Fotos de trabajos completados.',
       all: 'Todos',
       before: 'Antes', after: 'Después',
       catExterior: 'Exterior', catSeasonal: 'Temporada', catVehicle: 'Vehículos y equipos',
