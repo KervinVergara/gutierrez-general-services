@@ -102,11 +102,7 @@ export const content = {
       or: 'or', call: 'Call', text: 'Text',
     },
     footer: { tagline: 'Clean spaces. Brighter days.', rights: 'All rights reserved.', made: 'Website by' },
-    feedback: {
-      title: 'Suggest a change', sub: 'Tell us what to add, remove or change on this page. We\'ll take care of it.',
-      placeholder: 'E.g. "Change this photo", "Remove this text", "I\'d like it to say..."',
-      send: 'Send', sending: 'Sending…', ok: 'Thanks! We received it.', err: 'Could not send it, try again.',
-    },
+    feedback: { title: 'Suggestions', placeholder: 'Write a suggestion…', empty: 'No suggestions yet.' },
   },
   es: {
     nav: { services: 'Servicios', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', call: 'Llamar' },
@@ -205,10 +201,6 @@ export const content = {
       or: 'o', call: 'Llamar', text: 'Mensaje',
     },
     footer: { tagline: 'Espacios limpios. Días más brillantes.', rights: 'Todos los derechos reservados.', made: 'Sitio web por' },
-    feedback: {
-      title: 'Sugerir un cambio', sub: 'Cuéntanos qué agregar, quitar o cambiar en esta página. Nosotros lo hacemos.',
-      placeholder: 'Ej: "Cambia esta foto", "Quita este texto", "Me gustaría que dijera..."',
-      send: 'Enviar', sending: 'Enviando…', ok: '¡Gracias! Ya lo recibimos.', err: 'No se pudo enviar, intenta otra vez.',
-    },
+    feedback: { title: 'Sugerencias', placeholder: 'Escribe una sugerencia…', empty: 'No hay sugerencias todavía.' },
   },
 }
