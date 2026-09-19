@@ -7,7 +7,7 @@ import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
 import svcExterior from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
-import svcVehicle from '../assets/photos/stock-snow-removal.jpeg'
+import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
 import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
 import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
@@ -21,7 +21,7 @@ const groupOrder = ['exterior', 'seasonal', 'vehicle']
 const groupCaptions = {
   exterior: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
   seasonal: { en: 'Leaf cleanup', es: 'Recogida de hojas' },
-  vehicle: { en: 'Snow removal', es: 'Retiro de nieve' },
+  vehicle: { en: 'Paint detailing', es: 'Detallado de pintura' },
 }
 
 export default function Landing({ lang, setLang }) {
