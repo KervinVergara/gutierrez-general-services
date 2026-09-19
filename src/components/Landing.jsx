@@ -3,8 +3,10 @@ import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../conten
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import logo from '../assets/photos/logo-new.png'
-import heroMain from '../assets/photos/curated/09_pulido_en_accion.jpeg'
+import heroMain from '../assets/photos/stock-exterior-hero.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
+import svcExterior from '../assets/photos/stock-exterior-roof.jpeg'
+import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
 import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
 import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
@@ -13,7 +15,7 @@ import galBoat from '../assets/photos/curated/07_bote.jpeg'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
-const groupImages = { exterior: null, seasonal: null, vehicle: svcVehicle }
+const groupImages = { exterior: svcExterior, seasonal: svcSeasonal, vehicle: svcVehicle }
 const groupIcons = { exterior: 'water', seasonal: 'leaf', vehicle: 'car' }
 const groupOrder = ['exterior', 'seasonal', 'vehicle']
 
@@ -92,7 +94,7 @@ export default function Landing({ lang, setLang }) {
           </div>
           <div className="relative max-w-sm md:max-w-none mx-auto">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
-              <img src={heroMain} alt={lang === 'en' ? 'Hand-polishing a vehicle exterior' : 'Pulido a mano de un vehículo'} className="w-full h-full object-cover object-bottom" />
+              <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
             </div>
             <div className="hidden sm:block absolute -bottom-6 -right-4 md:-right-8 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
               <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
