@@ -34,12 +34,12 @@ export default function Landing({ lang, setLang }) {
   }
 
   const galleryItems = [
-    { id: 'truck', photo: galTruck, ratio: '4/5', pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada' },
-    { id: 'interior', photo: galInterior, ratio: '3/4', pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado' },
-    { id: 'jeep', photo: galJeep, ratio: '4/5', pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio' },
-    { id: 'boat', photo: galBoat, ratio: '4/3', pos: 'object-center', wide: true, alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
-    { id: 'foam', photo: galFoam, ratio: '4/3', pos: 'object-center', wide: true, alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso' },
-    { id: 'polish', photo: galPolish, ratio: '4/5', pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura' },
+    { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada' },
+    { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado' },
+    { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio' },
+    { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
+    { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso' },
+    { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura' },
   ]
 
   return (
@@ -175,7 +175,7 @@ export default function Landing({ lang, setLang }) {
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
             {galleryItems.map((g) => (
-              <div key={g.id} className={`rounded-xl overflow-hidden ${g.wide ? 'col-span-2' : ''}`} style={{ aspectRatio: g.ratio }}>
+              <div key={g.id} className="aspect-square rounded-xl overflow-hidden">
                 <img src={g.photo} alt={g.alt} className={`w-full h-full object-cover ${g.pos}`} loading="lazy" />
               </div>
             ))}
