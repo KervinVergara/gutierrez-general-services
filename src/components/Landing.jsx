@@ -58,8 +58,8 @@ export default function Landing({ lang, setLang }) {
           </a>
           <nav className="hidden lg:flex items-center gap-1 text-[15px] font-semibold text-ink">
             <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.services}</a>
-            <a href="#work" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.ourWork}</a>
             <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.seasonal}</a>
+            <a href="#work" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.ourWork}</a>
             <a href="#contact" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.contact}</a>
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
           </nav>
@@ -72,7 +72,7 @@ export default function Landing({ lang, setLang }) {
         </div>
         {open && (
           <nav className="lg:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
-            {[['#services', t.nav.services], ['#work', t.nav.ourWork], ['#services', t.nav.seasonal], ['#contact', t.nav.contact]].map(([h, l]) => (
+            {[['#services', t.nav.services], ['#services', t.nav.seasonal], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
               <a key={l} href={h} onClick={() => setOpen(false)} className="py-3 border-b border-ink/10 last:border-0 hover:text-gold-2">{l}</a>
             ))}
             <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="py-3 text-left border-b border-ink/10 hover:text-gold-2">EN / ES</button>
