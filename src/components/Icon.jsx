@@ -21,6 +21,9 @@ const paths = {
   star: <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6L3 9.4l6-.8z" fill="currentColor" stroke="none" />,
   leaf: <><path d="M19 5c-6 0-13 3-13 11 0 2 1 3 3 3 8 0 11-7 11-13 0-.5 0-1-1-1z" /><path d="M9 19c2-4 5-8 10-13" /></>,
   arrowRight: <path d="M5 12h14M13 5l7 7-7 7" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  trash: <><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /></>,
+  snow: <><path d="M12 2v20M4.5 6l15 12M19.5 6l-15 12" /><path d="M12 5l1.6 1.6M12 5l-1.6 1.6M12 19l1.6-1.6M12 19l-1.6-1.6M6.4 8.8l2.1.6M6.4 8.8l.6-2.1M17.6 8.8l-2.1.6M17.6 8.8l-.6-2.1M6.4 15.2l2.1-.6M6.4 15.2l.6 2.1M17.6 15.2l-2.1-.6M17.6 15.2l-.6 2.1" /></>,
 }
 
 export default function Icon({ name, size = 24, className = '' }) {

@@ -14,26 +14,33 @@ const serviceName = (id) => content.es.services.find((s) => s.id === id)?.title 
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
+  const [tab, setTab] = useState('quotes')
   const [quotes, setQuotes] = useState([])
+  const [feedback, setFeedback] = useState([])
   const [filter, setFilter] = useState('all')
   const [err, setErr] = useState('')
 
   useEffect(() => {
     if (!isConfigured) { setUser(null); return }
     let unsubQuotes = null
+    let unsubFeedback = null
     import('firebase/auth').then(({ onAuthStateChanged }) => {
       onAuthStateChanged(auth, async (u) => {
         setUser(u)
         if (unsubQuotes) { unsubQuotes(); unsubQuotes = null }
+        if (unsubFeedback) { unsubFeedback(); unsubFeedback = null }
         if (u) {
           const { collection, onSnapshot, orderBy, query } = await import('firebase/firestore')
           unsubQuotes = onSnapshot(query(collection(db, 'quotes'), orderBy('createdAt', 'desc')), (snap) => {
             setQuotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
           }, (e) => setErr(e.message))
+          unsubFeedback = onSnapshot(query(collection(db, 'feedback'), orderBy('createdAt', 'desc')), (snap) => {
+            setFeedback(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+          }, (e) => setErr(e.message))
         }
       })
     })
-    return () => unsubQuotes && unsubQuotes()
+    return () => { unsubQuotes && unsubQuotes(); unsubFeedback && unsubFeedback() }
   }, [])
 
   async function login(e) {
@@ -56,6 +63,16 @@ export default function Admin() {
     await updateDoc(doc(db, 'quotes', id), { status })
   }
 
+  async function toggleFeedback(id, status) {
+    const { doc, updateDoc } = await import('firebase/firestore')
+    await updateDoc(doc(db, 'feedback', id), { status: status === 'done' ? 'pending' : 'done' })
+  }
+
+  async function deleteFeedback(id) {
+    const { doc, deleteDoc } = await import('firebase/firestore')
+    await deleteDoc(doc(db, 'feedback', id))
+  }
+
   if (!isConfigured) return <Shell><p className="text-center">Firebase no está configurado. Copia <code>.env.example</code> a <code>.env</code> con las credenciales del proyecto.</p></Shell>
   if (user === undefined) return <Shell><p className="text-center text-ink/60">Cargando…</p></Shell>
 
@@ -75,14 +92,38 @@ export default function Admin() {
 
   const shown = filter === 'all' ? quotes : quotes.filter((q) => q.status === filter)
   const counts = Object.fromEntries(STATUSES.map((s) => [s, quotes.filter((q) => q.status === s).length]))
+  const pendingFeedback = feedback.filter((f) => f.status !== 'done').length
 
   return (
     <Shell right={<button onClick={logout} className="text-sm font-semibold hover:text-gold">Salir</button>}>
+      <div className="flex items-center gap-2 mb-8 border-b border-ink/10">
+        <TabBtn active={tab === 'quotes'} onClick={() => setTab('quotes')}>Cotizaciones ({quotes.length})</TabBtn>
+        <TabBtn active={tab === 'feedback'} onClick={() => setTab('feedback')}>Modificaciones {pendingFeedback > 0 && `(${pendingFeedback})`}</TabBtn>
+      </div>
+      {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
+
+      {tab === 'feedback' ? (
+        <div className="grid gap-3">
+          {feedback.length === 0 && <p className="text-ink/60">No hay modificaciones sugeridas todavía.</p>}
+          {feedback.map((f) => (
+            <article key={f.id} className={`rounded-xl bg-white border border-ink/10 p-4 flex items-start gap-3 ${f.status === 'done' ? 'opacity-50' : ''}`}>
+              <button onClick={() => toggleFeedback(f.id, f.status)} aria-label="Marcar hecho" className={`mt-0.5 grid place-items-center w-6 h-6 rounded-full border-2 shrink-0 ${f.status === 'done' ? 'bg-green-600 border-green-600 text-white' : 'border-ink/30'}`}>
+                {f.status === 'done' && <Icon name="check" size={14} />}
+              </button>
+              <div className="flex-1">
+                <p className={`text-ink ${f.status === 'done' ? 'line-through' : ''}`}>{f.text}</p>
+                <p className="mt-1 text-xs text-ink/50">{f.createdAt?.toDate ? f.createdAt.toDate().toLocaleString('es-CO') : '—'} · {f.lang?.toUpperCase()}</p>
+              </div>
+              <button onClick={() => deleteFeedback(f.id)} aria-label="Eliminar" className="grid place-items-center w-8 h-8 rounded-full border border-ink/15 shrink-0 hover:border-red-600 hover:text-red-600"><Icon name="trash" size={15} /></button>
+            </article>
+          ))}
+        </div>
+      ) : (
+      <>
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <FilterBtn active={filter === 'all'} onClick={() => setFilter('all')}>Todas ({quotes.length})</FilterBtn>
         {STATUSES.map((s) => <FilterBtn key={s} active={filter === s} onClick={() => setFilter(s)}>{LABEL[s]} ({counts[s]})</FilterBtn>)}
       </div>
-      {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
       {shown.length === 0 && <p className="text-ink/60">No hay solicitudes en esta vista.</p>}
       <div className="grid gap-4">
         {shown.map((q) => (
@@ -108,6 +149,8 @@ export default function Admin() {
           </article>
         ))}
       </div>
+      </>
+      )}
     </Shell>
   )
 }
@@ -128,4 +171,8 @@ function Shell({ children, right }) {
 
 function FilterBtn({ active, children, ...p }) {
   return <button {...p} className={`h-10 px-4 rounded-full text-sm font-semibold border ${active ? 'bg-ink text-gold border-ink' : 'bg-white border-ink/15 hover:border-ink'}`}>{children}</button>
+}
+
+function TabBtn({ active, children, ...p }) {
+  return <button {...p} className={`h-11 px-4 text-sm font-bold border-b-2 -mb-px ${active ? 'border-ink text-ink' : 'border-transparent text-ink/50 hover:text-ink'}`}>{children}</button>
 }

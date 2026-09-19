@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../content'
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
+import FeedbackWidget from './FeedbackWidget'
 import logo from '../assets/photos/logo-new.png'
 import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
 import svcExterior from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
-import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
+import svcSnow from '../assets/photos/stock-snow-shovel.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
 import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
 import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
@@ -15,13 +16,13 @@ import galBoat from '../assets/photos/curated/07_bote.jpeg'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
-const groupImages = { exterior: svcExterior, seasonal: svcSeasonal, vehicle: svcVehicle }
-const groupIcons = { exterior: 'water', seasonal: 'leaf', vehicle: 'car' }
-const groupOrder = ['exterior', 'seasonal', 'vehicle']
+const groupImages = { exterior: svcExterior, seasonal: svcSeasonal, snow: svcSnow }
+const groupIcons = { exterior: 'water', seasonal: 'leaf', snow: 'snow' }
+const groupOrder = ['exterior', 'seasonal', 'snow']
 const groupCaptions = {
   exterior: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
   seasonal: { en: 'Leaf cleanup', es: 'Recogida de hojas' },
-  vehicle: { en: 'Paint detailing', es: 'Detallado de pintura' },
+  snow: { en: 'Snow removal', es: 'Limpieza de nieve' },
 }
 
 export default function Landing({ lang, setLang }) {
@@ -210,6 +211,8 @@ export default function Landing({ lang, setLang }) {
           <p><a href={`tel:${PHONE_TEL}`} className="hover:text-gold-2">{PHONE_DISPLAY}</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:text-gold-2">SistemasKV</a></p>
         </div>
       </footer>
+
+      <FeedbackWidget t={t.feedback} lang={lang} />
     </div>
   )
 }

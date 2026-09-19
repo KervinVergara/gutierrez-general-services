@@ -11,5 +11,13 @@ service cloud.firestore {
       // Only signed-in staff can read/update/delete.
       allow read, update, delete: if request.auth != null;
     }
+    match /feedback/{id} {
+      // Anyone browsing the site can submit a change request (only the expected fields).
+      allow create: if request.resource.data.keys().hasOnly(['text','status','lang','page','createdAt','userAgent'])
+                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 2000
+                    && request.resource.data.status == 'pending';
+      // Only signed-in staff can read/update/delete.
+      allow read, update, delete: if request.auth != null;
+    }
   }
 }

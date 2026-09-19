@@ -10,13 +10,13 @@ export const content = {
     hero: {
       kicker: 'Cleaner spaces. Brighter days.',
       titleLines: ['Clean spaces.', 'Peace of mind.'],
-      sub: 'Exterior cleaning, seasonal care, and vehicle & equipment detailing in Warsaw, Indiana and nearby areas.',
+      sub: 'Exterior cleaning, seasonal care, and snow removal in Warsaw, Indiana and nearby areas.',
       cta1: 'Request a free quote',
     },
     details: 'View details', close: 'Close',
     servicesEyebrow: 'Our services',
-    servicesTitle: 'We take care of your outdoor spaces, vehicles and equipment.',
-    servicesSub: 'Property care, seasonal support, and vehicle & equipment cleaning — for a cleaner, brighter community.',
+    servicesTitle: 'We take care of your outdoor spaces, every season of the year.',
+    servicesSub: 'Property care, seasonal support, and snow removal — for a cleaner, brighter community.',
     from: 'From',
     quote: 'Custom quote',
     freeQuote: 'Free estimates',
@@ -29,9 +29,15 @@ export const content = {
       },
       {
         id: 'seasonal', group: 'seasonal', icon: 'leaf', title: 'Seasonal care', price: null, priceType: 'quote',
-        lead: 'Leaf cleanup in the fall and snow removal in the winter. Reliable help to keep your property safe and looking great through every season.',
-        items: ['Fall leaf cleanup & removal', 'Winter snow removal', 'Seasonal property upkeep'],
+        lead: 'Leaf cleanup in the fall and seasonal property upkeep. Reliable help to keep your property safe and looking great through every season.',
+        items: ['Fall leaf cleanup & removal', 'Seasonal property upkeep'],
         note: 'Custom quote based on property size and season.',
+      },
+      {
+        id: 'snow', group: 'snow', icon: 'snow', title: 'Snow removal', price: null, priceType: 'quote',
+        lead: 'Manual and reliable snow and ice removal for driveways, walkways and entryways. Keeping your property safe and accessible all winter long.',
+        items: ['Driveways', 'Walkways & sidewalks', 'Entryways & porches', 'Steps', 'Ice & salt treatment on request'],
+        note: 'Custom quote based on property size and snowfall.',
       },
       {
         id: 'detailing', group: 'vehicle', icon: 'car', title: 'Vehicle detailing', price: '$150', priceType: 'from',
@@ -70,7 +76,8 @@ export const content = {
     ],
     groups: {
       exterior: { title: 'Exterior cleaning', lead: 'House facades, patios, driveways and more. Professional pressure washing to keep your property looking its best.' },
-      seasonal: { title: 'Seasonal care', lead: 'Leaf cleanup in the fall and snow removal in the winter. Reliable help to keep your property safe and looking great through every season.' },
+      seasonal: { title: 'Seasonal care', lead: 'Leaf cleanup in the fall and seasonal property upkeep. Reliable help to keep your property safe and looking great through every season.' },
+      snow: { title: 'Snow removal', lead: 'Manual and reliable snow and ice removal for driveways, walkways and entryways. Keeping your property safe and accessible all winter long.' },
       vehicle: { title: 'Vehicle & equipment care', lead: 'Detailed cleaning for cars, trucks and commercial equipment. A clean look that works as hard as you do.' },
     },
     gallery: {
@@ -95,19 +102,24 @@ export const content = {
       or: 'or', call: 'Call', text: 'Text',
     },
     footer: { tagline: 'Clean spaces. Brighter days.', rights: 'All rights reserved.', made: 'Website by' },
+    feedback: {
+      title: 'Suggest a change', sub: 'Tell us what to add, remove or change on this page. We\'ll take care of it.',
+      placeholder: 'E.g. "Change this photo", "Remove this text", "I\'d like it to say..."',
+      send: 'Send', sending: 'Sending…', ok: 'Thanks! We received it.', err: 'Could not send it, try again.',
+    },
   },
   es: {
     nav: { services: 'Servicios', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', call: 'Llamar' },
     hero: {
       kicker: 'Espacios más limpios. Días más brillantes.',
       titleLines: ['Espacios limpios.', 'Tranquilidad.'],
-      sub: 'Limpieza exterior, cuidado de temporada y detallado de vehículos y equipos en Warsaw, Indiana y áreas cercanas.',
+      sub: 'Limpieza exterior, cuidado de temporada y limpieza de nieve en Warsaw, Indiana y áreas cercanas.',
       cta1: 'Solicitar cotización gratis',
     },
     details: 'Ver detalles', close: 'Cerrar',
     servicesEyebrow: 'Nuestros servicios',
-    servicesTitle: 'Cuidamos sus espacios exteriores, vehículos y equipos.',
-    servicesSub: 'Cuidado de propiedades, apoyo de temporada y limpieza de vehículos y equipos — para una comunidad más limpia y brillante.',
+    servicesTitle: 'Cuidamos sus espacios exteriores, en cada temporada del año.',
+    servicesSub: 'Cuidado de propiedades, apoyo de temporada y limpieza de nieve — para una comunidad más limpia y brillante.',
     from: 'Desde',
     quote: 'Cotización personalizada',
     freeQuote: 'Cotizaciones gratuitas',
@@ -120,9 +132,15 @@ export const content = {
       },
       {
         id: 'seasonal', group: 'seasonal', icon: 'leaf', title: 'Cuidado de temporada', price: null, priceType: 'quote',
-        lead: 'Recogida de hojas en otoño y retiro de nieve en invierno. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.',
-        items: ['Recogida y retiro de hojas en otoño', 'Retiro de nieve en invierno', 'Mantenimiento de temporada'],
+        lead: 'Recogida de hojas en otoño y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.',
+        items: ['Recogida y retiro de hojas en otoño', 'Mantenimiento de temporada'],
         note: 'Cotización personalizada según el tamaño de la propiedad y la temporada.',
+      },
+      {
+        id: 'snow', group: 'snow', icon: 'snow', title: 'Limpieza de nieve', price: null, priceType: 'quote',
+        lead: 'Retiro manual y confiable de nieve y hielo en entradas, andenes y accesos. Mantenemos su propiedad segura y accesible durante todo el invierno.',
+        items: ['Entradas de vehículos', 'Andenes y aceras', 'Accesos y porches', 'Escalones', 'Tratamiento de hielo y sal bajo solicitud'],
+        note: 'Cotización personalizada según el tamaño de la propiedad y la nevada.',
       },
       {
         id: 'detailing', group: 'vehicle', icon: 'car', title: 'Detallado de vehículos', price: '$150', priceType: 'from',
@@ -161,7 +179,8 @@ export const content = {
     ],
     groups: {
       exterior: { title: 'Limpieza exterior', lead: 'Fachadas, patios, entradas y más. Lavado a presión profesional para que su propiedad luzca lo mejor posible.' },
-      seasonal: { title: 'Cuidado de temporada', lead: 'Recogida de hojas en otoño y retiro de nieve en invierno. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.' },
+      seasonal: { title: 'Cuidado de temporada', lead: 'Recogida de hojas en otoño y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.' },
+      snow: { title: 'Limpieza de nieve', lead: 'Retiro manual y confiable de nieve y hielo en entradas, andenes y accesos. Mantenemos su propiedad segura y accesible durante todo el invierno.' },
       vehicle: { title: 'Vehículos y equipos', lead: 'Limpieza detallada para autos, camiones y equipo comercial. Una imagen limpia que trabaja tan duro como usted.' },
     },
     gallery: {
@@ -186,5 +205,10 @@ export const content = {
       or: 'o', call: 'Llamar', text: 'Mensaje',
     },
     footer: { tagline: 'Espacios limpios. Días más brillantes.', rights: 'Todos los derechos reservados.', made: 'Sitio web por' },
+    feedback: {
+      title: 'Sugerir un cambio', sub: 'Cuéntanos qué agregar, quitar o cambiar en esta página. Nosotros lo hacemos.',
+      placeholder: 'Ej: "Cambia esta foto", "Quita este texto", "Me gustaría que dijera..."',
+      send: 'Enviar', sending: 'Enviando…', ok: '¡Gracias! Ya lo recibimos.', err: 'No se pudo enviar, intenta otra vez.',
+    },
   },
 }
