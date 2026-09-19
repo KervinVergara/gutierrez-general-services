@@ -7,7 +7,7 @@ import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
 import svcExterior from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
-import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
+import svcVehicle from '../assets/photos/stock-snow-removal.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
 import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
 import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
@@ -21,7 +21,7 @@ const groupOrder = ['exterior', 'seasonal', 'vehicle']
 const groupCaptions = {
   exterior: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
   seasonal: { en: 'Leaf cleanup', es: 'Recogida de hojas' },
-  vehicle: { en: 'Paint detailing', es: 'Detallado de pintura' },
+  vehicle: { en: 'Snow removal', es: 'Retiro de nieve' },
 }
 
 export default function Landing({ lang, setLang }) {
@@ -63,7 +63,7 @@ export default function Landing({ lang, setLang }) {
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
           </nav>
           <div className="flex items-center gap-3 shrink-0">
-            <a href="#contact" className="hidden sm:inline-flex items-center h-11 px-5 rounded-full bg-gold text-ink font-bold text-sm whitespace-nowrap hover:bg-gold-2">{t.nav.quote}</a>
+            <a href="#contact" className="hidden sm:inline-flex items-center h-11 px-5 rounded-full bg-gold text-white font-bold text-sm whitespace-nowrap hover:bg-gold-2">{t.nav.quote}</a>
             <button onClick={() => setOpen(!open)} className="lg:hidden grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
               <Icon name={open ? 'x' : 'menu'} size={20} />
             </button>
@@ -75,7 +75,7 @@ export default function Landing({ lang, setLang }) {
               <a key={h} href={h} onClick={() => setOpen(false)} className="py-3 border-b border-ink/10 last:border-0 hover:text-gold-2">{l}</a>
             ))}
             <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="py-3 text-left border-b border-ink/10 hover:text-gold-2">EN / ES</button>
-            <a href="#contact" onClick={() => setOpen(false)} className="mt-3 inline-flex items-center justify-center h-12 rounded-full bg-gold text-ink font-bold">{t.nav.quote}</a>
+            <a href="#contact" onClick={() => setOpen(false)} className="mt-3 inline-flex items-center justify-center h-12 rounded-full bg-gold text-white font-bold">{t.nav.quote}</a>
           </nav>
         )}
       </header>
@@ -90,7 +90,7 @@ export default function Landing({ lang, setLang }) {
             </h1>
             <p className="mt-6 text-lg text-steel max-w-md">{t.hero.sub}</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
+              <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-white font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
               <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:text-gold-2">
                 <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
                 {PHONE_DISPLAY}
@@ -193,8 +193,7 @@ export default function Landing({ lang, setLang }) {
       <section id="contact" className="relative bg-ink text-white overflow-hidden">
         <div className="relative mx-auto max-w-6xl px-4 py-16 md:py-24 grid md:grid-cols-[1fr_1.1fr] gap-12">
           <div className="flex flex-col">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold">{t.contact.eyebrow}</p>
-            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
             <p className="mt-4 text-white/75 text-lg max-w-sm">{t.contact.sub}</p>
             <div className="mt-auto pt-10 text-right md:text-left">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Warsaw, Indiana</p>
