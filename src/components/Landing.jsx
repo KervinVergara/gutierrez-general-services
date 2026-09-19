@@ -3,27 +3,24 @@ import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../conten
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import logo from '../assets/photos/logo-new.png'
-import svcExterior from '../assets/photos/svc-pressure.jpeg'
-import svcVehicle from '../assets/photos/svc-trucks.jpeg'
-import heroOverlay from '../assets/photos/svc-polish.jpeg'
-import truck1Before from '../assets/photos/truck1-before.jpeg'
-import truck1After from '../assets/photos/truck1-after.jpeg'
-import truck2Before from '../assets/photos/truck2-before.jpeg'
-import truck2After from '../assets/photos/truck2-after.jpeg'
+import heroMain from '../assets/photos/curated/09_pulido_en_accion.jpeg'
+import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
+import svcVehicle from '../assets/photos/curated/02_brillo_pintura.jpeg'
+import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
+import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
+import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
+import galBoat from '../assets/photos/curated/07_bote.jpeg'
+import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
+import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
-const groupImages = { exterior: svcExterior, seasonal: null, vehicle: svcVehicle }
+const groupImages = { exterior: null, seasonal: null, vehicle: svcVehicle }
 const groupIcons = { exterior: 'water', seasonal: 'leaf', vehicle: 'car' }
 const groupOrder = ['exterior', 'seasonal', 'vehicle']
-const truckPairs = [
-  { before: truck1Before, after: truck1After },
-  { before: truck2Before, after: truck2After },
-]
 
 export default function Landing({ lang, setLang }) {
   const t = content[lang]
   const [open, setOpen] = useState(false)
   const [activeGroup, setActiveGroup] = useState(null)
-  const [galleryFilter, setGalleryFilter] = useState('all')
   const [presetService, setPresetService] = useState('')
 
   const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g) }))
@@ -35,14 +32,13 @@ export default function Landing({ lang, setLang }) {
   }
 
   const galleryItems = [
-    ...truckPairs.map((p, n) => ({ id: `veh-${n}`, group: 'vehicle', pair: p })),
-    { id: 'ext-0', group: 'exterior' },
-    { id: 'ext-1', group: 'exterior' },
-    { id: 'sea-0', group: 'seasonal' },
-    { id: 'sea-1', group: 'seasonal' },
+    { id: 'truck', photo: galTruck, ratio: '4/5', pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada' },
+    { id: 'interior', photo: galInterior, ratio: '3/4', pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado' },
+    { id: 'jeep', photo: galJeep, ratio: '4/5', pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio' },
+    { id: 'boat', photo: galBoat, ratio: '4/3', pos: 'object-center', wide: true, alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
+    { id: 'foam', photo: galFoam, ratio: '4/3', pos: 'object-center', wide: true, alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso' },
+    { id: 'polish', photo: galPolish, ratio: '4/5', pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura' },
   ]
-  const shownGallery = galleryFilter === 'all' ? galleryItems : galleryItems.filter((g) => g.group === galleryFilter)
-  const galleryCatLabel = { exterior: t.gallery.catExterior, seasonal: t.gallery.catSeasonal, vehicle: t.gallery.catVehicle }
 
   return (
     <div className="min-h-screen bg-sand">
@@ -50,7 +46,7 @@ export default function Landing({ lang, setLang }) {
       <header className="sticky top-0 z-40 bg-sand/95 backdrop-blur-sm border-b border-ink/10">
         <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logo} alt={BUSINESS} className="h-9 md:h-11 w-auto object-contain" />
+            <img src={logo} alt={BUSINESS} className="h-11 md:h-14 w-auto object-contain" />
           </a>
           <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink">
             <a href="#services" className="hover:text-gold-2">{t.nav.services}</a>
@@ -94,13 +90,12 @@ export default function Landing({ lang, setLang }) {
               </a>
             </div>
           </div>
-          <div className="relative">
-            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-dashed border-ink/20 bg-white/70 flex flex-col items-center justify-center gap-2 text-center px-6">
-              <Icon name="image" size={34} className="text-ink/25" />
-              <p className="text-sm font-semibold text-steel">{lang === 'en' ? 'Photo pending: exterior cleaning at a home entrance' : 'Foto pendiente: limpieza exterior en la entrada de una vivienda'}</p>
+          <div className="relative max-w-sm md:max-w-none mx-auto">
+            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
+              <img src={heroMain} alt={lang === 'en' ? 'Hand-polishing a vehicle exterior' : 'Pulido a mano de un vehículo'} className="w-full h-full object-cover object-bottom" />
             </div>
             <div className="hidden sm:block absolute -bottom-6 -right-4 md:-right-8 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
-              <img src={heroOverlay} alt={lang === 'en' ? 'Vehicle detailing close-up' : 'Detallado de vehículo de cerca'} className="w-full h-full object-cover" />
+              <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -118,14 +113,11 @@ export default function Landing({ lang, setLang }) {
             const primaryId = items[0]?.id
             return (
               <div key={key} id={key === 'seasonal' ? 'seasonal' : undefined}>
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-mist">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-mist flex items-center justify-center">
                   {img ? (
                     <img src={img} alt={g.title} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-center px-4">
-                      <Icon name={groupIcons[key]} size={30} className="text-ink/25" />
-                      <p className="text-xs font-semibold text-steel">{lang === 'en' ? 'Photo pending' : 'Foto pendiente'}</p>
-                    </div>
+                    <Icon name={groupIcons[key]} size={56} className="text-ink/20" />
                   )}
                 </div>
                 <h3 className="mt-5 text-xl font-bold text-ink">{g.title}</h3>
@@ -179,34 +171,11 @@ export default function Landing({ lang, setLang }) {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-2">{t.gallery.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
-          <div className="mt-7 flex flex-wrap gap-2">
-            {[['all', t.gallery.all], ['exterior', t.gallery.catExterior], ['seasonal', t.gallery.catSeasonal], ['vehicle', t.gallery.catVehicle]].map(([key, label]) => (
-              <button key={key} onClick={() => setGalleryFilter(key)} className={`h-9 px-4 rounded-full text-sm font-semibold border transition-colors ${galleryFilter === key ? 'bg-gold text-ink border-gold' : 'bg-white text-ink border-ink/15 hover:border-gold-2'}`}>{label}</button>
-            ))}
-          </div>
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
-            {shownGallery.map((g) => (
-              g.pair ? (
-                <div key={g.id} className="rounded-xl overflow-hidden border border-ink/10 bg-white">
-                  <div className="grid grid-cols-2">
-                    <div className="relative aspect-square">
-                      <img src={g.pair.before} alt={`${t.gallery.before} — ${galleryCatLabel[g.group]}`} className="w-full h-full object-cover" loading="lazy" />
-                      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-ink/85 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">{t.gallery.before}</span>
-                    </div>
-                    <div className="relative aspect-square">
-                      <img src={g.pair.after} alt={`${t.gallery.after} — ${galleryCatLabel[g.group]}`} className="w-full h-full object-cover" loading="lazy" />
-                      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-gold text-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">{t.gallery.after}</span>
-                    </div>
-                  </div>
-                  <p className="px-3 py-2 text-xs font-medium text-steel">{galleryCatLabel[g.group]}</p>
-                </div>
-              ) : (
-                <div key={g.id} className="aspect-square rounded-xl border border-dashed border-ink/15 bg-white flex flex-col items-center justify-center gap-2 text-center px-2">
-                  <Icon name={groupIcons[g.group]} size={24} className="text-ink/25" />
-                  <span className="text-xs font-medium text-ink/60">{galleryCatLabel[g.group]}</span>
-                  <span className="text-[11px] text-steel">{t.gallery.soon}</span>
-                </div>
-              )
+            {galleryItems.map((g) => (
+              <div key={g.id} className={`rounded-xl overflow-hidden ${g.wide ? 'col-span-2' : ''}`} style={{ aspectRatio: g.ratio }}>
+                <img src={g.photo} alt={g.alt} className={`w-full h-full object-cover ${g.pos}`} loading="lazy" />
+              </div>
             ))}
           </div>
         </div>
