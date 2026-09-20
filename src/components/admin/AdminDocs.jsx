@@ -2,22 +2,34 @@ import { useEffect, useState } from 'react'
 import { db } from '../../firebase'
 import { content, BUSINESS, PHONE_DISPLAY } from '../../content'
 import Icon from '../Icon'
-import { Field, inputCls, TabBtn } from './shared'
+import { Field, inputCls, TabBtn, FilterBtn } from './shared'
 import { money, fmtDate } from './util'
-import { printDoc } from './print'
+import DocModal from './DocModal'
+import SocialDoc from './SocialDoc'
 import logo from '../../assets/photos/logo-new.png'
 
 const logoUrl = new URL(logo, window.location.origin).toString()
-const SERVICES = content.es.services.filter((s) => !s.hidden)
 const GROUP_ORDER = ['auto', 'property', 'seasonal']
-const GROUP_LABEL = { auto: content.es.groups.auto.title, property: content.es.groups.property.title, seasonal: content.es.groups.seasonal.title }
+
+const DOC_LABELS = {
+  es: {
+    quoteDocTitle: 'Cotización', quoteSubtitle: 'Cotización de servicio', client: 'Cliente', service: 'Servicio', price: 'Precio', total: 'Total',
+    customQuote: 'Cotización personalizada', notesDefault: 'Cotización válida por 15 días. El precio final puede variar según el tamaño y condición del área o vehículo.',
+    catalogDocTitle: 'Nuestros servicios', catalogSubtitle: 'Catálogo de servicios', from: 'Desde', free: 'Gratis', quote: 'Cotización',
+  },
+  en: {
+    quoteDocTitle: 'Quote', quoteSubtitle: 'Service quote', client: 'Client', service: 'Service', price: 'Price', total: 'Total',
+    customQuote: 'Custom quote', notesDefault: 'Quote valid for 15 days. Final price may vary depending on the size and condition of the area or vehicle.',
+    catalogDocTitle: 'Our services', catalogSubtitle: 'Service catalog', from: 'From', free: 'Free', quote: 'Quote',
+  },
+}
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-function priceLabel(s) {
-  if (s.priceType === 'from') return `Desde ${money(s.price.replace('$', ''))}`
-  if (s.priceType === 'free') return 'Gratis'
-  return 'Cotización'
+function priceLabel(s, L) {
+  if (s.priceType === 'from') return `${L.from} ${money(String(s.price).replace('$', ''))}`
+  if (s.priceType === 'free') return L.free
+  return L.quote
 }
 
 function headerHtml(subtitle) {
@@ -26,29 +38,44 @@ function headerHtml(subtitle) {
 
 export default function AdminDocs() {
   const [mode, setMode] = useState('quote')
+  const [docLang, setDocLang] = useState('es')
+
   return (
     <div>
-      <div className="flex items-center gap-1 mb-6 border-b border-ink/10">
-        <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Cotización</TabBtn>
-        <TabBtn active={mode === 'catalog'} onClick={() => setMode('catalog')}>Catálogo</TabBtn>
-        <TabBtn active={mode === 'flyer'} onClick={() => setMode('flyer')}>Publicidad</TabBtn>
+      <div className="flex items-center justify-between mb-6 border-b border-ink/10 flex-wrap gap-3">
+        <div className="flex items-center gap-1">
+          <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Cotización</TabBtn>
+          <TabBtn active={mode === 'catalog'} onClick={() => setMode('catalog')}>Catálogo</TabBtn>
+          <TabBtn active={mode === 'social'} onClick={() => setMode('social')}>Publicidad</TabBtn>
+        </div>
+        {mode !== 'social' && (
+          <div className="flex items-center gap-2 pb-2">
+            <FilterBtn active={docLang === 'es'} onClick={() => setDocLang('es')}>ES</FilterBtn>
+            <FilterBtn active={docLang === 'en'} onClick={() => setDocLang('en')}>EN</FilterBtn>
+          </div>
+        )}
       </div>
-      {mode === 'quote' && <QuoteDoc />}
-      {mode === 'catalog' && <CatalogDoc />}
-      {mode === 'flyer' && <FlyerDoc />}
+      {mode === 'quote' && <QuoteDoc docLang={docLang} />}
+      {mode === 'catalog' && <CatalogDoc docLang={docLang} />}
+      {mode === 'social' && <SocialDoc />}
     </div>
   )
 }
 
-function QuoteDoc() {
+function QuoteDoc({ docLang }) {
+  const L = DOC_LABELS[docLang]
+  const SERVICES = content[docLang].services.filter((s) => !s.hidden)
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState('')
   const [manualName, setManualName] = useState('')
   const [manualPhone, setManualPhone] = useState('')
   const [date, setDate] = useState(today())
-  const [notes, setNotes] = useState('Cotización válida por 15 días. El precio final puede variar según el tamaño y condición del área o vehículo.')
+  const [notes, setNotes] = useState(L.notesDefault)
   const [items, setItems] = useState([{ description: '', price: '' }])
   const [pick, setPick] = useState('')
+  const [doc, setDoc] = useState(null)
+
+  useEffect(() => { setNotes(L.notesDefault) }, [docLang])
 
   useEffect(() => {
     let unsub = null
@@ -68,7 +95,7 @@ function QuoteDoc() {
   function addFromCatalog() {
     const s = SERVICES.find((x) => x.id === pick)
     if (!s) return
-    setItems((its) => [...its.filter((it) => it.description), { description: s.title, price: s.price ? s.price.replace('$', '') : '' }])
+    setItems((its) => [...its.filter((it) => it.description), { description: s.title, price: s.price ? String(s.price).replace('$', '') : '' }])
     setPick('')
   }
 
@@ -78,20 +105,20 @@ function QuoteDoc() {
   const clientPhone = client?.phone || manualPhone
 
   function generate() {
-    const rows = items.filter((it) => it.description).map((it) => `<tr><td>${it.description}</td><td class="right">${it.price ? money(it.price) : 'Cotización personalizada'}</td></tr>`).join('')
+    const rows = items.filter((it) => it.description).map((it) => `<tr><td>${it.description}</td><td class="right">${it.price ? money(it.price) : L.customQuote}</td></tr>`).join('')
     const html = `
-      ${headerHtml('Cotización de servicio')}
-      <h2>Cotización</h2>
+      ${headerHtml(L.quoteSubtitle)}
+      <h2>${L.quoteDocTitle}</h2>
       <p class="muted">${fmtDate(date)}</p>
-      <p style="margin-top:14px"><strong>Cliente:</strong> ${clientName || '—'}${clientPhone ? ` · ${clientPhone}` : ''}</p>
-      <table><thead><tr><th>Servicio</th><th class="right">Precio</th></tr></thead><tbody>
+      <p style="margin-top:14px"><strong>${L.client}:</strong> ${clientName || '—'}${clientPhone ? ` · ${clientPhone}` : ''}</p>
+      <table><thead><tr><th>${L.service}</th><th class="right">${L.price}</th></tr></thead><tbody>
         ${rows}
-        <tr class="total-row"><td>Total</td><td class="right">${money(total)}</td></tr>
+        <tr class="total-row"><td>${L.total}</td><td class="right">${money(total)}</td></tr>
       </tbody></table>
       <p class="muted" style="margin-top:20px;font-size:12px">${notes}</p>
       <div class="footer">${BUSINESS} · ${PHONE_DISPLAY} · Warsaw, Indiana</div>
     `
-    printDoc(html, `Cotización — ${clientName || 'cliente'}`)
+    setDoc({ title: `${L.quoteDocTitle} — ${clientName || 'cliente'}`, html })
   }
 
   return (
@@ -137,55 +164,72 @@ function QuoteDoc() {
 
       <div className="flex items-center justify-between border-t border-ink/10 pt-4">
         <p className="text-lg font-extrabold text-ink">Total: {money(total)}</p>
-        <button onClick={generate} className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generar PDF</button>
+        <button onClick={generate} className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generar</button>
       </div>
+
+      {doc && <DocModal title={doc.title} html={doc.html} onClose={() => setDoc(null)} />}
     </div>
   )
 }
 
-function CatalogDoc() {
+function CatalogDoc({ docLang }) {
+  const L = DOC_LABELS[docLang]
+  const seed = () => content[docLang].services.filter((s) => !s.hidden).map((s) => ({
+    id: s.id, included: true, title: s.title, priceText: priceLabel(s, L), lead: s.lead, group: s.group,
+  }))
+  const [items, setItems] = useState(seed)
+  const [catTitle, setCatTitle] = useState(L.catalogDocTitle)
+  const [doc, setDoc] = useState(null)
+
+  useEffect(() => { setItems(seed()); setCatTitle(L.catalogDocTitle) }, [docLang])
+
+  function update(id, field, value) {
+    setItems((its) => its.map((it) => (it.id === id ? { ...it, [field]: value } : it)))
+  }
+  function remove(id) { setItems((its) => its.filter((it) => it.id !== id)) }
+  function addCustom() {
+    setItems((its) => [...its, { id: `custom-${Date.now()}`, included: true, title: '', priceText: '', lead: '', group: 'custom' }])
+  }
+
   function generate() {
-    const groups = GROUP_ORDER.map((g) => {
-      const items = SERVICES.filter((s) => s.group === g).map((s) => `
-        <div class="cat-item"><div class="row"><span>${s.title}</span><span>${priceLabel(s)}</span></div><p>${s.lead}</p></div>
-      `).join('')
-      return `<div class="cat-group"><h3>${GROUP_LABEL[g]}</h3>${items}</div>`
+    const included = items.filter((it) => it.included && it.title)
+    const groups = [...GROUP_ORDER, 'custom'].map((g) => {
+      const gi = included.filter((it) => it.group === g)
+      if (gi.length === 0) return ''
+      const rows = gi.map((it) => `<div class="cat-item"><div class="row"><span>${it.title}</span><span>${it.priceText}</span></div>${it.lead ? `<p>${it.lead}</p>` : ''}</div>`).join('')
+      const label = g === 'custom' ? '' : `<h3>${content[docLang].groups[g].title}</h3>`
+      return `<div class="cat-group">${label}${rows}</div>`
     }).join('')
     const html = `
-      ${headerHtml('Catálogo de servicios')}
-      <h2>Nuestros servicios</h2>
+      ${headerHtml(L.catalogSubtitle)}
+      <h2>${catTitle}</h2>
       ${groups}
       <div class="footer">${BUSINESS} · ${PHONE_DISPLAY} · Warsaw, Indiana</div>
     `
-    printDoc(html, 'Catálogo de servicios')
+    setDoc({ title: catTitle, html })
   }
-  return (
-    <div className="rounded-2xl bg-white border border-ink/10 p-5">
-      <p className="text-ink/70 mb-4">Genera un catálogo con todos los servicios confirmados, agrupados por categoría, listo para imprimir o guardar como PDF.</p>
-      <button onClick={generate} className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generar catálogo</button>
-    </div>
-  )
-}
 
-function FlyerDoc() {
-  function generate() {
-    const html = `
-      ${headerHtml('Publicidad')}
-      <p class="badge">Warsaw, Indiana</p>
-      <p class="flyer-title">Su carro. Su casa.<br/>Bien cuidados.</p>
-      <p class="flyer-sub">Detallado profesional de vehículos, cuidado de propiedades y servicios de temporada.</p>
-      <div class="grid3">
-        ${GROUP_ORDER.map((g) => `<div class="card"><h3>${GROUP_LABEL[g]}</h3><p>${content.es.groups[g].lead}</p></div>`).join('')}
-      </div>
-      <a class="cta">Cotización gratis · ${PHONE_DISPLAY}</a>
-      <div class="footer">${BUSINESS} · gutierrez-general-services.web.app</div>
-    `
-    printDoc(html, 'Publicidad')
-  }
   return (
-    <div className="rounded-2xl bg-white border border-ink/10 p-5">
-      <p className="text-ink/70 mb-4">Genera un volante de una página con el logo, los servicios principales y los datos de contacto.</p>
-      <button onClick={generate} className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generar publicidad</button>
+    <div className="rounded-2xl bg-white border border-ink/10 p-5 grid gap-4">
+      <Field label="Título del catálogo"><input className={inputCls} value={catTitle} onChange={(e) => setCatTitle(e.target.value)} /></Field>
+      <p className="text-xs text-ink/50">Desmarca lo que no quieras mostrar, o edita el nombre y precio de cada línea.</p>
+      <div className="grid gap-2">
+        {items.map((it) => (
+          <div key={it.id} className={`flex items-center gap-2 rounded-lg border p-2 ${it.included ? 'border-ink/10' : 'border-ink/5 opacity-50'}`}>
+            <input type="checkbox" checked={it.included} onChange={(e) => update(it.id, 'included', e.target.checked)} className="w-4 h-4 accent-[var(--color-gold)] shrink-0" />
+            <input placeholder="Servicio" className={`${inputCls} flex-1 h-10`} value={it.title} onChange={(e) => update(it.id, 'title', e.target.value)} />
+            <input placeholder="Precio" className={`${inputCls} w-32 h-10`} value={it.priceText} onChange={(e) => update(it.id, 'priceText', e.target.value)} />
+            <button onClick={() => remove(it.id)} aria-label="Quitar" className="grid place-items-center w-9 h-9 rounded-lg border border-ink/15 hover:border-red-600 hover:text-red-600 shrink-0"><Icon name="trash" size={14} /></button>
+          </div>
+        ))}
+      </div>
+      <button onClick={addCustom} className="justify-self-start text-sm font-bold text-ink hover:underline">+ Agregar servicio personalizado</button>
+
+      <div className="border-t border-ink/10 pt-4">
+        <button onClick={generate} className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generar</button>
+      </div>
+
+      {doc && <DocModal title={doc.title} html={doc.html} onClose={() => setDoc(null)} />}
     </div>
   )
 }

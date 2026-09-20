@@ -1,4 +1,4 @@
-const PRINT_CSS = `
+export const PRINT_CSS = `
   #__print_root { font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif; color: #123b55; }
   .header { display: flex; align-items: center; gap: 14px; border-bottom: 3px solid #123b55; padding-bottom: 14px; margin-bottom: 20px; }
   .header img { height: 52px; }
@@ -22,13 +22,23 @@ const PRINT_CSS = `
   .cat-item .row { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; }
   .cat-item p { margin: 2px 0 0; font-size: 12px; color: #52616b; }
   .footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid #dfeef5; font-size: 11px; color: #52616b; text-align: center; }
-  .flyer-title { font-size: 34px; font-weight: 800; margin: 20px 0 6px; }
-  .flyer-sub { font-size: 15px; color: #52616b; margin: 0 0 20px; }
-  .cta { display: inline-block; background: #f3c64e; color: #123b55; font-weight: 800; padding: 10px 22px; border-radius: 999px; margin-top: 20px; }
 `
+
+const FONT_LINK = `<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">`
+
+// A full standalone HTML document for showing the print content inside an <iframe srcDoc>.
+export function previewDocHtml(bodyHtml) {
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINK}<style>
+    body { margin: 24px; }
+    #__print_root { display: block; }
+    ${PRINT_CSS}
+  </style></head><body><div id="__print_root">${bodyHtml}</div></body></html>`
+}
 
 let styleInjected = false
 
+// Renders the doc into a hidden root on the current page and opens the browser's print dialog
+// (the user picks "Save as PDF" there — no extra dependency needed for real PDF output).
 export function printDoc(bodyHtml, title = 'Documento') {
   if (!styleInjected) {
     const style = document.createElement('style')
