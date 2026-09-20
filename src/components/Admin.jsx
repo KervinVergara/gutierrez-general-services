@@ -3,17 +3,23 @@ import { auth, db, isConfigured } from '../firebase'
 import Icon from './Icon'
 import { TabBtn } from './admin/shared'
 import { sanitizePhone } from './admin/util'
+import AdminDashboard from './admin/AdminDashboard'
 import AdminQuotes from './admin/AdminQuotes'
 import AdminClients from './admin/AdminClients'
+import AdminAgenda from './admin/AdminAgenda'
 import AdminJobs from './admin/AdminJobs'
+import AdminPlans from './admin/AdminPlans'
 import AdminFinance from './admin/AdminFinance'
 import AdminRequests from './admin/AdminRequests'
 import AdminDocs from './admin/AdminDocs'
 
 const TABS = [
+  { id: 'dashboard', label: 'Inicio', Component: AdminDashboard },
   { id: 'quotes', label: 'Cotizaciones', Component: AdminQuotes },
   { id: 'clients', label: 'Clientes', Component: AdminClients },
+  { id: 'agenda', label: 'Agenda', Component: AdminAgenda },
   { id: 'jobs', label: 'Servicios', Component: AdminJobs },
+  { id: 'plans', label: 'Planes', Component: AdminPlans },
   { id: 'finance', label: 'Finanzas', Component: AdminFinance },
   { id: 'requests', label: 'Solicitudes', Component: AdminRequests },
   { id: 'docs', label: 'Documentos', Component: AdminDocs },
@@ -21,8 +27,21 @@ const TABS = [
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
-  const [tab, setTab] = useState('quotes')
+  const [tab, setTab] = useState('dashboard')
+  const [jobFocus, setJobFocus] = useState(null)
+  const [adminLang, setAdminLang] = useState(() => localStorage.getItem('adminLang') || 'es')
   const [err, setErr] = useState('')
+
+  // Preference is saved for when the full admin translation ships — every screen is
+  // still Spanish-only today, so switching this never mixes languages on one screen.
+  function toggleAdminLang() {
+    const next = adminLang === 'es' ? 'en' : 'es'
+    setAdminLang(next)
+    localStorage.setItem('adminLang', next)
+  }
+
+  function openJob(id) { setJobFocus({ id }); setTab('jobs') }
+  function createJobAt(date) { setJobFocus({ prefillDate: date }); setTab('jobs') }
 
   useEffect(() => {
     if (!isConfigured) { setUser(null); return }
@@ -51,7 +70,7 @@ export default function Admin() {
             zip: q.zip || existing.data()?.zip || '',
             updatedAt: serverTimestamp(),
           }
-          if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'quote' }
+          if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'quote'; data.vehicles = []; data.properties = [] }
           await setDoc(ref, data, { merge: true })
         })
       })
@@ -94,11 +113,16 @@ export default function Admin() {
   const Active = TABS.find((t) => t.id === tab).Component
 
   return (
-    <Shell right={<button onClick={logout} className="text-sm font-semibold hover:text-gold">Salir</button>}>
-      <div className="flex items-center gap-1 mb-8 border-b border-ink/10 overflow-x-auto">
+    <Shell right={
+      <div className="flex items-center gap-3">
+        <button onClick={toggleAdminLang} title="Selector de idioma (próximamente disponible para todo el panel)" className="text-sm font-semibold hover:text-gold">{adminLang.toUpperCase()} / {adminLang === 'es' ? 'EN' : 'ES'}</button>
+        <button onClick={logout} className="text-sm font-semibold hover:text-gold">Salir</button>
+      </div>
+    }>
+      <div className="flex items-center gap-1 mb-8 border-b border-ink/10 overflow-x-auto overflow-y-hidden flex-nowrap">
         {TABS.map((t) => <TabBtn key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</TabBtn>)}
       </div>
-      <Active />
+      <Active goTo={setTab} openJob={openJob} createJobAt={createJobAt} focus={jobFocus} onFocusHandled={() => setJobFocus(null)} />
     </Shell>
   )
 }

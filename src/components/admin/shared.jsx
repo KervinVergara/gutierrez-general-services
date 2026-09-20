@@ -21,3 +21,21 @@ export function Field({ label, children }) {
 }
 
 export const inputCls = 'h-11 rounded-lg bg-white text-ink px-3 border border-ink/20 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold'
+
+export function Loading() {
+  return <div className="rounded-2xl bg-white border border-ink/10 p-6 text-center text-ink/50">Cargando…</div>
+}
+
+export function EmptyState({ title, hint, ctaLabel, onCta }) {
+  return (
+    <div className="rounded-2xl bg-white border border-ink/10 p-6 text-center">
+      <p className="text-ink/60">{title}</p>
+      {hint && <p className="text-sm text-ink/50 mt-1">{hint}</p>}
+      {ctaLabel && (
+        <button onClick={onCta} className="mt-3 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-gold text-sm font-bold">
+          + {ctaLabel}
+        </button>
+      )}
+    </div>
+  )
+}

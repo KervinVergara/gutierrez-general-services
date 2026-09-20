@@ -1,51 +1,57 @@
 import { useEffect, useState } from 'react'
 import { db } from '../../firebase'
 import Icon from '../Icon'
-import { Field, inputCls } from './shared'
-import { sanitizePhone, money, fmtDate } from './util'
+import { Field, inputCls, Loading, EmptyState } from './shared'
+import { sanitizePhone, money, fmtDate, todayStr } from './util'
 
 const emptyForm = { name: '', phone: '', email: '', zip: '', notes: '' }
+const emptyVehicle = { make: '', model: '', year: '', color: '', plate: '', notes: '' }
+const emptyProperty = { address: '', type: '', notes: '' }
+const uid = () => Math.random().toString(36).slice(2, 10)
 
 export default function AdminClients() {
   const [clients, setClients] = useState([])
   const [jobs, setJobs] = useState([])
+  const [quotes, setQuotes] = useState([])
+  const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    let unsub1 = null, unsub2 = null
+    let u1 = null, u2 = null, u3 = null
     import('firebase/firestore').then(({ collection, onSnapshot, orderBy, query }) => {
-      unsub1 = onSnapshot(query(collection(db, 'clients'), orderBy('updatedAt', 'desc')), (snap) => {
+      u1 = onSnapshot(query(collection(db, 'clients'), orderBy('updatedAt', 'desc')), (snap) => {
         setClients(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+        setLoaded(true)
       }, (e) => setErr(e.message))
-      unsub2 = onSnapshot(collection(db, 'jobs'), (snap) => {
-        setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-      })
+      u2 = onSnapshot(collection(db, 'jobs'), (snap) => setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      u3 = onSnapshot(collection(db, 'quotes'), (snap) => setQuotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
     })
-    return () => { unsub1 && unsub1(); unsub2 && unsub2() }
+    return () => { u1 && u1(); u2 && u2(); u3 && u3() }
   }, [])
 
-  function jobsFor(clientId) {
-    return jobs.filter((j) => j.clientId === clientId)
-  }
-  function totalFor(clientId) {
-    return jobsFor(clientId).filter((j) => j.status === 'done').reduce((s, j) => s + (Number(j.amountCharged) || 0), 0)
+  function jobsFor(c) { return jobs.filter((j) => j.clientId === c.id) }
+  function quotesFor(c) { return quotes.filter((q) => sanitizePhone(q.phone) === c.id) }
+
+  function summaryFor(c) {
+    const cjobs = jobsFor(c)
+    const done = cjobs.filter((j) => j.status === 'done')
+    const totalBilled = done.reduce((s, j) => s + (Number(j.amountCharged) || 0), 0)
+    const totalPaid = cjobs.reduce((s, j) => s + (Number(j.amountPaid) || 0), 0)
+    const last = [...done].sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0]
+    const today = todayStr()
+    const next = [...cjobs].filter((j) => j.status !== 'cancelled' && j.status !== 'done' && j.date >= today).sort((a, b) => (a.date || '').localeCompare(b.date || ''))[0]
+    return { count: done.length, totalBilled, totalPaid, last, next }
   }
 
   function startEdit(c) {
     setEditingId(c.id)
     setForm({ name: c.name || '', phone: c.phone || '', email: c.email || '', zip: c.zip || '', notes: c.notes || '' })
   }
-  function startNew() {
-    setEditingId('new')
-    setForm(emptyForm)
-  }
-  function cancel() {
-    setEditingId(null)
-    setForm(emptyForm)
-  }
+  function startNew() { setEditingId('new'); setForm(emptyForm) }
+  function cancel() { setEditingId(null); setForm(emptyForm) }
 
   async function save(e) {
     e.preventDefault()
@@ -56,14 +62,20 @@ export default function AdminClients() {
     const ref = doc(db, 'clients', id)
     const existing = await getDoc(ref)
     const data = { name: form.name, phone: form.phone, email: form.email, zip: form.zip, notes: form.notes, updatedAt: serverTimestamp() }
-    if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'manual' }
+    if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'manual'; data.vehicles = []; data.properties = [] }
     await setDoc(ref, data, { merge: true })
     cancel()
   }
 
   async function remove(id) {
+    if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer y no borra sus servicios ni cotizaciones registrados.')) return
     const { doc, deleteDoc } = await import('firebase/firestore')
     await deleteDoc(doc(db, 'clients', id))
+  }
+
+  async function saveList(client, key, list) {
+    const { doc, updateDoc } = await import('firebase/firestore')
+    await updateDoc(doc(db, 'clients', client.id), { [key]: list })
   }
 
   return (
@@ -89,11 +101,12 @@ export default function AdminClients() {
         </form>
       )}
 
-      {clients.length === 0 && <p className="text-ink/60">No hay clientes todavía.</p>}
+      {!loaded && <Loading />}
+      {loaded && clients.length === 0 && <EmptyState title="No hay clientes todavía." hint="Se agregan automáticamente al recibir una cotización, o puedes crear uno manualmente." ctaLabel="Nuevo cliente" onCta={startNew} />}
       <div className="grid gap-3">
         {clients.map((c) => {
-          const cjobs = jobsFor(c.id)
           const isOpen = open === c.id
+          const sum = summaryFor(c)
           return (
             <article key={c.id} className="rounded-2xl bg-white border border-ink/10 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,22 +119,56 @@ export default function AdminClients() {
                   {c.notes && <p className="mt-1 text-sm text-ink/60">{c.notes}</p>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-bold text-ink/70">{money(totalFor(c.id))} facturado</span>
-                  <button onClick={() => setOpen(isOpen ? null : c.id)} className="h-9 px-3 rounded-lg border border-ink/15 text-xs font-bold hover:border-ink">{isOpen ? 'Ocultar' : 'Ver historial'}</button>
+                  <span className="text-sm font-bold text-ink/70">{money(sum.totalBilled)} facturado</span>
+                  <button onClick={() => setOpen(isOpen ? null : c.id)} className="h-9 px-3 rounded-lg border border-ink/15 text-xs font-bold hover:border-ink">{isOpen ? 'Ocultar' : 'Ver ficha'}</button>
                   <button onClick={() => startEdit(c)} aria-label="Editar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-ink"><Icon name="tag" size={14} /></button>
                   <button onClick={() => remove(c.id)} aria-label="Eliminar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-red-600 hover:text-red-600"><Icon name="trash" size={14} /></button>
                 </div>
               </div>
+
               {isOpen && (
-                <div className="mt-4 border-t border-ink/10 pt-4">
-                  {cjobs.length === 0 && <p className="text-sm text-ink/50">Sin servicios registrados.</p>}
-                  <div className="grid gap-2">
-                    {cjobs.map((j) => (
-                      <div key={j.id} className="flex items-center justify-between text-sm">
-                        <span>{fmtDate(j.date)} · {j.service}</span>
-                        <span className="font-bold">{money(j.amountCharged)}</span>
-                      </div>
-                    ))}
+                <div className="mt-4 border-t border-ink/10 pt-4 grid gap-5">
+                  <div className="grid sm:grid-cols-4 gap-3">
+                    <MiniStat label="Servicios" value={sum.count} />
+                    <MiniStat label="Total facturado" value={money(sum.totalBilled)} />
+                    <MiniStat label="Último servicio" value={sum.last ? fmtDate(sum.last.date) : '—'} />
+                    <MiniStat label="Próximo servicio" value={sum.next ? fmtDate(sum.next.date) : '—'} />
+                  </div>
+
+                  <ListEditor title="Vehículos" items={c.vehicles || []} empty={emptyVehicle}
+                    onSave={(list) => saveList(c, 'vehicles', list)}
+                    renderRow={(v) => `${v.make} ${v.model} ${v.year}`.trim() || '(sin datos)'}
+                    fields={[['make', 'Marca'], ['model', 'Modelo'], ['year', 'Año'], ['color', 'Color'], ['plate', 'Matrícula']]} />
+
+                  <ListEditor title="Propiedades" items={c.properties || []} empty={emptyProperty}
+                    onSave={(list) => saveList(c, 'properties', list)}
+                    renderRow={(p) => p.address || '(sin dirección)'}
+                    fields={[['address', 'Dirección'], ['type', 'Tipo']]} />
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-ink/50 mb-2">Historial de servicios</p>
+                    {jobsFor(c).length === 0 && <p className="text-sm text-ink/50">Sin servicios registrados.</p>}
+                    <div className="grid gap-1.5">
+                      {jobsFor(c).sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((j) => (
+                        <div key={j.id} className="flex items-center justify-between text-sm">
+                          <span>{fmtDate(j.date)} · {j.service}</span>
+                          <span className="font-bold">{money(j.amountCharged)} · {j.paymentStatus === 'paid' ? 'Pagado' : j.paymentStatus === 'partial' ? 'Parcial' : 'Pendiente'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-ink/50 mb-2">Cotizaciones</p>
+                    {quotesFor(c).length === 0 && <p className="text-sm text-ink/50">Sin cotizaciones registradas.</p>}
+                    <div className="grid gap-1.5">
+                      {quotesFor(c).map((q) => (
+                        <div key={q.id} className="flex items-center justify-between text-sm">
+                          <span>{q.createdAt?.toDate ? fmtDate(q.createdAt.toDate().toISOString().slice(0, 10)) : '—'} · {q.service}</span>
+                          <span className="text-ink/60">{q.status}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -129,6 +176,55 @@ export default function AdminClients() {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="rounded-xl bg-mist p-3">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-ink/50">{label}</p>
+      <p className="text-sm font-extrabold text-ink mt-0.5">{value}</p>
+    </div>
+  )
+}
+
+function ListEditor({ title, items, empty, fields, renderRow, onSave }) {
+  const [adding, setAdding] = useState(false)
+  const [draft, setDraft] = useState(empty)
+
+  function add() {
+    onSave([...items, { id: uid(), ...draft }])
+    setDraft(empty)
+    setAdding(false)
+  }
+  function remove(id) {
+    onSave(items.filter((i) => i.id !== id))
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-bold uppercase tracking-wide text-ink/50">{title}</p>
+        <button onClick={() => setAdding(!adding)} className="text-xs font-bold text-ink hover:underline">{adding ? 'Cancelar' : '+ Agregar'}</button>
+      </div>
+      {items.length === 0 && !adding && <p className="text-sm text-ink/50">Ninguno registrado.</p>}
+      <div className="grid gap-1.5 mb-2">
+        {items.map((i) => (
+          <div key={i.id} className="flex items-center justify-between text-sm bg-mist rounded-lg px-3 py-2">
+            <span>{renderRow(i)}</span>
+            <button onClick={() => remove(i.id)} aria-label="Quitar" className="text-ink/40 hover:text-red-600"><Icon name="trash" size={13} /></button>
+          </div>
+        ))}
+      </div>
+      {adding && (
+        <div className="grid sm:grid-cols-3 gap-2">
+          {fields.map(([key, label]) => (
+            <input key={key} placeholder={label} className={inputCls} value={draft[key]} onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))} />
+          ))}
+          <button onClick={add} className="h-11 px-4 rounded-lg bg-gold text-ink font-bold text-sm">Guardar</button>
+        </div>
+      )}
     </div>
   )
 }
