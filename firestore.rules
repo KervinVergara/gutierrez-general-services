@@ -21,5 +21,17 @@ service cloud.firestore {
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                     && request.resource.data.status in ['pending', 'done'];
     }
+    match /clients/{id} {
+      // Internal CRM data — only signed-in staff can read/write.
+      allow read, create, update, delete: if request.auth != null;
+    }
+    match /jobs/{id} {
+      // Completed/scheduled service records — only signed-in staff.
+      allow read, create, update, delete: if request.auth != null;
+    }
+    match /finance/{id} {
+      // Income/expense ledger — only signed-in staff.
+      allow read, create, update, delete: if request.auth != null;
+    }
   }
 }

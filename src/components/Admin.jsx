@@ -1,40 +1,61 @@
 import { useEffect, useState } from 'react'
 import { auth, db, isConfigured } from '../firebase'
-import { content } from '../content'
 import Icon from './Icon'
+import { TabBtn } from './admin/shared'
+import { sanitizePhone } from './admin/util'
+import AdminQuotes from './admin/AdminQuotes'
+import AdminClients from './admin/AdminClients'
+import AdminJobs from './admin/AdminJobs'
+import AdminFinance from './admin/AdminFinance'
+import AdminRequests from './admin/AdminRequests'
 
-const STATUSES = ['new', 'contacted', 'scheduled', 'done', 'lost']
-const LABEL = {
-  new: 'Nuevo', contacted: 'Contactado', scheduled: 'Agendado', done: 'Terminado', lost: 'Perdido',
-}
-const COLOR = {
-  new: 'bg-gold text-ink', contacted: 'bg-blue-100 text-blue-900', scheduled: 'bg-purple-100 text-purple-900', done: 'bg-green-100 text-green-900', lost: 'bg-ink/10 text-ink/60',
-}
-const serviceName = (id) => content.es.services.find((s) => s.id === id)?.title || id || '—'
+const TABS = [
+  { id: 'quotes', label: 'Cotizaciones', Component: AdminQuotes },
+  { id: 'clients', label: 'Clientes', Component: AdminClients },
+  { id: 'jobs', label: 'Servicios', Component: AdminJobs },
+  { id: 'finance', label: 'Finanzas', Component: AdminFinance },
+  { id: 'requests', label: 'Solicitudes', Component: AdminRequests },
+]
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
-  const [quotes, setQuotes] = useState([])
-  const [filter, setFilter] = useState('all')
+  const [tab, setTab] = useState('quotes')
   const [err, setErr] = useState('')
 
   useEffect(() => {
     if (!isConfigured) { setUser(null); return }
-    let unsubQuotes = null
     import('firebase/auth').then(({ onAuthStateChanged }) => {
-      onAuthStateChanged(auth, async (u) => {
-        setUser(u)
-        if (unsubQuotes) { unsubQuotes(); unsubQuotes = null }
-        if (u) {
-          const { collection, onSnapshot, orderBy, query } = await import('firebase/firestore')
-          unsubQuotes = onSnapshot(query(collection(db, 'quotes'), orderBy('createdAt', 'desc')), (snap) => {
-            setQuotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-          }, (e) => setErr(e.message))
-        }
+      onAuthStateChanged(auth, (u) => setUser(u))
+    })
+  }, [])
+
+  // Every quote that comes in from the public site automatically feeds the client database.
+  useEffect(() => {
+    if (!user) return
+    let unsub = null
+    import('firebase/firestore').then(({ collection, onSnapshot, doc, getDoc, setDoc, serverTimestamp }) => {
+      unsub = onSnapshot(collection(db, 'quotes'), (snap) => {
+        snap.docChanges().forEach(async (change) => {
+          if (change.type === 'removed') return
+          const q = change.doc.data()
+          const id = sanitizePhone(q.phone)
+          if (!id) return
+          const ref = doc(db, 'clients', id)
+          const existing = await getDoc(ref)
+          const data = {
+            name: q.name || existing.data()?.name || '',
+            phone: q.phone,
+            email: q.email || existing.data()?.email || '',
+            zip: q.zip || existing.data()?.zip || '',
+            updatedAt: serverTimestamp(),
+          }
+          if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'quote' }
+          await setDoc(ref, data, { merge: true })
+        })
       })
     })
-    return () => unsubQuotes && unsubQuotes()
-  }, [])
+    return () => unsub && unsub()
+  }, [user])
 
   async function login(e) {
     e.preventDefault()
@@ -49,11 +70,6 @@ export default function Admin() {
   async function logout() {
     const { signOut } = await import('firebase/auth')
     await signOut(auth)
-  }
-
-  async function setStatus(id, status) {
-    const { doc, updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, 'quotes', id), { status })
   }
 
   if (!isConfigured) return <Shell><p className="text-center">Firebase no está configurado. Copia <code>.env.example</code> a <code>.env</code> con las credenciales del proyecto.</p></Shell>
@@ -73,41 +89,14 @@ export default function Admin() {
     )
   }
 
-  const shown = filter === 'all' ? quotes : quotes.filter((q) => q.status === filter)
-  const counts = Object.fromEntries(STATUSES.map((s) => [s, quotes.filter((q) => q.status === s).length]))
+  const Active = TABS.find((t) => t.id === tab).Component
 
   return (
     <Shell right={<button onClick={logout} className="text-sm font-semibold hover:text-gold">Salir</button>}>
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <FilterBtn active={filter === 'all'} onClick={() => setFilter('all')}>Todas ({quotes.length})</FilterBtn>
-        {STATUSES.map((s) => <FilterBtn key={s} active={filter === s} onClick={() => setFilter(s)}>{LABEL[s]} ({counts[s]})</FilterBtn>)}
+      <div className="flex items-center gap-1 mb-8 border-b border-ink/10 overflow-x-auto">
+        {TABS.map((t) => <TabBtn key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</TabBtn>)}
       </div>
-      {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
-      {shown.length === 0 && <p className="text-ink/60">No hay solicitudes en esta vista.</p>}
-      <div className="grid gap-4">
-        {shown.map((q) => (
-          <article key={q.id} className="rounded-2xl bg-white border border-ink/10 p-5 grid md:grid-cols-[1fr_auto] gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${COLOR[q.status] || COLOR.new}`}>{LABEL[q.status] || q.status}</span>
-                <span className="text-xs text-ink/50">{q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString('es-CO') : '—'} · {q.lang?.toUpperCase()}</span>
-              </div>
-              <h2 className="mt-2 text-2xl font-bold">{q.name}</h2>
-              <p className="text-ink/80"><span className="font-semibold">{serviceName(q.service)}</span>{q.vehicle && ` · ${q.vehicle}`}{q.zip && ` · ${q.zip}`}{q.email && ` · ${q.email}`}</p>
-              {q.message && <p className="mt-2 text-sm text-ink/70 whitespace-pre-line">{q.message}</p>}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a href={`tel:${q.phone}`} className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-ink text-gold text-sm font-bold"><Icon name="phone" size={16} /> {q.phone}</a>
-                <a href={`sms:${q.phone}`} className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-ink/20 text-sm font-bold"><Icon name="message" size={16} /> SMS</a>
-              </div>
-            </div>
-            <label className="text-sm font-medium grid gap-1 self-start">Estado
-              <select value={q.status || 'new'} onChange={(e) => setStatus(q.id, e.target.value)} className="h-10 rounded-lg border border-ink/20 px-3 bg-white">
-                {STATUSES.map((s) => <option key={s} value={s}>{LABEL[s]}</option>)}
-              </select>
-            </label>
-          </article>
-        ))}
-      </div>
+      <Active />
     </Shell>
   )
 }
@@ -124,8 +113,4 @@ function Shell({ children, right }) {
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
     </div>
   )
-}
-
-function FilterBtn({ active, children, ...p }) {
-  return <button {...p} className={`h-10 px-4 rounded-full text-sm font-semibold border ${active ? 'bg-ink text-gold border-ink' : 'bg-white border-ink/15 hover:border-ink'}`}>{children}</button>
 }
