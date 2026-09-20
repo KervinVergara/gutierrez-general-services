@@ -75,7 +75,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
     )
   }
 
-  const input = 'w-full h-13 rounded-xl bg-white text-ink text-base px-4 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold'
+  const input = 'w-full h-12 rounded-xl bg-white text-ink text-base px-4 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold'
   const typeOptions = [
     { id: 'vehicle', label: t.typeVehicle, icon: 'car' },
     { id: 'home', label: t.typeHome, icon: 'home' },
@@ -83,7 +83,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
   ]
 
   return (
-    <form id={id} onSubmit={submit} noValidate className="rounded-2xl bg-white p-6 md:p-7 grid gap-4 shadow-[0_18px_40px_-20px_rgba(18,59,85,0.35)]">
+    <form id={id} onSubmit={submit} noValidate className="rounded-2xl bg-white p-5 md:p-6 grid gap-3.5 shadow-[0_18px_40px_-20px_rgba(18,59,85,0.35)]">
       <fieldset className="grid gap-2">
         <legend className="text-sm font-bold text-ink">{t.typeLabel}</legend>
         <div className="grid grid-cols-3 gap-2.5">
@@ -93,7 +93,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
               type="button"
               onClick={() => setForm((f) => ({ ...f, type: o.id }))}
               aria-pressed={form.type === o.id}
-              className={`h-16 rounded-xl border-2 flex flex-col items-center justify-center gap-1 font-bold text-sm transition-colors ${form.type === o.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/70 hover:border-ink/30'}`}
+              className={`h-14 rounded-xl border-2 flex flex-col items-center justify-center gap-1 font-bold text-sm transition-colors ${form.type === o.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/70 hover:border-ink/30'}`}
             >
               <Icon name={o.icon} size={20} />
               {o.label}
@@ -144,7 +144,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
 
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-steel">
             {t.message}
-            <textarea rows="3" className="w-full rounded-xl bg-white text-ink text-base px-4 py-3 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold" value={form.message} onChange={set('message')} />
+            <textarea rows="3" className="w-full rounded-xl bg-white text-ink text-base px-4 py-2.5 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold" value={form.message} onChange={set('message')} />
           </label>
 
           <label className="flex items-start gap-2.5 text-xs text-ink/60">
@@ -156,7 +156,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
             <p role="alert" className="text-sm font-medium text-red-600">{t.err} <a className="underline font-bold" href={`tel:${PHONE_TEL}`}>{PHONE_DISPLAY}</a>.</p>
           )}
 
-          <button disabled={state === 'sending'} aria-busy={state === 'sending'} className="h-14 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+          <button disabled={state === 'sending'} aria-busy={state === 'sending'} className="h-13 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
             {state === 'sending' ? t.sending : t.send}
           </button>
         </>

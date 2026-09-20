@@ -239,16 +239,18 @@ export default function Landing({ lang, setLang }) {
 
       {/* QUOTE / CONTACT */}
       <section id="contact" className="relative bg-ink text-white overflow-hidden">
-        <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-[1fr_1.1fr] gap-8">
-          <div className="flex flex-col">
+        <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14">
+          <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
-            <p className="mt-4 text-white/75 text-lg max-w-sm">{t.contact.sub}</p>
-            <div className="mt-auto pt-6 text-right md:text-left">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Warsaw, Indiana</p>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{t.footer.tagline}</p>
-            </div>
+            <p className="mt-4 text-white/75 text-lg">{t.contact.sub}</p>
           </div>
-          <QuoteForm t={t.contact} services={t.services} lang={lang} presetService={presetService} presetType={presetType} id="quote-form" />
+          <div className="mt-8 max-w-[900px] mx-auto">
+            <QuoteForm t={t.contact} services={t.services} lang={lang} presetService={presetService} presetType={presetType} id="quote-form" />
+          </div>
+          <div className="mt-6 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Warsaw, Indiana</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{t.footer.tagline}</p>
+          </div>
         </div>
       </section>
 
