@@ -35,7 +35,7 @@ export const content = {
         note: 'Custom quote based on property size and season.',
       },
       {
-        id: 'snow', group: 'seasonal', icon: 'snow', title: 'Snow removal', price: null, priceType: 'quote',
+        id: 'snow', group: 'seasonal', icon: 'snow', hidden: true, title: 'Snow removal', price: null, priceType: 'quote',
         lead: 'Manual and reliable snow and ice removal for driveways, walkways and entryways. Keeping your property safe and accessible all winter long.',
         items: ['Driveways', 'Walkways & sidewalks', 'Entryways & porches', 'Steps', 'Ice & salt treatment on request'],
         note: 'Custom quote based on property size and snowfall.',
@@ -78,21 +78,30 @@ export const content = {
     groups: {
       auto: { title: 'Auto Care', lead: 'Interior and exterior detailing, polishing and protection for cars, trucks and equipment. A clean look that works as hard as you do.' },
       property: { title: 'Property Care', lead: 'House facades, patios, driveways, gutters and more. Professional pressure washing to keep your property looking its best.' },
-      seasonal: { title: 'Seasonal Care', lead: 'Leaf cleanup, snow removal and seasonal upkeep. Reliable help to keep your property safe and looking great through every season.' },
+      seasonal: { title: 'Seasonal Care', lead: 'Leaf cleanup and seasonal upkeep. Reliable help to keep your property safe and looking great through every season.' },
     },
     plans: {
       eyebrow: 'Membership',
       title: 'Monthly Care Plans',
-      sub: 'One monthly payment. Less to worry about.',
-      priceFrom: 'Starting at $299/month',
+      sub: 'Keep your vehicle and property maintained without scheduling every service separately.',
+      priceFrom: 'Plans starting at $299/month',
       essential: { name: 'Essential Care', blurb: 'Regular care for your vehicle or your property.' },
       complete: { name: 'Complete Care', blurb: 'Combined care for both your vehicle and your property.' },
       cta: 'Ask About Monthly Plans',
       note: 'Save more with recurring service.',
     },
+    howItWorks: {
+      eyebrow: 'How it works',
+      title: 'How It Works',
+      steps: [
+        { title: 'Tell Us What You Need', text: 'Choose vehicle care, property care, or both.' },
+        { title: 'Get Your Quote', text: "Send us the details and we'll prepare your quote." },
+        { title: 'We Take Care of It', text: "Schedule your service and we'll handle the rest." },
+      ],
+    },
     trust: {
       eyebrow: 'Why choose us',
-      title: 'Why Homeowners Choose Us',
+      title: 'Why Customers Choose Us',
       points: [
         { icon: 'pin', title: 'Local & Dependable', text: 'Based right here in Warsaw, showing up when we say we will.' },
         { icon: 'hand', title: 'Personalized Service', text: 'We tailor every visit to your vehicle and your property.' },
@@ -161,7 +170,7 @@ export const content = {
         note: 'Cotización personalizada según el tamaño de la propiedad y la temporada.',
       },
       {
-        id: 'snow', group: 'seasonal', icon: 'snow', title: 'Limpieza de nieve', price: null, priceType: 'quote',
+        id: 'snow', group: 'seasonal', icon: 'snow', hidden: true, title: 'Limpieza de nieve', price: null, priceType: 'quote',
         lead: 'Retiro manual y confiable de nieve y hielo en entradas, andenes y accesos. Mantenemos su propiedad segura y accesible durante todo el invierno.',
         items: ['Entradas de vehículos', 'Andenes y aceras', 'Accesos y porches', 'Escalones', 'Tratamiento de hielo y sal bajo solicitud'],
         note: 'Cotización personalizada según el tamaño de la propiedad y la nevada.',
@@ -204,21 +213,30 @@ export const content = {
     groups: {
       auto: { title: 'Cuidado automotriz', lead: 'Detallado interior y exterior, pulido y protección para autos, camiones y equipo. Una imagen limpia que trabaja tan duro como usted.' },
       property: { title: 'Cuidado de propiedad', lead: 'Fachadas, patios, entradas, canaletas y más. Lavado a presión profesional para que su propiedad luzca lo mejor posible.' },
-      seasonal: { title: 'Cuidado de temporada', lead: 'Recogida de hojas, retiro de nieve y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.' },
+      seasonal: { title: 'Cuidado de temporada', lead: 'Recogida de hojas y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.' },
     },
     plans: {
       eyebrow: 'Membresía',
       title: 'Planes mensuales de cuidado',
-      sub: 'Un solo pago mensual. Menos de qué preocuparse.',
-      priceFrom: 'Desde $299/mes',
+      sub: 'Mantenga su vehículo y su propiedad en buen estado sin programar cada servicio por separado.',
+      priceFrom: 'Planes desde $299/mes',
       essential: { name: 'Cuidado Esencial', blurb: 'Cuidado regular para su vehículo o su propiedad.' },
       complete: { name: 'Cuidado Completo', blurb: 'Cuidado combinado para su vehículo y su propiedad.' },
       cta: 'Preguntar por planes mensuales',
       note: 'Ahorre más con servicio recurrente.',
     },
+    howItWorks: {
+      eyebrow: 'Cómo funciona',
+      title: 'Cómo funciona',
+      steps: [
+        { title: 'Cuéntenos qué necesita', text: 'Elija cuidado de vehículo, de propiedad, o ambos.' },
+        { title: 'Reciba su cotización', text: 'Envíenos los detalles y prepararemos su cotización.' },
+        { title: 'Nosotros nos encargamos', text: 'Programe su servicio y nosotros hacemos el resto.' },
+      ],
+    },
     trust: {
       eyebrow: 'Por qué elegirnos',
-      title: 'Por qué los propietarios nos eligen',
+      title: 'Por qué nuestros clientes nos eligen',
       points: [
         { icon: 'pin', title: 'Local y confiable', text: 'Con base aquí en Warsaw, cumplimos cuando decimos que lo haremos.' },
         { icon: 'hand', title: 'Servicio personalizado', text: 'Adaptamos cada visita a su vehículo y su propiedad.' },

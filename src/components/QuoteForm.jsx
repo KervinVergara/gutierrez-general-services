@@ -26,6 +26,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
   const serviceName = selected?.title || form.service
 
   const shownServices = services.filter((s) => {
+    if (s.hidden) return false
     if (form.type === 'vehicle') return s.group === 'auto'
     if (form.type === 'home') return s.group === 'property' || s.group === 'seasonal'
     return true

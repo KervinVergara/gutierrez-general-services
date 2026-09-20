@@ -32,7 +32,7 @@ export default function Landing({ lang, setLang }) {
   const [presetService, setPresetService] = useState('')
   const [presetType, setPresetType] = useState('')
 
-  const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g) }))
+  const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g && !s.hidden) }))
 
   function quoteFor(serviceId) {
     const group = t.services.find((s) => s.id === serviceId)?.group
@@ -113,11 +113,11 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+      <section id="services" className="mx-auto max-w-6xl px-4 py-12 md:py-20">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.servicesEyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
-        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {byGroup.map(({ key }) => {
             const g = t.groups[key]
             const img = groupImages[key]
@@ -175,24 +175,30 @@ export default function Landing({ lang, setLang }) {
         </div>
       )}
 
+      {/* HOW IT WORKS */}
+      <section className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.howItWorks.eyebrow}</p>
+        <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.howItWorks.title}</h2>
+        <div className="mt-8 grid sm:grid-cols-3 gap-8">
+          {t.howItWorks.steps.map((s, i) => (
+            <div key={s.title}>
+              <span className="text-3xl font-extrabold text-gold-2">{String(i + 1).padStart(2, '0')}</span>
+              <h3 className="mt-2 font-bold text-ink">{s.title}</h3>
+              <p className="mt-1 text-steel">{s.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* MONTHLY CARE PLANS */}
       <section id="plans" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.plans.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.plans.title}</h2>
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.plans.sub}</p>
-          <div className="mt-10 grid sm:grid-cols-2 gap-6 max-w-3xl">
-            {[t.plans.essential, t.plans.complete].map((p) => (
-              <div key={p.name} className="rounded-2xl bg-white border border-ink/10 p-7">
-                <h3 className="text-xl font-bold text-ink">{p.name}</h3>
-                <p className="mt-2 text-steel">{p.blurb}</p>
-                <p className="mt-4 text-sm font-bold text-ink/70">{t.plans.priceFrom}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.plans.cta}</a>
-            <p className="text-sm font-semibold text-steel">{t.plans.note}</p>
+          <div className="mt-6 rounded-2xl bg-white border border-ink/10 p-6 md:p-7 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-lg font-bold text-ink">{t.plans.priceFrom}</p>
+            <a href="#contact" className="inline-flex items-center justify-center h-12 px-6 rounded-full bg-gold text-ink font-bold hover:bg-gold-2">{t.plans.cta}</a>
           </div>
         </div>
       </section>
@@ -214,10 +220,10 @@ export default function Landing({ lang, setLang }) {
 
       {/* TRUST */}
       <section className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.trust.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink max-w-2xl">{t.trust.title}</h2>
-          <div className="mt-10 grid sm:grid-cols-2 gap-8">
+          <div className="mt-8 grid sm:grid-cols-2 gap-6">
             {t.trust.points.map((p) => (
               <div key={p.title} className="flex items-start gap-4">
                 <span className="grid place-items-center w-12 h-12 rounded-xl bg-white text-ink shrink-0 shadow-sm"><Icon name={p.icon} size={22} /></span>
@@ -233,11 +239,11 @@ export default function Landing({ lang, setLang }) {
 
       {/* QUOTE / CONTACT */}
       <section id="contact" className="relative bg-ink text-white overflow-hidden">
-        <div className="relative mx-auto max-w-6xl px-4 py-16 md:py-24 grid md:grid-cols-[1fr_1.1fr] gap-12">
+        <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-[1fr_1.1fr] gap-8">
           <div className="flex flex-col">
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
             <p className="mt-4 text-white/75 text-lg max-w-sm">{t.contact.sub}</p>
-            <div className="mt-auto pt-10 text-right md:text-left">
+            <div className="mt-auto pt-6 text-right md:text-left">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Warsaw, Indiana</p>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{t.footer.tagline}</p>
             </div>
@@ -248,7 +254,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* FINAL CTA */}
       <section className="bg-sand">
-        <div className="mx-auto max-w-6xl px-4 py-16 md:py-20 text-center">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-ink">{t.finalCta.title}</h2>
           <p className="mt-3 text-lg text-steel">{t.finalCta.text}</p>
           <a href="#contact" className="mt-7 inline-flex items-center justify-center h-13 px-8 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.finalCta.cta}</a>
