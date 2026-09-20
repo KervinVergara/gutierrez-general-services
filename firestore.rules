@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /quotes/{id} {
       // Anyone can submit a quote request from the landing page (only the expected fields).
-      allow create: if request.resource.data.keys().hasOnly(['name','phone','city','service','vehicle','date','message','lang','status','createdAt','userAgent'])
+      allow create: if request.resource.data.keys().hasOnly(['type','name','phone','email','zip','service','vehicle','message','lang','status','createdAt','userAgent'])
                     && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 120
                     && request.resource.data.phone is string && request.resource.data.phone.size() > 5 && request.resource.data.phone.size() < 40
                     && request.resource.data.message.size() < 2000

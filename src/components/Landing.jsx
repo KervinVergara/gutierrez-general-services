@@ -6,9 +6,9 @@ import FeedbackWidget from './FeedbackWidget'
 import logo from '../assets/photos/logo-new.png'
 import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
 import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
-import svcExterior from '../assets/photos/stock-exterior-gutter.jpeg'
+import svcAuto from '../assets/photos/curated/02_brillo_pintura.jpeg'
+import svcProperty from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
-import svcSnow from '../assets/photos/stock-snow-shovel.jpeg'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
 import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
 import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
@@ -16,13 +16,13 @@ import galBoat from '../assets/photos/curated/07_bote.jpeg'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
-const groupImages = { exterior: svcExterior, seasonal: svcSeasonal, snow: svcSnow }
-const groupIcons = { exterior: 'water', seasonal: 'leaf', snow: 'snow' }
-const groupOrder = ['exterior', 'seasonal', 'snow']
+const groupImages = { auto: svcAuto, property: svcProperty, seasonal: svcSeasonal }
+const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
+const groupOrder = ['auto', 'property', 'seasonal']
 const groupCaptions = {
-  exterior: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
-  seasonal: { en: 'Leaf cleanup', es: 'Recogida de hojas' },
-  snow: { en: 'Snow removal', es: 'Limpieza de nieve' },
+  auto: { en: 'Vehicle detailing', es: 'Detallado de vehículos' },
+  property: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
+  seasonal: { en: 'Seasonal care', es: 'Cuidado de temporada' },
 }
 
 export default function Landing({ lang, setLang }) {
@@ -30,10 +30,13 @@ export default function Landing({ lang, setLang }) {
   const [open, setOpen] = useState(false)
   const [activeGroup, setActiveGroup] = useState(null)
   const [presetService, setPresetService] = useState('')
+  const [presetType, setPresetType] = useState('')
 
   const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g) }))
 
   function quoteFor(serviceId) {
+    const group = t.services.find((s) => s.id === serviceId)?.group
+    setPresetType(group === 'auto' ? 'vehicle' : 'home')
     setPresetService(serviceId)
     setActiveGroup(null)
     setOpen(false)
@@ -58,7 +61,7 @@ export default function Landing({ lang, setLang }) {
           </a>
           <nav className="hidden lg:flex items-center gap-1 text-[15px] font-semibold text-ink">
             <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.services}</a>
-            <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.seasonal}</a>
+            <a href="#plans" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.plans}</a>
             <a href="#work" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.ourWork}</a>
             <a href="#contact" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.contact}</a>
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
@@ -71,7 +74,7 @@ export default function Landing({ lang, setLang }) {
         </div>
         {open && (
           <nav className="lg:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
-            {[['#services', t.nav.services], ['#services', t.nav.seasonal], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
+            {[['#services', t.nav.services], ['#plans', t.nav.plans], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
               <a key={l} href={h} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg border-b border-ink/10 last:border-0 hover:bg-mist">{l}</a>
             ))}
             <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="px-3 py-3 rounded-lg text-left hover:bg-mist">EN / ES</button>
@@ -90,16 +93,17 @@ export default function Landing({ lang, setLang }) {
             <p className="mt-6 text-lg text-steel max-w-md">{t.hero.sub}</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
               <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
-              <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
-                <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
-                {PHONE_DISPLAY}
-              </a>
+              <a href="#services" className="inline-flex items-center justify-center h-13 px-6 rounded-full border-2 border-ink/15 text-ink font-bold text-lg hover:border-ink">{t.hero.cta2}</a>
             </div>
+            <a href={`tel:${PHONE_TEL}`} className="mt-6 inline-flex items-center gap-2 font-bold text-ink hover:underline">
+              <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
+              {PHONE_DISPLAY}
+            </a>
           </div>
           <div className="relative max-w-sm mx-auto md:mx-0 md:ml-auto">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
-              <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Exterior cleaning' : 'Limpieza exterior'}</span>
+              <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Property care' : 'Cuidado de propiedad'}</span>
             </div>
             <div className="hidden sm:block absolute -bottom-6 right-2 md:right-4 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
               <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
@@ -171,17 +175,56 @@ export default function Landing({ lang, setLang }) {
         </div>
       )}
 
-      {/* OUR WORK */}
-      <section id="work" className="bg-mist">
+      {/* MONTHLY CARE PLANS */}
+      <section id="plans" className="bg-mist">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.gallery.eyebrow}</p>
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
-          <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
-            {galleryItems.map((g) => (
-              <div key={g.id} className="relative aspect-square rounded-xl overflow-hidden bg-white">
-                <img src={g.photo} alt={g.alt} className={`w-full h-full ${g.fit === 'contain' ? 'object-contain' : `object-cover ${g.pos}`}`} loading="lazy" />
-                <span className="absolute bottom-2 left-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{g.caption}</span>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.plans.eyebrow}</p>
+          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.plans.title}</h2>
+          <p className="mt-3 text-lg text-steel max-w-2xl">{t.plans.sub}</p>
+          <div className="mt-10 grid sm:grid-cols-2 gap-6 max-w-3xl">
+            {[t.plans.essential, t.plans.complete].map((p) => (
+              <div key={p.name} className="rounded-2xl bg-white border border-ink/10 p-7">
+                <h3 className="text-xl font-bold text-ink">{p.name}</h3>
+                <p className="mt-2 text-steel">{p.blurb}</p>
+                <p className="mt-4 text-sm font-bold text-ink/70">{t.plans.priceFrom}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.plans.cta}</a>
+            <p className="text-sm font-semibold text-steel">{t.plans.note}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* OUR WORK */}
+      <section id="work" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.gallery.eyebrow}</p>
+        <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
+        <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
+          {galleryItems.map((g) => (
+            <div key={g.id} className="relative aspect-square rounded-xl overflow-hidden bg-white">
+              <img src={g.photo} alt={g.alt} className={`w-full h-full ${g.fit === 'contain' ? 'object-contain' : `object-cover ${g.pos}`}`} loading="lazy" />
+              <span className="absolute bottom-2 left-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{g.caption}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TRUST */}
+      <section className="bg-mist">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.trust.eyebrow}</p>
+          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink max-w-2xl">{t.trust.title}</h2>
+          <div className="mt-10 grid sm:grid-cols-2 gap-8">
+            {t.trust.points.map((p) => (
+              <div key={p.title} className="flex items-start gap-4">
+                <span className="grid place-items-center w-12 h-12 rounded-xl bg-white text-ink shrink-0 shadow-sm"><Icon name={p.icon} size={22} /></span>
+                <div>
+                  <h3 className="font-bold text-ink">{p.title}</h3>
+                  <p className="mt-1 text-steel">{p.text}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -199,7 +242,16 @@ export default function Landing({ lang, setLang }) {
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/40">{t.footer.tagline}</p>
             </div>
           </div>
-          <QuoteForm t={t.contact} services={t.services} lang={lang} presetService={presetService} id="quote-form" />
+          <QuoteForm t={t.contact} services={t.services} lang={lang} presetService={presetService} presetType={presetType} id="quote-form" />
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="bg-sand">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:py-20 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-ink">{t.finalCta.title}</h2>
+          <p className="mt-3 text-lg text-steel">{t.finalCta.text}</p>
+          <a href="#contact" className="mt-7 inline-flex items-center justify-center h-13 px-8 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.finalCta.cta}</a>
         </div>
       </section>
 

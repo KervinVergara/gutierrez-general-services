@@ -20,6 +20,8 @@ const paths = {
   image: <><rect x="3" y="4" width="18" height="16" rx="1.5" /><circle cx="8.5" cy="9.5" r="1.7" /><path d="M3 17l5.5-5.5a2 2 0 0 1 2.8 0L14 14l1.5-1.5a2 2 0 0 1 2.8 0L21 15.5" /></>,
   star: <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6L3 9.4l6-.8z" fill="currentColor" stroke="none" />,
   leaf: <><path d="M19 5c-6 0-13 3-13 11 0 2 1 3 3 3 8 0 11-7 11-13 0-.5 0-1-1-1z" /><path d="M9 19c2-4 5-8 10-13" /></>,
+  home: <><path d="M4 11l8-7 8 7" /><path d="M6 10v9h12v-9" /><path d="M10 19v-5h4v5" /></>,
+  both: <><path d="M3 13l1.6-4A1.6 1.6 0 0 1 6.1 8h4.8a1.6 1.6 0 0 1 1.5 1l1.6 4" /><rect x="2.5" y="13" width="12" height="4.5" rx="1" /><circle cx="5.5" cy="17.5" r="1.3" /><circle cx="11.5" cy="17.5" r="1.3" /><path d="M14 9l4-3.5 4 3.5" /><path d="M15.2 8.3v6.7h5.6V8.3" /></>,
   arrowRight: <path d="M5 12h14M13 5l7 7-7 7" />,
   plus: <path d="M12 5v14M5 12h14" />,
   trash: <><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /></>,

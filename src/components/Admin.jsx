@@ -93,7 +93,7 @@ export default function Admin() {
                 <span className="text-xs text-ink/50">{q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString('es-CO') : '—'} · {q.lang?.toUpperCase()}</span>
               </div>
               <h2 className="mt-2 text-2xl font-bold">{q.name}</h2>
-              <p className="text-ink/80"><span className="font-semibold">{serviceName(q.service)}</span>{q.vehicle && ` · ${q.vehicle}`}{q.city && ` · ${q.city}`}{q.date && ` · ${q.date}`}</p>
+              <p className="text-ink/80"><span className="font-semibold">{serviceName(q.service)}</span>{q.vehicle && ` · ${q.vehicle}`}{q.zip && ` · ${q.zip}`}{q.email && ` · ${q.email}`}</p>
               {q.message && <p className="mt-2 text-sm text-ink/70 whitespace-pre-line">{q.message}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <a href={`tel:${q.phone}`} className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-ink text-gold text-sm font-bold"><Icon name="phone" size={16} /> {q.phone}</a>
