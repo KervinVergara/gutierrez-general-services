@@ -8,6 +8,7 @@ import AdminClients from './admin/AdminClients'
 import AdminJobs from './admin/AdminJobs'
 import AdminFinance from './admin/AdminFinance'
 import AdminRequests from './admin/AdminRequests'
+import AdminDocs from './admin/AdminDocs'
 
 const TABS = [
   { id: 'quotes', label: 'Cotizaciones', Component: AdminQuotes },
@@ -15,6 +16,7 @@ const TABS = [
   { id: 'jobs', label: 'Servicios', Component: AdminJobs },
   { id: 'finance', label: 'Finanzas', Component: AdminFinance },
   { id: 'requests', label: 'Solicitudes', Component: AdminRequests },
+  { id: 'docs', label: 'Documentos', Component: AdminDocs },
 ]
 
 export default function Admin() {
