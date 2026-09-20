@@ -56,6 +56,11 @@ export default function AdminFinance() {
   })
   const topServices = Object.entries(byService).sort((a, b) => b[1] - a[1]).slice(0, 3)
 
+  // Outstanding receivables — money owed for work already performed, never counted as income.
+  const unpaidJobs = jobs.filter((j) => (j.status === 'done' || j.status === 'in_progress') && j.paymentStatus !== 'paid')
+  const pendingTotal = unpaidJobs.reduce((s, j) => s + Math.max((Number(j.amountCharged) || 0) - (Number(j.amountPaid) || 0), 0), 0)
+  const partialJobs = jobs.filter((j) => j.paymentStatus === 'partial')
+
   const months = last6Months()
   const incomeByMonth = months.map((mk) => entries.filter((e) => e.type === 'income' && e.date && monthKey(e.date) === mk).reduce((s, e) => s + (Number(e.amount) || 0), 0))
   const expenseByMonth = months.map((mk) => entries.filter((e) => e.type === 'expense' && e.date && monthKey(e.date) === mk).reduce((s, e) => s + (Number(e.amount) || 0), 0))
@@ -95,10 +100,15 @@ export default function AdminFinance() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
         <StatCard label="Ingresos" value={money(income)} tone="good" />
         <StatCard label="Gastos" value={money(expenses)} tone="bad" />
         <StatCard label="Ganancia neta" value={money(net)} tone={net >= 0 ? 'good' : 'bad'} />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard label="Total cobrado" value={money(income)} tone="good" />
+        <StatCard label="Pendiente por cobrar" value={money(pendingTotal)} tone={pendingTotal > 0 ? 'bad' : undefined} />
+        <StatCard label="Pagos parciales" value={partialJobs.length} />
       </div>
 
       <div className="mb-6 rounded-2xl bg-white border border-ink/10 p-5">

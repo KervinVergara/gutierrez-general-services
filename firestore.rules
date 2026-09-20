@@ -8,6 +8,8 @@ service cloud.firestore {
                     && request.resource.data.phone is string && request.resource.data.phone.size() > 5 && request.resource.data.phone.size() < 40
                     && request.resource.data.message.size() < 2000
                     && request.resource.data.status == 'new';
+      // Signed-in staff can also create a quote manually (e.g. a phone-in lead), with extra fields.
+      allow create: if request.auth != null;
       // Only signed-in staff can read/update/delete.
       allow read, update, delete: if request.auth != null;
     }

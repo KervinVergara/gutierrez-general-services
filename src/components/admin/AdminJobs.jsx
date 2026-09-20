@@ -56,6 +56,10 @@ export default function AdminJobs({ focus, onFocusHandled }) {
       setEditingId('new')
       setForm({ ...emptyForm, date: focus.prefillDate })
       onFocusHandled?.()
+    } else if (focus.clientId) {
+      setEditingId('new')
+      setForm({ ...emptyForm, clientId: focus.clientId })
+      onFocusHandled?.()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus, jobs, loaded])
@@ -113,9 +117,13 @@ export default function AdminJobs({ focus, onFocusHandled }) {
 
   async function remove(job) {
     if (!confirm(`¿Eliminar el servicio de ${job.clientName}? Esta acción no se puede deshacer.`)) return
-    const { doc, deleteDoc } = await import('firebase/firestore')
+    const { doc, deleteDoc, updateDoc } = await import('firebase/firestore')
     await deleteDoc(doc(db, 'jobs', job.id))
     await deleteDoc(doc(db, 'finance', `job_${job.id}`)).catch(() => {})
+    // Un-link the originating quote so it doesn't stay locked pointing at a deleted service.
+    if (job.quoteId) {
+      await updateDoc(doc(db, 'quotes', job.quoteId), { jobId: null, status: 'accepted' }).catch(() => {})
+    }
   }
 
   async function saveNextService(job, next) {

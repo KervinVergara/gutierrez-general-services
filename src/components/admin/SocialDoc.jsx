@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { BUSINESS, PHONE_DISPLAY } from '../../content'
+import { content, BUSINESS, PHONE_DISPLAY } from '../../content'
 import Icon from '../Icon'
-import { Field, inputCls } from './shared'
+import { Field, inputCls, FilterBtn } from './shared'
+import DocModal from './DocModal'
 import logoSrc from '../../assets/photos/logo-new.png'
 
+const WEBSITE = 'gutierrez-general-services.web.app'
+const logoUrl = new URL(logoSrc, window.location.origin).toString()
+
+const CONFIG_FORMATS = [
+  { id: 'ig_post', label: 'Instagram Post' },
+  { id: 'ig_story', label: 'Instagram Story' },
+  { id: 'flyer', label: 'Printable Letter/Flyer' },
+]
 const FORMATS = [
   { id: 'ig_post', label: 'Instagram / Facebook — Post cuadrado', w: 1080, h: 1080 },
   { id: 'ig_story', label: 'Instagram / TikTok — Historia', w: 1080, h: 1920 },
-  { id: 'fb_post', label: 'Facebook — Post horizontal', w: 1200, h: 630 },
-  { id: 'whatsapp', label: 'WhatsApp — Estado', w: 1080, h: 1080 },
 ]
 const TEMPLATES = [
   { id: 'full', label: 'Foto completa' },
@@ -188,18 +195,117 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
+function flyerHeaderHtml(subtitle) {
+  return `<div class="header"><img src="${logoUrl}" /><div><h1>${BUSINESS}</h1><p>${subtitle} · Warsaw, Indiana · ${PHONE_DISPLAY}</p></div></div>`
+}
+
 export default function SocialDoc() {
+  const [phase, setPhase] = useState('config')
+  const [lang, setLang] = useState('es')
+  const [selectedIds, setSelectedIds] = useState([])
+  const [promoTitle, setPromoTitle] = useState('')
+  const [format, setFormat] = useState('ig_post')
+  const [showPhone, setShowPhone] = useState(true)
+  const [showWebsite, setShowWebsite] = useState(true)
+  const [editorInit, setEditorInit] = useState(null)
+  const [flyerDoc, setFlyerDoc] = useState(null)
+
+  const SERVICES = content[lang].services.filter((s) => !s.hidden)
+
+  function toggleService(id) {
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
+  }
+
+  function ctaLine() {
+    const parts = []
+    if (showPhone) parts.push(PHONE_DISPLAY)
+    if (showWebsite) parts.push(WEBSITE)
+    return parts.join(' · ') || (lang === 'es' ? 'Cotización gratis' : 'Free quote')
+  }
+
+  function generateAdvertising() {
+    const chosen = SERVICES.filter((s) => selectedIds.includes(s.id))
+    const title = promoTitle || (lang === 'es' ? 'Su carro. Su casa.\nBien cuidados.' : 'Your Car. Your Home.\nTaken Care Of.')
+
+    if (format === 'flyer') {
+      const rows = chosen.map((s) => `<div class="cat-item"><div class="row"><span>${s.title}</span></div><p>${s.lead}</p></div>`).join('')
+      const html = `
+        ${flyerHeaderHtml(lang === 'es' ? 'Publicidad' : 'Advertising')}
+        <h2>${title.replace(/\n/g, ' ')}</h2>
+        ${rows}
+        <p class="muted" style="margin-top:20px">${ctaLine()}</p>
+        <div class="footer">${BUSINESS} · Warsaw, Indiana</div>
+      `
+      setFlyerDoc({ title: promoTitle || 'Advertising', html })
+      return
+    }
+
+    setEditorInit({
+      title,
+      subtitle: chosen.map((s) => s.title).join(' · ') || (lang === 'es' ? 'Detallado de vehículos, cuidado de propiedad y servicios de temporada.' : 'Vehicle detailing, property care and seasonal services.'),
+      cta: ctaLine(),
+      formatId: format,
+    })
+    setPhase('edit')
+  }
+
+  if (phase === 'edit' && editorInit) {
+    return <SocialEditor init={editorInit} onBack={() => setPhase('config')} />
+  }
+
+  return (
+    <div className="rounded-2xl bg-white border border-ink/10 p-5 grid gap-4 max-w-2xl">
+      <Field label="Idioma">
+        <div className="flex gap-2">
+          <FilterBtn active={lang === 'es'} onClick={() => setLang('es')}>Español</FilterBtn>
+          <FilterBtn active={lang === 'en'} onClick={() => setLang('en')}>English</FilterBtn>
+        </div>
+      </Field>
+
+      <Field label="Servicios a promocionar">
+        <div className="grid sm:grid-cols-2 gap-1.5">
+          {SERVICES.map((s) => (
+            <label key={s.id} className="flex items-center gap-2 text-sm text-ink/80 bg-mist rounded-lg px-3 py-2 cursor-pointer">
+              <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleService(s.id)} className="w-4 h-4 accent-[var(--color-gold)]" />
+              {s.title}
+            </label>
+          ))}
+        </div>
+      </Field>
+
+      <Field label="Título / promoción"><input className={inputCls} value={promoTitle} onChange={(e) => setPromoTitle(e.target.value)} placeholder="Ej. Fall Special — 15% off" /></Field>
+
+      <Field label="Formato">
+        <div className="grid grid-cols-3 gap-2">
+          {CONFIG_FORMATS.map((f) => (
+            <button key={f.id} type="button" onClick={() => setFormat(f.id)} className={`h-14 rounded-lg border-2 text-xs font-bold px-2 ${format === f.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}>{f.label}</button>
+          ))}
+        </div>
+      </Field>
+
+      <div className="flex flex-wrap gap-4">
+        <label className="flex items-center gap-2 text-sm text-ink/80"><input type="checkbox" checked={showPhone} onChange={(e) => setShowPhone(e.target.checked)} className="w-4 h-4 accent-[var(--color-gold)]" /> Mostrar teléfono</label>
+        <label className="flex items-center gap-2 text-sm text-ink/80"><input type="checkbox" checked={showWebsite} onChange={(e) => setShowWebsite(e.target.checked)} className="w-4 h-4 accent-[var(--color-gold)]" /> Mostrar website</label>
+      </div>
+
+      <button onClick={generateAdvertising} className="mt-2 inline-flex items-center justify-center gap-2 h-12 rounded-full bg-gold text-ink font-bold"><Icon name="tag" size={16} /> Generate Advertising</button>
+
+      {flyerDoc && <DocModal title={flyerDoc.title} html={flyerDoc.html} onClose={() => setFlyerDoc(null)} />}
+    </div>
+  )
+}
+
+function SocialEditor({ init, onBack }) {
   const canvasRef = useRef(null)
-  const [formatId, setFormatId] = useState(FORMATS[0].id)
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id)
-  const [title, setTitle] = useState('Su carro. Su casa.\nBien cuidados.')
-  const [subtitle, setSubtitle] = useState('Detallado de vehículos, cuidado de propiedad y servicios de temporada.')
-  const [cta, setCta] = useState(`Cotización gratis · ${PHONE_DISPLAY}`)
+  const [title, setTitle] = useState(init.title)
+  const [subtitle, setSubtitle] = useState(init.subtitle)
+  const [cta, setCta] = useState(init.cta)
   const [photoImg, setPhotoImg] = useState(null)
   const [ready, setReady] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const format = FORMATS.find((f) => f.id === formatId)
+  const format = FORMATS.find((f) => f.id === init.formatId) || FORMATS[0]
 
   useEffect(() => {
     let cancelled = false
@@ -221,39 +327,38 @@ export default function SocialDoc() {
     const canvas = canvasRef.current
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
-    a.download = `${BUSINESS.replace(/\s+/g, '-')}-${formatId}.png`
+    a.download = `${BUSINESS.replace(/\s+/g, '-')}-${format.id}.png`
     a.click()
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <div className="rounded-2xl bg-white border border-ink/10 p-5 grid gap-3.5">
-        <Field label="Formato de salida">
-          <select className={inputCls} value={formatId} onChange={(e) => setFormatId(e.target.value)}>
-            {FORMATS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-          </select>
-        </Field>
-        <Field label="Plantilla">
-          <div className="grid grid-cols-3 gap-2">
-            {TEMPLATES.map((t) => (
-              <button key={t.id} type="button" onClick={() => setTemplateId(t.id)} className={`h-11 rounded-lg border-2 text-xs font-bold ${templateId === t.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}>{t.label}</button>
-            ))}
-          </div>
-        </Field>
-        <Field label="Foto">
-          <label className="flex items-center gap-2 h-11 px-3 rounded-lg border border-ink/20 cursor-pointer text-sm font-semibold text-ink/70 hover:border-ink">
-            <Icon name="image" size={16} /> {photoImg ? 'Cambiar foto…' : 'Subir foto…'}
-            <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
-          </label>
-        </Field>
-        <Field label="Título"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
-        <Field label="Subtítulo"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={subtitle} onChange={(e) => setSubtitle(e.target.value)} /></Field>
-        <Field label="Llamado a la acción"><input className={inputCls} value={cta} onChange={(e) => setCta(e.target.value)} /></Field>
-        <button onClick={() => setModalOpen(true)} disabled={!ready} className="mt-2 inline-flex items-center justify-center gap-2 h-12 rounded-full bg-gold text-ink font-bold disabled:opacity-60"><Icon name="tag" size={16} /> Generar imagen</button>
-      </div>
+    <div>
+      <button onClick={onBack} className="mb-4 text-sm font-bold text-ink hover:underline">← Cambiar configuración</button>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="rounded-2xl bg-white border border-ink/10 p-5 grid gap-3.5">
+          <p className="text-xs font-bold uppercase tracking-wide text-ink/50">{format.label}</p>
+          <Field label="Plantilla">
+            <div className="grid grid-cols-3 gap-2">
+              {TEMPLATES.map((t) => (
+                <button key={t.id} type="button" onClick={() => setTemplateId(t.id)} className={`h-11 rounded-lg border-2 text-xs font-bold ${templateId === t.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}>{t.label}</button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Foto">
+            <label className="flex items-center gap-2 h-11 px-3 rounded-lg border border-ink/20 cursor-pointer text-sm font-semibold text-ink/70 hover:border-ink">
+              <Icon name="image" size={16} /> {photoImg ? 'Cambiar foto…' : 'Subir foto…'}
+              <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
+            </label>
+          </Field>
+          <Field label="Título"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
+          <Field label="Subtítulo"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={subtitle} onChange={(e) => setSubtitle(e.target.value)} /></Field>
+          <Field label="Llamado a la acción"><input className={inputCls} value={cta} onChange={(e) => setCta(e.target.value)} /></Field>
+          <button onClick={() => setModalOpen(true)} disabled={!ready} className="mt-2 inline-flex items-center justify-center gap-2 h-12 rounded-full bg-gold text-ink font-bold disabled:opacity-60"><Icon name="tag" size={16} /> Generar imagen</button>
+        </div>
 
-      <div className="rounded-2xl bg-mist border border-ink/10 p-5 grid place-items-center">
-        <canvas ref={canvasRef} className="max-w-full rounded-lg shadow-sm" style={{ width: '100%', maxWidth: format.w >= format.h ? 380 : 260, height: 'auto' }} />
+        <div className="rounded-2xl bg-mist border border-ink/10 p-5 grid place-items-center">
+          <canvas ref={canvasRef} className="max-w-full rounded-lg shadow-sm" style={{ width: '100%', maxWidth: format.w >= format.h ? 380 : 260, height: 'auto' }} />
+        </div>
       </div>
 
       {modalOpen && (

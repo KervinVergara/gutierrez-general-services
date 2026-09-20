@@ -9,10 +9,11 @@ const emptyVehicle = { make: '', model: '', year: '', color: '', plate: '', note
 const emptyProperty = { address: '', type: '', notes: '' }
 const uid = () => Math.random().toString(36).slice(2, 10)
 
-export default function AdminClients() {
+export default function AdminClients({ goTo, focus, onFocusHandled }) {
   const [clients, setClients] = useState([])
   const [jobs, setJobs] = useState([])
   const [quotes, setQuotes] = useState([])
+  const [plans, setPlans] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -20,7 +21,7 @@ export default function AdminClients() {
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    let u1 = null, u2 = null, u3 = null
+    let u1 = null, u2 = null, u3 = null, u4 = null
     import('firebase/firestore').then(({ collection, onSnapshot, orderBy, query }) => {
       u1 = onSnapshot(query(collection(db, 'clients'), orderBy('updatedAt', 'desc')), (snap) => {
         setClients(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
@@ -28,22 +29,31 @@ export default function AdminClients() {
       }, (e) => setErr(e.message))
       u2 = onSnapshot(collection(db, 'jobs'), (snap) => setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
       u3 = onSnapshot(collection(db, 'quotes'), (snap) => setQuotes(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      u4 = onSnapshot(collection(db, 'plans'), (snap) => setPlans(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
     })
-    return () => { u1 && u1(); u2 && u2(); u3 && u3() }
+    return () => { u1 && u1(); u2 && u2(); u3 && u3(); u4 && u4() }
   }, [])
+
+  useEffect(() => {
+    if (!focus?.clientId) return
+    setOpen(focus.clientId)
+    onFocusHandled?.()
+  }, [focus, onFocusHandled])
 
   function jobsFor(c) { return jobs.filter((j) => j.clientId === c.id) }
   function quotesFor(c) { return quotes.filter((q) => sanitizePhone(q.phone) === c.id) }
+  function activePlanFor(c) { return plans.find((p) => p.clientId === c.id && p.status === 'active') }
 
   function summaryFor(c) {
     const cjobs = jobsFor(c)
     const done = cjobs.filter((j) => j.status === 'done')
     const totalBilled = done.reduce((s, j) => s + (Number(j.amountCharged) || 0), 0)
     const totalPaid = cjobs.reduce((s, j) => s + (Number(j.amountPaid) || 0), 0)
+    const balance = Math.max(totalBilled - totalPaid, 0)
     const last = [...done].sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0]
     const today = todayStr()
     const next = [...cjobs].filter((j) => j.status !== 'cancelled' && j.status !== 'done' && j.date >= today).sort((a, b) => (a.date || '').localeCompare(b.date || ''))[0]
-    return { count: done.length, totalBilled, totalPaid, last, next }
+    return { count: done.length, totalBilled, totalPaid, balance, last, next }
   }
 
   function startEdit(c) {
@@ -128,11 +138,20 @@ export default function AdminClients() {
 
               {isOpen && (
                 <div className="mt-4 border-t border-ink/10 pt-4 grid gap-5">
-                  <div className="grid sm:grid-cols-4 gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => goTo?.('quotes', { newQuoteFor: { name: c.name, phone: c.phone, email: c.email, zip: c.zip } })} className="h-9 px-3 rounded-lg border border-ink/20 text-xs font-bold hover:border-ink">+ Nueva cotización</button>
+                    <button onClick={() => goTo?.('jobs', { clientId: c.id })} className="h-9 px-3 rounded-lg border border-ink/20 text-xs font-bold hover:border-ink">+ Nuevo servicio</button>
+                    <button onClick={() => goTo?.('plans', { clientId: c.id })} className="h-9 px-3 rounded-lg border border-ink/20 text-xs font-bold hover:border-ink">+ Nuevo plan</button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <MiniStat label="Servicios" value={sum.count} />
                     <MiniStat label="Total facturado" value={money(sum.totalBilled)} />
+                    <MiniStat label="Total pagado" value={money(sum.totalPaid)} />
+                    <MiniStat label="Saldo pendiente" value={money(sum.balance)} />
                     <MiniStat label="Último servicio" value={sum.last ? fmtDate(sum.last.date) : '—'} />
                     <MiniStat label="Próximo servicio" value={sum.next ? fmtDate(sum.next.date) : '—'} />
+                    <MiniStat label="Plan activo" value={activePlanFor(c)?.name || '—'} />
                   </div>
 
                   <ListEditor title="Vehículos" items={c.vehicles || []} empty={emptyVehicle}
