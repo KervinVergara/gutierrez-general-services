@@ -8,6 +8,7 @@ const WEBSITE = 'gutierrez-general-services.web.app'
 const LOCATION = 'Warsaw, Indiana'
 
 const NAVY = '#123b55'
+const NAVY2 = '#1a4d6e'
 const GOLD = '#f3c64e'
 const SAND = '#f7f5ef'
 const MIST = '#dfeef5'
@@ -32,6 +33,17 @@ const TEMPLATES = [
   { id: 'split', label: 'Split Layout' },
   { id: 'clean_brand', label: 'Clean Brand' },
 ]
+
+// Named brand graphic styles — a distinct visual language each (composition, photo
+// treatment and gold usage all differ), on top of the same locked palette/typography
+// as every other template. Selectable from the same "Plantilla" picker for now.
+const BRAND_STYLES = [
+  { id: 'navy_motion', label: 'Navy Motion' },
+  { id: 'clean_waves', label: 'Clean Waves' },
+  { id: 'bold_frame', label: 'Bold Frame' },
+  { id: 'brand_pattern', label: 'Brand Pattern' },
+]
+const STYLE_TEMPLATE_IDS = BRAND_STYLES.map((s) => s.id)
 
 // Editor control labels — always Spanish, regardless of "Idioma de la pieza" (that only
 // affects the ad copy that gets drawn on the canvas, not the panel controls around it).
@@ -60,6 +72,15 @@ const LOGO_FULL_SIZE = { w: 1720, h: 398 }
 const PRESET_KEY = 'ggs_ad_presets'
 function loadPresets() { try { return JSON.parse(localStorage.getItem(PRESET_KEY) || '[]') } catch { return [] } }
 function savePresetsList(list) { try { localStorage.setItem(PRESET_KEY, JSON.stringify(list)) } catch { /* storage unavailable */ } }
+
+function loadImageUrl(url) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+}
 
 let logoImgPromise = null
 function loadLogo() {
@@ -533,6 +554,352 @@ function renderBeforeAfter(ctx, state) {
   }
 }
 
+// --- Brand graphic styles: Navy Motion, Clean Waves, Bold Frame, Brand Pattern ---
+// Each is a genuinely different composition (not the same layout with a new background):
+// diagonal split, organic curved panel, incomplete L-frame, subtle tiled brand texture.
+// All vector/procedural (paths, gradients, clips) so exports stay crisp — no raster textures.
+
+function drawHighlightedLines(ctx, lines, x, y0, lineH, align, highlightWord, colorNormal, colorHighlight, font) {
+  ctx.textAlign = align
+  ctx.font = font
+  const needle = (highlightWord || '').trim().toUpperCase()
+  lines.forEach((line, i) => {
+    const hit = needle && line.toUpperCase().includes(needle)
+    ctx.fillStyle = hit ? colorHighlight : colorNormal
+    ctx.fillText(line, x, y0 + i * lineH)
+  })
+}
+
+function drawDiagonalPhoto(ctx, photo, w, h, topX, bottomX, fallbackColor) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(topX, 0)
+  ctx.lineTo(w, 0)
+  ctx.lineTo(w, h)
+  ctx.lineTo(bottomX, h)
+  ctx.closePath()
+  ctx.clip()
+  if (photo?.img) drawCover(ctx, photo.img, { x: 0, y: 0, w, h }, photo)
+  else { ctx.fillStyle = fallbackColor; ctx.fillRect(0, 0, w, h) }
+  ctx.restore()
+}
+
+function renderNavyMotion(ctx, state) {
+  const { format } = state
+  const { w, h } = format
+  ctx.fillStyle = NAVY
+  ctx.fillRect(0, 0, w, h)
+
+  const topX = w * 0.47
+  const bottomX = w * 0.33
+  drawDiagonalPhoto(ctx, state.photo, w, h, topX, bottomX, NAVY2)
+
+  ctx.save()
+  ctx.strokeStyle = GOLD
+  ctx.lineWidth = Math.max(2, w * 0.01)
+  ctx.globalAlpha = 0.9
+  ctx.beginPath(); ctx.moveTo(topX, 0); ctx.lineTo(bottomX, h); ctx.stroke()
+  ctx.globalAlpha = 0.3
+  ctx.beginPath(); ctx.moveTo(topX - w * 0.025, 0); ctx.lineTo(bottomX - w * 0.025, h); ctx.stroke()
+  ctx.restore()
+
+  const pad = Math.min(w, h) * 0.075
+  const maxTextW = bottomX - pad * 1.3
+  const texts = buildTexts(state)
+  const category = (state.category || '').trim()
+
+  ctx.textAlign = 'left'
+  if (category) {
+    ctx.font = `800 ${Math.round(w * 0.024)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.65)'
+    ctx.fillText(category.toUpperCase(), pad, h * 0.16)
+  }
+
+  const { size: titleSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * 0.078, w * 0.032, maxTextW, 4)
+  const lineH = titleSize * 1.1
+  const titleBottom = h * 0.6
+  const startY = titleBottom - (titleLines.length - 1) * lineH
+  drawHighlightedLines(ctx, titleLines, pad, startY, lineH, 'left', state.highlightWord, '#fff', GOLD, `800 ${Math.round(titleSize)}px Manrope, sans-serif`)
+
+  let py = titleBottom + titleSize * 0.9
+  if (state.price) {
+    ctx.textAlign = 'left'
+    ctx.font = `700 ${Math.round(w * 0.024)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.fillText((content[state.pieceLang].from || '').toUpperCase(), pad, py)
+    py += w * 0.06
+    const { size: priceSize } = fitFont(ctx, state.price, 800, w * 0.09, w * 0.04, maxTextW)
+    ctx.font = `800 ${Math.round(priceSize)}px Manrope, sans-serif`
+    ctx.fillStyle = GOLD
+    ctx.fillText(state.price, pad, py)
+  }
+
+  const cta = ctaLabel(state)
+  if (cta) {
+    ctx.font = `700 ${Math.round(w * 0.02)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.textAlign = 'left'
+    ctx.fillText(cta, pad, h - bottomSafePad(format))
+  }
+}
+
+function drawWaveBlob(ctx, w, h, color) {
+  ctx.save()
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.moveTo(0, h * 0.55)
+  ctx.bezierCurveTo(w * 0.18, h * 0.42, w * 0.3, h * 0.68, w * 0.5, h * 0.6)
+  ctx.bezierCurveTo(w * 0.68, h * 0.53, w * 0.6, h * 0.85, w * 0.78, h)
+  ctx.lineTo(0, h)
+  ctx.closePath()
+  ctx.fill()
+  ctx.restore()
+}
+
+function drawWaveAccentLine(ctx, w, h) {
+  ctx.save()
+  ctx.strokeStyle = GOLD
+  ctx.lineWidth = Math.max(2, w * 0.008)
+  ctx.beginPath()
+  ctx.moveTo(0, h * 0.5)
+  ctx.bezierCurveTo(w * 0.18, h * 0.37, w * 0.3, h * 0.63, w * 0.5, h * 0.55)
+  ctx.bezierCurveTo(w * 0.68, h * 0.48, w * 0.6, h * 0.8, w * 0.78, h * 0.955)
+  ctx.stroke()
+  ctx.restore()
+}
+
+function drawWavePhoto(ctx, photo, w, h) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(w * 0.32, 0)
+  ctx.lineTo(w, 0)
+  ctx.lineTo(w, h * 0.62)
+  ctx.bezierCurveTo(w * 0.85, h * 0.72, w * 0.62, h * 0.5, w * 0.5, h * 0.42)
+  ctx.bezierCurveTo(w * 0.4, h * 0.36, w * 0.36, h * 0.18, w * 0.32, 0)
+  ctx.closePath()
+  ctx.clip()
+  if (photo?.img) drawCover(ctx, photo.img, { x: 0, y: 0, w, h }, photo)
+  else { ctx.fillStyle = MIST; ctx.fillRect(0, 0, w, h) }
+  ctx.restore()
+}
+
+function renderCleanWaves(ctx, state) {
+  const { format } = state
+  const { w, h } = format
+  const bg = BG_COLORS[state.style] || BG_COLORS.sand
+  ctx.fillStyle = bg.hex
+  ctx.fillRect(0, 0, w, h)
+
+  drawWaveBlob(ctx, w, h, NAVY)
+  drawWaveAccentLine(ctx, w, h)
+  drawWavePhoto(ctx, state.photo, w, h)
+
+  const pad = Math.min(w, h) * 0.08
+  const maxTextW = w * 0.5
+  // The wave photo mask cuts in closest to the top (x ~0.32w at y=0), so the headline —
+  // drawn up there — needs a narrower safe width than the subtitle/price sitting lower,
+  // where the curve has already swung right and left more room for text.
+  const maxTitleW = w * 0.4
+  const texts = buildTexts(state)
+  const category = (state.category || '').trim()
+
+  ctx.textAlign = 'left'
+  if (category) {
+    ctx.font = `800 ${Math.round(w * 0.022)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(18,59,85,0.6)'
+    ctx.fillText(category.toUpperCase(), pad, h * 0.12)
+  }
+
+  const subFit = texts.subtitle ? fitWrappedText(ctx, texts.subtitle, 600, w * 0.026, w * 0.014, maxTextW, 2) : null
+
+  // The price sits at a fixed y (well clear of the blob at this x) and the headline/subtitle
+  // stack upward from it, so they can never collide with the curve or with each other no
+  // matter how many lines the title wraps to.
+  const priceY = h * 0.47
+  let subtitleTop = priceY - w * 0.08
+  if (subFit) subtitleTop -= (subFit.lines.length - 1) * subFit.size * 1.35
+
+  const { size: titleSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * 0.07, w * 0.03, maxTitleW, 4)
+  const lineH = titleSize * 1.12
+  const titleBottom = subFit ? subtitleTop - w * 0.02 : subtitleTop
+  const titleStartY = titleBottom - (titleLines.length - 1) * lineH
+  drawHighlightedLines(ctx, titleLines, pad, titleStartY, lineH, 'left', state.highlightWord, NAVY, GOLD, `800 ${Math.round(titleSize)}px Manrope, sans-serif`)
+
+  if (subFit) {
+    ctx.font = `600 ${Math.round(subFit.size)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(18,59,85,0.75)'
+    ctx.textAlign = 'left'
+    let sy = subtitleTop
+    subFit.lines.forEach((l) => { ctx.fillText(l, pad, sy); sy += subFit.size * 1.35 })
+  }
+
+  if (state.price) {
+    ctx.font = `700 ${Math.round(w * 0.02)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(18,59,85,0.55)'
+    ctx.textAlign = 'left'
+    ctx.fillText((content[state.pieceLang].from || '').toUpperCase(), pad, priceY)
+    const { size: priceSize } = fitFont(ctx, state.price, 800, w * 0.055, w * 0.03, maxTextW)
+    ctx.font = `800 ${Math.round(priceSize)}px Manrope, sans-serif`
+    ctx.fillStyle = NAVY
+    ctx.fillText(state.price, pad, priceY + w * 0.045)
+  }
+
+  const cta = ctaLabel(state)
+  if (cta) drawCtaChip(ctx, pad, h - bottomSafePad(format), 'left', cta, w, w * 0.6)
+}
+
+function renderBoldFrame(ctx, state) {
+  const { format } = state
+  const { w, h } = format
+  drawPhotoOrPlaceholder(ctx, state.photo, { x: 0, y: 0, w, h })
+
+  const leftW = w * 0.16
+  const bottomH = h * 0.24
+  ctx.fillStyle = NAVY
+  ctx.fillRect(0, 0, leftW, h)
+  ctx.fillRect(leftW, h - bottomH, w - leftW, bottomH)
+
+  ctx.save()
+  ctx.strokeStyle = GOLD
+  ctx.lineWidth = Math.max(2, w * 0.007)
+  ctx.beginPath()
+  ctx.moveTo(leftW, 0)
+  ctx.lineTo(leftW, h - bottomH)
+  ctx.lineTo(w, h - bottomH)
+  ctx.stroke()
+  ctx.restore()
+
+  const pad = Math.min(w, h) * 0.045
+  const bandX = leftW + pad
+  const bandY = h - bottomH
+  const texts = buildTexts(state)
+  const category = (state.category || '').trim()
+
+  ctx.textAlign = 'left'
+  if (category) {
+    ctx.font = `800 ${Math.round(w * 0.02)}px Manrope, sans-serif`
+    ctx.fillStyle = GOLD
+    ctx.fillText(category.toUpperCase(), bandX, bandY + bottomH * 0.22)
+  }
+
+  const maxTitleW = (w - bandX - pad) * 0.6
+  const { size: titleSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * 0.032, w * 0.018, maxTitleW, 2)
+  const ty = bandY + bottomH * 0.32
+  drawHighlightedLines(ctx, titleLines, bandX, ty, titleSize * 1.15, 'left', state.highlightWord, '#fff', GOLD, `800 ${Math.round(titleSize)}px Manrope, sans-serif`)
+
+  const cta = ctaLabel(state)
+  if (cta) {
+    ctx.font = `700 ${Math.round(w * 0.017)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.textAlign = 'left'
+    ctx.fillText(cta, bandX, bandY + bottomH * 0.86)
+  }
+
+  if (state.price) {
+    ctx.font = `800 ${Math.round(w * 0.11)}px Manrope, sans-serif`
+    const priceW = ctx.measureText(state.price).width
+    const px = w - pad - priceW
+    const py = bandY - h * 0.03
+    const grad = ctx.createLinearGradient(0, py - h * 0.15, 0, py + h * 0.02)
+    grad.addColorStop(0, 'rgba(18,59,85,0)')
+    grad.addColorStop(1, 'rgba(18,59,85,0.55)')
+    ctx.fillStyle = grad
+    ctx.fillRect(px - pad * 0.6, py - h * 0.15, priceW + pad * 1.2, h * 0.18)
+    ctx.textAlign = 'left'
+    ctx.fillStyle = GOLD
+    ctx.fillText(state.price, px, py)
+  }
+}
+
+function drawBrandTexture(ctx, logoImg, w, h) {
+  if (!logoImg) return
+  ctx.save()
+  ctx.globalAlpha = 0.05
+  const size = w * 0.16
+  const iw = size
+  const ih = size * (LOGO_ICON_CROP.h / LOGO_ICON_CROP.w)
+  const stepX = iw * 1.7
+  const stepY = ih * 2.2
+  let row = 0
+  for (let y = -ih; y < h + ih; y += stepY) {
+    const offset = (row % 2) * (stepX / 2)
+    for (let x = -iw; x < w + iw; x += stepX) {
+      ctx.drawImage(logoImg, 0, 0, LOGO_ICON_CROP.w, LOGO_ICON_CROP.h, x + offset, y, iw, ih)
+    }
+    row++
+  }
+  ctx.restore()
+}
+
+function renderBrandPattern(ctx, state) {
+  const { format } = state
+  const { w, h } = format
+  ctx.fillStyle = NAVY
+  ctx.fillRect(0, 0, w, h)
+  drawBrandTexture(ctx, state.logoImg, w, h)
+
+  ctx.save()
+  ctx.strokeStyle = GOLD
+  ctx.globalAlpha = 0.9
+  ctx.lineWidth = Math.max(2, w * 0.006)
+  const lineY = h * 0.4
+  ctx.beginPath(); ctx.moveTo(w * 0.08, lineY); ctx.lineTo(w * 0.92, lineY); ctx.stroke()
+  ctx.restore()
+
+  const cardW = w * 0.52
+  const cardH = h * 0.27
+  const cardX = (w - cardW) / 2
+  const cardY = h * 0.44
+  const radius = Math.min(cardW, cardH) * 0.04
+  ctx.save()
+  roundRect(ctx, cardX, cardY, cardW, cardH, radius)
+  ctx.clip()
+  if (state.photo?.img) drawCover(ctx, state.photo.img, { x: cardX, y: cardY, w: cardW, h: cardH }, state.photo)
+  else { ctx.fillStyle = NAVY2; ctx.fillRect(cardX, cardY, cardW, cardH) }
+  ctx.restore()
+  ctx.save()
+  ctx.strokeStyle = GOLD
+  ctx.lineWidth = Math.max(2, w * 0.004)
+  roundRect(ctx, cardX, cardY, cardW, cardH, radius)
+  ctx.stroke()
+  ctx.restore()
+
+  const pad = Math.min(w, h) * 0.08
+  const maxTextW = w - pad * 2
+  const texts = buildTexts(state)
+  const category = (state.category || '').trim()
+
+  let y = h * 0.15
+  ctx.textAlign = 'center'
+  if (category) {
+    ctx.font = `800 ${Math.round(w * 0.022)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.fillText(category.toUpperCase(), w / 2, y)
+    y += w * 0.05
+  }
+
+  const { size: titleSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * 0.06, w * 0.028, maxTextW, 2)
+  y += titleSize * 0.9
+  drawHighlightedLines(ctx, titleLines, w / 2, y, titleSize * 1.15, 'center', state.highlightWord, '#fff', GOLD, `800 ${Math.round(titleSize)}px Manrope, sans-serif`)
+
+  let by = cardY + cardH + w * 0.055
+  if (state.price) {
+    ctx.textAlign = 'center'
+    ctx.font = `700 ${Math.round(w * 0.02)}px Manrope, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.fillText((content[state.pieceLang].from || '').toUpperCase(), w / 2, by)
+    by += w * 0.045
+    const { size: priceSize } = fitFont(ctx, state.price, 800, w * 0.05, w * 0.028, maxTextW)
+    ctx.font = `800 ${Math.round(priceSize)}px Manrope, sans-serif`
+    ctx.fillStyle = GOLD
+    ctx.fillText(state.price, w / 2, by)
+    by += priceSize * 0.7
+  }
+
+  const cta = ctaLabel(state)
+  if (cta) drawCtaChip(ctx, w / 2, h - bottomSafePad(format), 'center', cta, w, w * 0.7)
+}
+
 async function render(canvas, state) {
   const { w, h } = state.format
   canvas.width = w
@@ -546,6 +913,10 @@ async function render(canvas, state) {
     if (state.templateId === 'split') renderSplit(ctx, state)
     else if (state.templateId === 'clean_brand') renderCleanBrand(ctx, state)
     else if (state.templateId === 'before_after') renderBeforeAfter(ctx, state)
+    else if (state.templateId === 'navy_motion') renderNavyMotion(ctx, state)
+    else if (state.templateId === 'clean_waves') renderCleanWaves(ctx, state)
+    else if (state.templateId === 'bold_frame') renderBoldFrame(ctx, state)
+    else if (state.templateId === 'brand_pattern') renderBrandPattern(ctx, state)
     else renderPhotoHero(ctx, state)
   } catch (err) {
     console.error('Publicidad: fallo al dibujar la plantilla', err)
@@ -641,6 +1012,8 @@ export default function SocialDoc() {
   const [showValidity, setShowValidity] = useState(false)
   const [beforeLabel, setBeforeLabel] = useState('ANTES')
   const [afterLabel, setAfterLabel] = useState('DESPUÉS')
+  const [category, setCategory] = useState('')
+  const [highlightWord, setHighlightWord] = useState('')
 
   const [overlay, setOverlay] = useState(30)
   const [textAlign, setTextAlign] = useState('center')
@@ -688,9 +1061,10 @@ export default function SocialDoc() {
     render(canvas, {
       format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation,
       title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel,
+      category, highlightWord,
       overlay, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg,
     })
-  }, [format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation, title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel, overlay, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg])
+  }, [format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation, title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel, category, highlightWord, overlay, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg])
 
   function selectAdType(t) {
     setAdType(t)
@@ -764,7 +1138,7 @@ export default function SocialDoc() {
 
   function savePreset() {
     if (!presetName.trim()) return
-    const p = { id: Date.now(), name: presetName.trim(), formatId, templateId, style, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, overlay, showPhone, showWebsite, showLocation, ctaType, ctaCustom }
+    const p = { id: Date.now(), name: presetName.trim(), formatId, templateId, style, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, overlay, showPhone, showWebsite, showLocation, ctaType, ctaCustom, category, highlightWord }
     const list = [...presets, p]
     setPresets(list); savePresetsList(list); setPresetName('')
   }
@@ -772,6 +1146,7 @@ export default function SocialDoc() {
     setFormatId(p.formatId); setTemplateId(p.templateId); setStyle(p.style); setTextAlign(p.textAlign); setTitleScale(p.titleScale || 100)
     setLogoOn(p.logoOn); setLogoVariant(p.logoVariant || 'full'); setLogoPos(p.logoPos); setLogoSize(p.logoSize); setOverlay(p.overlay)
     setShowPhone(p.showPhone); setShowWebsite(p.showWebsite); setShowLocation(p.showLocation); setCtaType(p.ctaType); setCtaCustom(p.ctaCustom || '')
+    setCategory(p.category || ''); setHighlightWord(p.highlightWord || '')
   }
   function deletePreset(id) {
     const list = presets.filter((p) => p.id !== id)
@@ -868,6 +1243,50 @@ export default function SocialDoc() {
             </Field>
           )}
 
+          {adType !== 'before_after' && (
+            <Field label="Estilo de marca">
+              <div className="grid grid-cols-2 gap-2">
+                {BRAND_STYLES.map((t) => (
+                  <button key={t.id} type="button" onClick={() => setTemplateId(t.id)} className={`h-12 rounded-lg border-2 text-[11px] font-bold px-1 ${templateId === t.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}>{t.label}</button>
+                ))}
+              </div>
+            </Field>
+          )}
+
+          {STYLE_TEMPLATE_IDS.includes(templateId) && (
+            <>
+              <Field label="Categoría / ubicación (opcional)">
+                <input className={inputCls} placeholder="WARSAW, IN · AUTO CARE" value={category} onChange={(e) => setCategory(e.target.value)} />
+              </Field>
+              <Field label="Palabra en dorado (opcional)">
+                <input className={inputCls} placeholder="ej. DETAILING" value={highlightWord} onChange={(e) => setHighlightWord(e.target.value)} />
+              </Field>
+              {adType !== 'promo' && (
+                <Field label="Precio (opcional)">
+                  <input className={inputCls} placeholder="$150" value={price} onChange={(e) => setPrice(e.target.value)} />
+                </Field>
+              )}
+            </>
+          )}
+
+          {templateId === 'clean_waves' && (
+            <Field label="Color de fondo">
+              <div className="flex items-center gap-2">
+                {Object.entries(BG_COLORS).map(([key, c]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setStyle(key)}
+                    aria-label={c.label}
+                    title={c.label}
+                    className={`w-9 h-9 rounded-full border-2 transition-transform ${style === key ? 'border-ink scale-110' : 'border-ink/15'}`}
+                    style={{ backgroundColor: c.hex }}
+                  />
+                ))}
+              </div>
+            </Field>
+          )}
+
           {(templateId === 'split' || templateId === 'clean_brand') && (
             <Field label="Color de fondo">
               <div className="flex items-center gap-2">
@@ -893,7 +1312,7 @@ export default function SocialDoc() {
             </Field>
           )}
 
-          {templateId !== 'before_after' && (
+          {templateId !== 'before_after' && !STYLE_TEMPLATE_IDS.includes(templateId) && (
             <Field label={`Overlay — ${overlay}%`}>
               <input type="range" min="0" max="70" value={overlay} onChange={(e) => setOverlay(Number(e.target.value))} className="accent-[var(--color-gold)]" />
             </Field>
@@ -998,3 +1417,7 @@ export default function SocialDoc() {
     </div>
   )
 }
+
+// Named exports for the standalone dev preview harness only (renders real pieces outside the
+// authenticated admin app, e.g. scripts/dev-preview — not used by the app itself).
+export { render, FORMATS, BRAND_STYLES, loadLogo, loadImageUrl }

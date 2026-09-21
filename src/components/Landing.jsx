@@ -310,6 +310,7 @@ export default function Landing({ lang, setLang }) {
             <Icon name="x" size={20} />
           </button>
           <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} className="max-w-full max-h-full rounded-lg object-contain" />
+          <img src={logo} alt="" className="absolute bottom-6 right-6 h-8 sm:h-10 w-auto object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none" />
         </div>
       )}
     </div>
