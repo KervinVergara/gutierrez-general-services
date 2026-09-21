@@ -7,7 +7,6 @@ import AdminSearch from './admin/AdminSearch'
 import AdminDashboard from './admin/AdminDashboard'
 import AdminQuotes from './admin/AdminQuotes'
 import AdminClients from './admin/AdminClients'
-import AdminAgenda from './admin/AdminAgenda'
 import AdminJobs from './admin/AdminJobs'
 import AdminPlans from './admin/AdminPlans'
 import AdminFinance from './admin/AdminFinance'
@@ -18,7 +17,6 @@ const TABS = [
   { id: 'dashboard', label: 'Inicio', Component: AdminDashboard },
   { id: 'quotes', label: 'Cotizaciones', Component: AdminQuotes },
   { id: 'clients', label: 'Clientes', Component: AdminClients },
-  { id: 'agenda', label: 'Agenda', Component: AdminAgenda },
   { id: 'jobs', label: 'Servicios', Component: AdminJobs },
   { id: 'plans', label: 'Planes', Component: AdminPlans },
   { id: 'finance', label: 'Finanzas', Component: AdminFinance },

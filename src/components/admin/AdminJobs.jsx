@@ -14,6 +14,11 @@ const PAY_COLOR = { pending: 'bg-red-50 text-red-700', paid: 'bg-green-50 text-g
 const PAY_METHODS = ['', 'Efectivo', 'Transferencia', 'Tarjeta', 'Otro']
 const CATEGORIES = [{ id: '', label: 'Sin categoría' }, { id: 'auto', label: 'Auto' }, { id: 'property', label: 'Property' }, { id: 'seasonal', label: 'Seasonal' }]
 const ORIGIN_LABEL = { manual: 'Manual', quote: 'Desde cotización', plan: 'Desde plan' }
+const CATEGORY_DOT = { auto: 'bg-blue-500', property: 'bg-green-500', seasonal: 'bg-amber-500' }
+const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+function toDateStr(d) { return d.toISOString().slice(0, 10) }
+function startOfWeek(d) { const c = new Date(d); const day = (c.getDay() + 6) % 7; c.setDate(c.getDate() - day); return c }
 
 const emptyForm = {
   clientId: '', category: '', service: SERVICE_TITLES[0] || '', date: todayStr(), time: '', address: '',
@@ -30,6 +35,9 @@ export default function AdminJobs({ focus, onFocusHandled }) {
   const [editingId, setEditingId] = useState(null)
   const [nextFor, setNextFor] = useState(null)
   const [err, setErr] = useState('')
+  const [view, setView] = useState('list')
+  const [calMode, setCalMode] = useState('month')
+  const [cursor, setCursor] = useState(new Date())
 
   useEffect(() => {
     let unsub1 = null, unsub2 = null
@@ -132,14 +140,32 @@ export default function AdminJobs({ focus, onFocusHandled }) {
     setNextFor(null)
   }
 
+  function jobsOn(dateStr) { return jobs.filter((j) => j.date === dateStr && j.status !== 'cancelled').sort((a, b) => (a.time || '').localeCompare(b.time || '')) }
+  function openJobId(id) { const j = jobs.find((x) => x.id === id); if (j) startEdit(j) }
+  function createJobAt(dateStr) { setEditingId('new'); setForm({ ...emptyForm, date: dateStr }) }
+  function shiftCursor(delta) {
+    const c = new Date(cursor)
+    if (calMode === 'month') c.setMonth(c.getMonth() + delta)
+    else c.setDate(c.getDate() + delta * 7)
+    setCursor(c)
+  }
+
   const shown = filter === 'all' ? jobs : jobs.filter((j) => j.status === filter)
+  const monthLabel = cursor.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <FilterBtn active={filter === 'all'} onClick={() => setFilter('all')}>Todos ({jobs.length})</FilterBtn>
-          {STATUSES.map((s) => <FilterBtn key={s} active={filter === s} onClick={() => setFilter(s)}>{LABEL[s]} ({jobs.filter((j) => j.status === s).length})</FilterBtn>)}
+          <FilterBtn active={view === 'list'} onClick={() => setView('list')}>Lista</FilterBtn>
+          <FilterBtn active={view === 'calendar'} onClick={() => setView('calendar')}>Calendario</FilterBtn>
+          {view === 'list' && <span className="w-px h-6 bg-ink/10 mx-1" />}
+          {view === 'list' && (
+            <>
+              <FilterBtn active={filter === 'all'} onClick={() => setFilter('all')}>Todos ({jobs.length})</FilterBtn>
+              {STATUSES.map((s) => <FilterBtn key={s} active={filter === s} onClick={() => setFilter(s)}>{LABEL[s]} ({jobs.filter((j) => j.status === s).length})</FilterBtn>)}
+            </>
+          )}
         </div>
         <button onClick={startNew} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-gold text-sm font-bold"><Icon name="plus" size={16} /> Nuevo servicio</button>
       </div>
@@ -210,42 +236,137 @@ export default function AdminJobs({ focus, onFocusHandled }) {
         </form>
       )}
 
-      {!loaded && <Loading />}
-      {loaded && shown.length === 0 && <EmptyState title="No hay servicios en esta vista." hint="Crea un servicio o convierte una cotización aceptada." ctaLabel="Nuevo servicio" onCta={startNew} />}
-      <div className="grid gap-3">
-        {shown.map((j) => (
-          <article key={j.id} className="rounded-xl bg-white border border-ink/10 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${COLOR[j.status] || COLOR.scheduled}`}>{LABEL[j.status] || j.status}</span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${PAY_COLOR[j.paymentStatus] || PAY_COLOR.pending}`}>{PAY_LABEL[j.paymentStatus] || 'Pendiente'}</span>
-                  <span className="text-xs text-ink/50">{fmtDate(j.date)}{j.time && ` · ${j.time}`}</span>
-                  {j.origin && j.origin !== 'manual' && <span className="text-[10px] font-bold uppercase tracking-wide text-ink/40">{ORIGIN_LABEL[j.origin]}</span>}
+      {view === 'list' && (
+        <>
+          {!loaded && <Loading />}
+          {loaded && shown.length === 0 && <EmptyState title="No hay servicios en esta vista." hint="Crea un servicio o convierte una cotización aceptada." ctaLabel="Nuevo servicio" onCta={startNew} />}
+          <div className="grid gap-3">
+            {shown.map((j) => (
+              <article key={j.id} className="rounded-xl bg-white border border-ink/10 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${COLOR[j.status] || COLOR.scheduled}`}>{LABEL[j.status] || j.status}</span>
+                      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${PAY_COLOR[j.paymentStatus] || PAY_COLOR.pending}`}>{PAY_LABEL[j.paymentStatus] || 'Pendiente'}</span>
+                      <span className="text-xs text-ink/50">{fmtDate(j.date)}{j.time && ` · ${j.time}`}</span>
+                      {j.origin && j.origin !== 'manual' && <span className="text-[10px] font-bold uppercase tracking-wide text-ink/40">{ORIGIN_LABEL[j.origin]}</span>}
+                    </div>
+                    <p className="mt-1 font-bold text-ink">{j.service}</p>
+                    <p className="text-sm text-ink/70">{j.clientName}{j.address && ` · ${j.address}`}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-extrabold text-ink">{money(j.amountCharged)}</span>
+                    <button onClick={() => startEdit(j)} aria-label="Editar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-ink"><Icon name="tag" size={14} /></button>
+                    <button onClick={() => remove(j)} aria-label="Eliminar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-red-600 hover:text-red-600"><Icon name="trash" size={14} /></button>
+                  </div>
                 </div>
-                <p className="mt-1 font-bold text-ink">{j.service}</p>
-                <p className="text-sm text-ink/70">{j.clientName}{j.address && ` · ${j.address}`}</p>
+                {j.status === 'done' && (
+                  <div className="mt-3 border-t border-ink/10 pt-3">
+                    {j.nextService?.dueDate ? (
+                      <p className="text-sm text-ink/60">Próximo mantenimiento sugerido: <strong className="text-ink">{fmtDate(j.nextService.dueDate)}</strong> <button onClick={() => saveNextService(j, null)} className="ml-2 text-xs underline">Quitar</button></p>
+                    ) : nextFor === j.id ? (
+                      <NextServiceForm job={j} onSave={(n) => saveNextService(j, n)} onCancel={() => setNextFor(null)} />
+                    ) : (
+                      <button onClick={() => setNextFor(j.id)} className="text-sm font-bold text-ink hover:underline">+ Definir próximo mantenimiento</button>
+                    )}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+
+      {view === 'calendar' && (
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <FilterBtn active={calMode === 'month'} onClick={() => setCalMode('month')}>Mensual</FilterBtn>
+              <FilterBtn active={calMode === 'week'} onClick={() => setCalMode('week')}>Semanal</FilterBtn>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => shiftCursor(-1)} aria-label="Anterior" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-ink">‹</button>
+              <p className="font-bold text-ink capitalize w-40 text-center">{calMode === 'month' ? monthLabel : `Semana del ${toDateStr(startOfWeek(cursor)).slice(5)}`}</p>
+              <button onClick={() => shiftCursor(1)} aria-label="Siguiente" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-ink">›</button>
+              <button onClick={() => setCursor(new Date())} className="h-9 px-3 rounded-lg border border-ink/15 text-xs font-bold hover:border-ink">Hoy</button>
+            </div>
+          </div>
+          {calMode === 'month'
+            ? <MonthGrid cursor={cursor} jobsOn={jobsOn} openJob={openJobId} createJobAt={createJobAt} />
+            : <WeekList cursor={cursor} jobsOn={jobsOn} openJob={openJobId} createJobAt={createJobAt} />}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MonthGrid({ cursor, jobsOn, openJob, createJobAt }) {
+  const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
+  const gridStart = startOfWeek(first)
+  const today = todayStr()
+  const days = Array.from({ length: 42 }, (_, i) => { const d = new Date(gridStart); d.setDate(d.getDate() + i); return d })
+
+  return (
+    <div className="rounded-2xl bg-white border border-ink/10 overflow-hidden">
+      <div className="grid grid-cols-7 border-b border-ink/10 bg-mist">
+        {WEEKDAYS.map((w) => <div key={w} className="p-2 text-center text-xs font-bold text-ink/60">{w}</div>)}
+      </div>
+      <div className="grid grid-cols-7">
+        {days.map((d) => {
+          const dateStr = toDateStr(d)
+          const inMonth = d.getMonth() === cursor.getMonth()
+          const dayJobs = jobsOn(dateStr)
+          return (
+            <div key={dateStr} className={`min-h-[92px] border-b border-r border-ink/5 p-1.5 ${inMonth ? '' : 'bg-sand/40'}`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold ${dateStr === today ? 'bg-gold text-ink rounded-full w-5 h-5 grid place-items-center' : inMonth ? 'text-ink/70' : 'text-ink/30'}`}>{d.getDate()}</span>
+                <button onClick={() => createJobAt?.(dateStr)} aria-label="Agregar" className="text-ink/30 hover:text-ink"><Icon name="plus" size={12} /></button>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-extrabold text-ink">{money(j.amountCharged)}</span>
-                <button onClick={() => startEdit(j)} aria-label="Editar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-ink"><Icon name="tag" size={14} /></button>
-                <button onClick={() => remove(j)} aria-label="Eliminar" className="grid place-items-center w-9 h-9 rounded-full border border-ink/15 hover:border-red-600 hover:text-red-600"><Icon name="trash" size={14} /></button>
+              <div className="mt-1 grid gap-0.5">
+                {dayJobs.slice(0, 3).map((j) => (
+                  <button key={j.id} onClick={() => openJob?.(j.id)} className="w-full text-left text-[10px] leading-tight bg-mist rounded px-1 py-0.5 flex items-center gap-1 hover:bg-ink/10 truncate">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${CATEGORY_DOT[j.category] || 'bg-ink/40'}`} />
+                    <span className="truncate">{j.time && `${j.time} `}{j.clientName}</span>
+                  </button>
+                ))}
+                {dayJobs.length > 3 && <span className="text-[10px] text-ink/40 px-1">+{dayJobs.length - 3} más</span>}
               </div>
             </div>
-            {j.status === 'done' && (
-              <div className="mt-3 border-t border-ink/10 pt-3">
-                {j.nextService?.dueDate ? (
-                  <p className="text-sm text-ink/60">Próximo mantenimiento sugerido: <strong className="text-ink">{fmtDate(j.nextService.dueDate)}</strong> <button onClick={() => saveNextService(j, null)} className="ml-2 text-xs underline">Quitar</button></p>
-                ) : nextFor === j.id ? (
-                  <NextServiceForm job={j} onSave={(n) => saveNextService(j, n)} onCancel={() => setNextFor(null)} />
-                ) : (
-                  <button onClick={() => setNextFor(j.id)} className="text-sm font-bold text-ink hover:underline">+ Definir próximo mantenimiento</button>
-                )}
-              </div>
-            )}
-          </article>
-        ))}
+          )
+        })}
       </div>
+    </div>
+  )
+}
+
+function WeekList({ cursor, jobsOn, openJob, createJobAt }) {
+  const start = startOfWeek(cursor)
+  const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d })
+  const today = todayStr()
+
+  return (
+    <div className="grid sm:grid-cols-7 gap-2">
+      {days.map((d) => {
+        const dateStr = toDateStr(d)
+        const dayJobs = jobsOn(dateStr)
+        return (
+          <div key={dateStr} className={`rounded-xl border p-2.5 ${dateStr === today ? 'border-gold bg-gold/10' : 'border-ink/10 bg-white'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-ink/70">{WEEKDAYS[(d.getDay() + 6) % 7]} {d.getDate()}</p>
+              <button onClick={() => createJobAt?.(dateStr)} aria-label="Agregar" className="text-ink/30 hover:text-ink"><Icon name="plus" size={13} /></button>
+            </div>
+            <div className="grid gap-1">
+              {dayJobs.length === 0 && <p className="text-[11px] text-ink/40">Sin servicios</p>}
+              {dayJobs.map((j) => (
+                <button key={j.id} onClick={() => openJob?.(j.id)} className="w-full text-left text-xs bg-mist rounded px-2 py-1.5 hover:bg-ink/10">
+                  <span className="font-bold">{j.time || '—'}</span> · {j.clientName}
+                  <p className="text-[10px] text-ink/50 truncate">{j.service}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

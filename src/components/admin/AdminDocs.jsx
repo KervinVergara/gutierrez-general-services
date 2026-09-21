@@ -44,7 +44,7 @@ export default function AdminDocs() {
     <div>
       <div className="flex items-center justify-between mb-6 border-b border-ink/10 flex-wrap gap-3">
         <div className="flex items-center gap-1">
-          <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Cotización</TabBtn>
+          <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Hoja de cotización</TabBtn>
           <TabBtn active={mode === 'catalog'} onClick={() => setMode('catalog')}>Catálogo</TabBtn>
           <TabBtn active={mode === 'social'} onClick={() => setMode('social')}>Publicidad</TabBtn>
         </div>
