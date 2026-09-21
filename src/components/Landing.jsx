@@ -116,7 +116,7 @@ export default function Landing({ lang, setLang }) {
               </a>
             </div>
           </div>
-          <div className="relative max-w-sm mx-auto md:mx-0 md:ml-auto">
+          <div className="relative max-w-sm md:max-w-full mx-auto md:mx-0">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
               <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Property care' : 'Cuidado de propiedad'}</span>
