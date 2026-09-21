@@ -78,7 +78,7 @@ export default function Landing({ lang, setLang }) {
           <a href="#top" className="flex items-center shrink-0">
             <img src={logo} alt={BUSINESS} className="h-12 md:h-14 w-auto object-contain" />
           </a>
-          <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink/75">
+          <nav className="hidden md:flex items-center gap-5 lg:gap-7 text-[15px] font-semibold text-ink/75">
             <a href="#services" className={navLinkCls}>{t.nav.services}</a>
             <a href="#plans" className={navLinkCls}>{t.nav.plans}</a>
             <a href="#work" className={navLinkCls}>{t.nav.ourWork}</a>
@@ -86,7 +86,7 @@ export default function Landing({ lang, setLang }) {
             <span className="w-px h-5 bg-ink/15" aria-hidden="true" />
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-ink/60 hover:text-ink text-sm font-bold transition-colors" aria-label="Switch language">EN / ES</button>
           </nav>
-          <div className="flex items-center gap-2 shrink-0 lg:hidden">
+          <div className="flex items-center gap-2 shrink-0 md:hidden">
             <a href="#contact" className="inline-flex items-center justify-center h-10 px-4 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
             <button onClick={() => setOpen(!open)} className="grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
               <Icon name={open ? 'x' : 'menu'} size={20} />
@@ -94,7 +94,7 @@ export default function Landing({ lang, setLang }) {
           </div>
         </div>
         {open && (
-          <nav className="lg:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
+          <nav className="md:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
             {[['#services', t.nav.services], ['#plans', t.nav.plans], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
               <a key={l} href={h} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg border-b border-ink/10 last:border-0 hover:bg-mist">{l}</a>
             ))}
@@ -105,10 +105,10 @@ export default function Landing({ lang, setLang }) {
 
       {/* HERO */}
       <section id="top" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-12 gap-6 md:gap-6 items-center">
-          <div className="md:col-span-6">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:py-14 grid grid-cols-1 md:grid-cols-[3fr_2fr] lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-6">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
-            <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3.75rem] font-extrabold leading-[1.03] tracking-tight text-ink">
+            <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3rem] lg:text-[3.75rem] font-extrabold leading-[1.03] tracking-tight text-ink">
               {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
             </h1>
             <p className="mt-5 text-lg text-steel max-w-md">{t.hero.sub}</p>
@@ -122,7 +122,7 @@ export default function Landing({ lang, setLang }) {
               <span>{t.trust.points[2].title}</span>
             </p>
           </div>
-          <div className="hidden md:block md:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <button
               type="button"
               onClick={() => setLightbox({ src: heroPhotoSecondary, alt: lang === 'en' ? 'Exterior house pressure washing' : 'Lavado a presión exterior de una vivienda' })}
@@ -131,7 +131,7 @@ export default function Landing({ lang, setLang }) {
               <img src={heroPhotoSecondary} alt={lang === 'en' ? 'Exterior house pressure washing' : 'Lavado a presión exterior de una vivienda'} className="w-full h-full object-cover" />
             </button>
           </div>
-          <div className="md:col-span-4">
+          <div className="lg:col-span-4">
             <button
               type="button"
               onClick={() => setLightbox({ src: heroPhoto, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
