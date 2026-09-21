@@ -183,7 +183,7 @@ function drawPhotoOrPlaceholder(ctx, photo, frame, radius) {
   else drawPhotoPlaceholder(ctx, frame)
 }
 
-function drawLogo(ctx, logoImg, format, pos, sizeKey, variant) {
+function drawLogo(ctx, logoImg, format, pos, sizeKey, variant, withBacking) {
   if (!logoImg) return
   const { w, h } = format
   const useIcon = variant === 'icon'
@@ -199,8 +199,23 @@ function drawLogo(ctx, logoImg, format, pos, sizeKey, variant) {
   else x = (w - lw) / 2
   if (pos.startsWith('top')) y = margin
   else y = h - margin - lh
+  // The logo is navy-colored, so it can vanish over a busy/dark real photo. A soft, subtle
+  // backing (not a hard circular badge) keeps it legible without looking forced on flat colors.
+  if (withBacking) {
+    const padX = lw * 0.1, padY = lh * 0.22
+    ctx.save()
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    roundRect(ctx, x - padX, y - padY, lw + padX * 2, lh + padY * 2, Math.min(lw, lh) * 0.16)
+    ctx.fill()
+    ctx.restore()
+  }
   if (useIcon) ctx.drawImage(logoImg, 0, 0, LOGO_ICON_CROP.w, LOGO_ICON_CROP.h, x, y, lw, lh)
   else ctx.drawImage(logoImg, x, y, lw, lh)
+}
+
+function logoNeedsBacking(state) {
+  if (state.templateId === 'before_after') return !!(state.photoBefore?.img || state.photoAfter?.img)
+  return !!state.photo?.img
 }
 
 function bottomSafePad(format) {
@@ -537,7 +552,7 @@ async function render(canvas, state) {
   }
 
   if (state.logoOn) {
-    try { drawLogo(ctx, state.logoImg, state.format, state.logoPos, state.logoSize, state.logoVariant) }
+    try { drawLogo(ctx, state.logoImg, state.format, state.logoPos, state.logoSize, state.logoVariant, logoNeedsBacking(state)) }
     catch (err) { console.error('Publicidad: fallo al dibujar el logo', err) }
   }
 }
