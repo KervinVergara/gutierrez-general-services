@@ -66,9 +66,9 @@ export default function Landing({ lang, setLang }) {
     <div className="min-h-screen bg-sand">
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-sand/95 backdrop-blur-sm border-b border-ink/10">
-        <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-7xl px-4 h-24 flex items-center justify-between gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logo} alt={BUSINESS} className="h-11 md:h-14 w-auto object-contain" />
+            <img src={logo} alt={BUSINESS} className="h-12 md:h-16 w-auto object-contain" />
           </a>
           <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink/75">
             <a href="#services" className={navLinkCls}>{t.nav.services}</a>
@@ -95,7 +95,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* HERO */}
       <section id="top" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-start">
+        <div className="mx-auto max-w-7xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-start">
           <div className="md:pt-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
             <h1 className="mt-4 text-[2.6rem] sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.05] text-ink">
@@ -134,7 +134,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="mx-auto max-w-6xl px-4 py-12 md:py-20">
+      <section id="services" className="mx-auto max-w-7xl px-4 py-12 md:py-20">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.servicesEyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
@@ -197,7 +197,7 @@ export default function Landing({ lang, setLang }) {
       )}
 
       {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <section className="mx-auto max-w-7xl px-4 py-12 md:py-16">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.howItWorks.eyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.howItWorks.title}</h2>
         <div className="mt-8 grid sm:grid-cols-3 gap-8">
@@ -213,7 +213,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* MONTHLY CARE PLANS */}
       <section id="plans" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.plans.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.plans.title}</h2>
           <p className="mt-3 text-lg text-steel max-w-2xl">{t.plans.sub}</p>
@@ -225,7 +225,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* OUR WORK */}
-      <section id="work" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+      <section id="work" className="mx-auto max-w-7xl px-4 py-16 md:py-24">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.gallery.eyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
@@ -246,7 +246,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* TRUST */}
       <section className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.trust.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink max-w-2xl">{t.trust.title}</h2>
           <div className="mt-8 grid sm:grid-cols-2 gap-6">
@@ -265,7 +265,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* QUOTE / CONTACT */}
       <section id="contact" className="relative bg-ink text-white overflow-hidden">
-        <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <div className="relative mx-auto max-w-7xl px-4 py-10 md:py-14">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
             <p className="mt-4 text-white/75 text-lg">{t.contact.sub}</p>
@@ -282,7 +282,7 @@ export default function Landing({ lang, setLang }) {
 
       {/* FINAL CTA */}
       <section className="bg-sand">
-        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16 text-center">
+        <div className="mx-auto max-w-7xl px-4 py-12 md:py-16 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-ink">{t.finalCta.title}</h2>
           <p className="mt-3 text-lg text-steel">{t.finalCta.text}</p>
           <a href="#contact" className="mt-7 inline-flex items-center justify-center h-13 px-8 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.finalCta.cta}</a>
@@ -290,7 +290,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       <footer className="bg-sand text-steel text-sm border-t border-ink/10">
-        <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col md:flex-row justify-between gap-2">
+        <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col md:flex-row justify-between gap-2">
           <p>© {new Date().getFullYear()} {BUSINESS}. {t.footer.rights}</p>
           <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
         </div>
