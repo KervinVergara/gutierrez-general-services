@@ -8,9 +8,11 @@ export const content = {
   en: {
     nav: { services: 'Services', plans: 'Plans', ourWork: 'Our Work', seasonal: 'Seasonal Care', contact: 'Contact', quote: 'Get a Free Quote', quoteShort: 'Get a Quote', call: 'Call now' },
     hero: {
-      kicker: 'Cleaner spaces. Brighter days.',
+      kicker: 'Local care · Warsaw, IN',
       titleLines: ['Your Car.', 'Your Home.', 'Taken Care Of.'],
       sub: 'Auto detailing, property care and seasonal services in Warsaw, Indiana.',
+      serviceLine: ['Auto detailing', 'Property care', 'Seasonal services'],
+      serviceLineShort: ['Auto', 'Property', 'Seasonal'],
       cta1: 'Get a Free Quote',
       cta2: 'View Our Work',
     },
@@ -143,9 +145,11 @@ export const content = {
   es: {
     nav: { services: 'Servicios', plans: 'Planes', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', quoteShort: 'Cotizar', call: 'Llamar' },
     hero: {
-      kicker: 'Espacios más limpios. Días más brillantes.',
+      kicker: 'Cuidado local · Warsaw, IN',
       titleLines: ['Su carro.', 'Su casa.', 'Bien cuidados.'],
       sub: 'Detallado de vehículos, cuidado de propiedades y servicios de temporada en Warsaw, Indiana.',
+      serviceLine: ['Detallado de vehículos', 'Cuidado de propiedad', 'Servicios de temporada'],
+      serviceLineShort: ['Auto', 'Propiedad', 'Temporada'],
       cta1: 'Cotización gratis',
       cta2: 'Ver nuestro trabajo',
     },
