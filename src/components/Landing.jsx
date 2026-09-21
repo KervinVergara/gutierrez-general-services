@@ -5,6 +5,7 @@ import QuoteForm from './QuoteForm'
 import FeedbackWidget from './FeedbackWidget'
 import logo from '../assets/photos/logo-new.png'
 import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.jpeg'
+import heroPhotoSecondary from '../assets/photos/stock-exterior-siding.jpeg'
 import svcAuto from '../assets/photos/curated/02_brillo_pintura.jpeg'
 import svcProperty from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
@@ -75,7 +76,7 @@ export default function Landing({ lang, setLang }) {
       <header className={`sticky top-0 z-40 transition-colors duration-200 ${scrolled ? 'bg-sand border-b border-ink/10 shadow-[0_2px_10px_-4px_rgba(18,59,85,0.12)]' : 'bg-sand/95 backdrop-blur-sm border-b border-transparent'}`}>
         <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logo} alt={BUSINESS} className="h-10 md:h-12 w-auto object-contain" />
+            <img src={logo} alt={BUSINESS} className="h-12 md:h-14 w-auto object-contain" />
           </a>
           <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink/75">
             <a href="#services" className={navLinkCls}>{t.nav.services}</a>
@@ -84,7 +85,6 @@ export default function Landing({ lang, setLang }) {
             <a href="#contact" className={navLinkCls}>{t.nav.contact}</a>
             <span className="w-px h-5 bg-ink/15" aria-hidden="true" />
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-ink/60 hover:text-ink text-sm font-bold transition-colors" aria-label="Switch language">EN / ES</button>
-            <a href="#contact" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 transition-colors whitespace-nowrap">{t.nav.quoteShort}</a>
           </nav>
           <div className="flex items-center gap-2 shrink-0 lg:hidden">
             <a href="#contact" className="inline-flex items-center justify-center h-10 px-4 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
@@ -105,8 +105,8 @@ export default function Landing({ lang, setLang }) {
 
       {/* HERO */}
       <section id="top" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-5 gap-10 md:gap-8 items-center">
-          <div className="md:col-span-3">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-12 gap-6 md:gap-6 items-center">
+          <div className="md:col-span-6">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
             <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3.75rem] font-extrabold leading-[1.03] tracking-tight text-ink">
               {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
@@ -122,11 +122,20 @@ export default function Landing({ lang, setLang }) {
               <span>{t.trust.points[2].title}</span>
             </p>
           </div>
-          <div className="md:col-span-2">
+          <div className="hidden md:block md:col-span-2">
+            <button
+              type="button"
+              onClick={() => setLightbox({ src: heroPhotoSecondary, alt: lang === 'en' ? 'Exterior house pressure washing' : 'Lavado a presión exterior de una vivienda' })}
+              className="relative block w-full h-72 md:h-[420px] rounded-3xl overflow-hidden shadow-sm cursor-zoom-in"
+            >
+              <img src={heroPhotoSecondary} alt={lang === 'en' ? 'Exterior house pressure washing' : 'Lavado a presión exterior de una vivienda'} className="w-full h-full object-cover" />
+            </button>
+          </div>
+          <div className="md:col-span-4">
             <button
               type="button"
               onClick={() => setLightbox({ src: heroPhoto, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
-              className="relative block w-full max-w-sm md:max-w-full mx-auto aspect-[3/4] rounded-3xl overflow-hidden shadow-sm cursor-zoom-in"
+              className="relative block w-full max-w-sm md:max-w-full mx-auto h-72 md:h-[420px] rounded-3xl overflow-hidden shadow-sm cursor-zoom-in"
             >
               <img src={heroPhoto} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
             </button>
