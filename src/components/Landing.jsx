@@ -17,6 +17,7 @@ import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
 const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
+const navLinkCls = "relative py-2 text-ink/75 hover:text-ink transition-colors after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-gold after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
 const groupImages = { auto: svcAuto, property: svcProperty, seasonal: svcSeasonal }
 const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
 const groupOrder = ['auto', 'property', 'seasonal']
@@ -69,12 +70,12 @@ export default function Landing({ lang, setLang }) {
           <a href="#top" className="flex items-center shrink-0">
             <img src={logo} alt={BUSINESS} className="h-11 md:h-14 w-auto object-contain" />
           </a>
-          <nav className="hidden lg:flex items-center gap-1 text-[15px] font-semibold text-ink">
-            <a href="#services" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.services}</a>
-            <a href="#plans" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.plans}</a>
-            <a href="#work" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.ourWork}</a>
-            <a href="#contact" className="px-4 py-2 rounded-full transition-colors hover:bg-mist">{t.nav.contact}</a>
-            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="px-4 py-2 rounded-full transition-colors hover:bg-mist" aria-label="Switch language">EN / ES</button>
+          <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink/75">
+            <a href="#services" className={navLinkCls}>{t.nav.services}</a>
+            <a href="#plans" className={navLinkCls}>{t.nav.plans}</a>
+            <a href="#work" className={navLinkCls}>{t.nav.ourWork}</a>
+            <a href="#contact" className={navLinkCls}>{t.nav.contact}</a>
+            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className={navLinkCls} aria-label="Switch language">EN / ES</button>
           </nav>
           <div className="flex items-center gap-3 shrink-0">
             <button onClick={() => setOpen(!open)} className="lg:hidden grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
