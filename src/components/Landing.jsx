@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../content'
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
@@ -16,6 +16,7 @@ import galBoat from '../assets/photos/curated/07_bote.jpeg'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 
+const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
 const groupImages = { auto: svcAuto, property: svcProperty, seasonal: svcSeasonal }
 const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
 const groupOrder = ['auto', 'property', 'seasonal']
@@ -31,7 +32,16 @@ export default function Landing({ lang, setLang }) {
   const [activeGroup, setActiveGroup] = useState(null)
   const [presetService, setPresetService] = useState('')
   const [presetType, setPresetType] = useState('')
+  const [lightbox, setLightbox] = useState(null)
 
+  useEffect(() => {
+    if (!lightbox) return
+    const onKey = (e) => { if (e.key === 'Escape') setLightbox(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightbox])
+
+  const waHref = `https://wa.me/${PHONE_WA}?text=${encodeURIComponent(WA_GREETING[lang])}`
   const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g && !s.hidden) }))
 
   function quoteFor(serviceId) {
@@ -46,7 +56,7 @@ export default function Landing({ lang, setLang }) {
     { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada', caption: lang === 'en' ? 'Detailed truck' : 'Camioneta detallada' },
     { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado', caption: lang === 'en' ? 'Leather interior' : 'Interior de cuero' },
     { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio', caption: lang === 'en' ? 'Clean SUV' : 'SUV limpio' },
-    { id: 'boat', photo: galBoat, fit: 'contain', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
+    { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
     { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso', caption: lang === 'en' ? 'Wash in progress' : 'Lavado en proceso' },
     { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura', caption: lang === 'en' ? 'Paint polishing' : 'Pulido de pintura' },
   ]
@@ -95,19 +105,29 @@ export default function Landing({ lang, setLang }) {
               <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
               <a href="#services" className="inline-flex items-center justify-center h-13 px-6 rounded-full border-2 border-ink/15 text-ink font-bold text-lg hover:border-ink">{t.hero.cta2}</a>
             </div>
-            <a href={`tel:${PHONE_TEL}`} className="mt-6 inline-flex items-center gap-2 font-bold text-ink hover:underline">
-              <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
-              {PHONE_DISPLAY}
-            </a>
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
+                <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
+                {PHONE_DISPLAY}
+              </a>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
+                <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="whatsapp" size={18} /></span>
+                WhatsApp
+              </a>
+            </div>
           </div>
           <div className="relative max-w-sm mx-auto md:mx-0 md:ml-auto">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-sm">
               <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
               <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Property care' : 'Cuidado de propiedad'}</span>
             </div>
-            <div className="hidden sm:block absolute -bottom-6 right-2 md:right-4 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg">
+            <button
+              type="button"
+              onClick={() => setLightbox({ src: heroOverlay, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
+              className="hidden sm:block absolute -bottom-6 right-2 md:right-4 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg cursor-zoom-in"
+            >
               <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
-            </div>
+            </button>
           </div>
         </div>
       </section>
@@ -210,10 +230,15 @@ export default function Landing({ lang, setLang }) {
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-5">
           {galleryItems.map((g) => (
-            <div key={g.id} className="relative aspect-square rounded-xl overflow-hidden bg-white">
-              <img src={g.photo} alt={g.alt} className={`w-full h-full ${g.fit === 'contain' ? 'object-contain' : `object-cover ${g.pos}`}`} loading="lazy" />
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => setLightbox({ src: g.photo, alt: g.alt })}
+              className="relative aspect-square rounded-xl overflow-hidden bg-white cursor-zoom-in"
+            >
+              <img src={g.photo} alt={g.alt} className={`w-full h-full object-cover ${g.pos || ''}`} loading="lazy" />
               <span className="absolute bottom-2 left-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{g.caption}</span>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -266,11 +291,25 @@ export default function Landing({ lang, setLang }) {
       <footer className="bg-sand text-steel text-sm border-t border-ink/10">
         <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col md:flex-row justify-between gap-2">
           <p>© {new Date().getFullYear()} {BUSINESS}. {t.footer.rights}</p>
-          <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
+          <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
         </div>
       </footer>
 
       <FeedbackWidget t={t.feedback} />
+
+      {lightbox && (
+        <div className="fixed inset-0 z-50 bg-ink/90 grid place-items-center p-4" onClick={() => setLightbox(null)}>
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            aria-label={lang === 'en' ? 'Close' : 'Cerrar'}
+            className="absolute top-4 right-4 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <Icon name="x" size={20} />
+          </button>
+          <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} className="max-w-full max-h-full rounded-lg object-contain" />
+        </div>
+      )}
     </div>
   )
 }
