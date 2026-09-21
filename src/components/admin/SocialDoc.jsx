@@ -14,9 +14,9 @@ const SAND = '#f7f5ef'
 const MIST = '#dfeef5'
 
 // Brand-only background swatches for Split/Clean Brand — no free color picker, matches the
-// site's own palette (header/hero mist, section sand, contact navy) so pieces always stay on-brand.
+// site's own palette (header/hero mist, section sand). Navy was removed: the logo itself is
+// navy-colored, so it loses all contrast/legibility on a navy background.
 const BG_COLORS = {
-  navy: { hex: NAVY, mode: 'light', label: 'Navy' },
   sand: { hex: SAND, mode: 'dark', label: 'Sand' },
   mist: { hex: MIST, mode: 'dark', label: 'Mist' },
 }
@@ -440,7 +440,7 @@ function renderSplit(ctx, state) {
   const frames = computeFrames(state.format, 'split', null)
   drawPhotoOrPlaceholder(ctx, state.photo, frames.main)
 
-  const bg = BG_COLORS[state.style] || BG_COLORS.navy
+  const bg = BG_COLORS[state.style] || BG_COLORS.mist
   ctx.fillStyle = bg.hex
   ctx.fillRect(frames.info.x, frames.info.y, frames.info.w, frames.info.h)
 
@@ -452,12 +452,13 @@ function renderCleanBrand(ctx, state) {
   const { w, h } = format
   let mode = 'light'
   if (style === 'photo') {
-    if (state.photo?.img) drawPhotoInFrame(ctx, state.photo, { x: 0, y: 0, w, h })
-    else { ctx.fillStyle = NAVY; ctx.fillRect(0, 0, w, h) }
-    ctx.fillStyle = 'rgba(18,59,85,0.55)'
-    ctx.fillRect(0, 0, w, h)
+    if (state.photo?.img) {
+      drawPhotoInFrame(ctx, state.photo, { x: 0, y: 0, w, h })
+      ctx.fillStyle = 'rgba(18,59,85,0.55)'
+      ctx.fillRect(0, 0, w, h)
+    } else { ctx.fillStyle = MIST; ctx.fillRect(0, 0, w, h); mode = 'dark' }
   } else {
-    const bg = BG_COLORS[style] || BG_COLORS.navy
+    const bg = BG_COLORS[style] || BG_COLORS.mist
     ctx.fillStyle = bg.hex
     ctx.fillRect(0, 0, w, h)
     mode = bg.mode
@@ -604,7 +605,7 @@ export default function SocialDoc() {
   const [pieceLang, setPieceLang] = useState('es')
   const [adType, setAdType] = useState('general')
   const [templateId, setTemplateId] = useState('clean_brand')
-  const [style, setStyle] = useState('navy')
+  const [style, setStyle] = useState('mist')
 
   const [serviceId, setServiceId] = useState('')
   const [photo, setPhoto] = useState(emptyPhoto)
@@ -631,8 +632,8 @@ export default function SocialDoc() {
 
   const [logoOn, setLogoOn] = useState(true)
   const [logoVariant, setLogoVariant] = useState('full')
-  const [logoPos, setLogoPos] = useState('top_left')
-  const [logoSize, setLogoSize] = useState('medium')
+  const [logoPos, setLogoPos] = useState('top_center')
+  const [logoSize, setLogoSize] = useState('large')
   const [showPhone, setShowPhone] = useState(true)
   const [showWebsite, setShowWebsite] = useState(true)
   const [showLocation, setShowLocation] = useState(false)
