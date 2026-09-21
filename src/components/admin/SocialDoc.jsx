@@ -1243,15 +1243,8 @@ export default function SocialDoc() {
             </Field>
           )}
 
-          {adType !== 'before_after' && (
-            <Field label="Estilo de marca">
-              <div className="grid grid-cols-2 gap-2">
-                {BRAND_STYLES.map((t) => (
-                  <button key={t.id} type="button" onClick={() => setTemplateId(t.id)} className={`h-12 rounded-lg border-2 text-[11px] font-bold px-1 ${templateId === t.id ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}>{t.label}</button>
-                ))}
-              </div>
-            </Field>
-          )}
+          {/* Estilo de marca (Navy Motion / Clean Waves / Bold Frame / Brand Pattern) — retirado
+              del panel: colisiona con el logo/texto por defecto, en rework. Ver conversación. */}
 
           {STYLE_TEMPLATE_IDS.includes(templateId) && (
             <>
