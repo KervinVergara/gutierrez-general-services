@@ -176,22 +176,6 @@ function drawPhotoOrPlaceholder(ctx, photo, frame, radius) {
   else drawPhotoPlaceholder(ctx, frame)
 }
 
-function drawCleanBrandPlaceholder(ctx, frame, logoImg) {
-  ctx.save()
-  ctx.strokeStyle = GOLD
-  ctx.lineWidth = Math.max(2, frame.w * 0.006)
-  roundRect(ctx, frame.x, frame.y, frame.w, frame.h, Math.min(frame.w, frame.h) * 0.04)
-  ctx.stroke()
-  if (logoImg) {
-    const lw = frame.w * 0.42
-    const lh = lw * (logoImg.height / logoImg.width)
-    ctx.globalAlpha = 0.92
-    ctx.drawImage(logoImg, frame.x + (frame.w - lw) / 2, frame.y + (frame.h - lh) / 2, lw, lh)
-    ctx.globalAlpha = 1
-  }
-  ctx.restore()
-}
-
 function drawLogo(ctx, logoImg, format, pos, sizeKey, variant) {
   if (!logoImg) return
   const { w, h } = format
@@ -466,14 +450,17 @@ function renderCleanBrand(ctx, state) {
     ctx.fillRect(0, 0, w, h)
   } else { ctx.fillStyle = NAVY; ctx.fillRect(0, 0, w, h) }
 
-  if (style !== 'photo') {
+  const hasPhoto = style !== 'photo' && !!state.photo?.img
+  if (hasPhoto) {
     const frames = computeFrames(format, 'clean_brand', null)
     const radius = Math.min(frames.main.w, frames.main.h) * 0.04
-    if (state.photo?.img) drawPhotoInFrame(ctx, state.photo, frames.main, radius)
-    else drawCleanBrandPlaceholder(ctx, frames.main, state.logoImg)
+    drawPhotoInFrame(ctx, state.photo, frames.main, radius)
   }
 
-  drawContentBlock(ctx, state, bottomSafePad(format), mode)
+  // Without a photo there's no frame to anchor text below, so give the type room to
+  // breathe near the middle instead of a bordered placeholder that reads as a missing image.
+  const padBottom = hasPhoto ? bottomSafePad(format) : h * 0.36
+  drawContentBlock(ctx, state, padBottom, mode)
 }
 
 function renderBeforeAfter(ctx, state) {
