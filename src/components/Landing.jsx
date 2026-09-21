@@ -18,14 +18,6 @@ import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
 const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
 const navLinkCls = "relative py-2 text-ink/75 hover:text-ink transition-colors after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-gold after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
 
-function joinDots(items) {
-  return items.map((s, i) => (
-    <span key={s} className="inline-flex items-center gap-2">
-      {i > 0 && <span aria-hidden="true">•</span>}
-      {s}
-    </span>
-  ))
-}
 const groupImages = { auto: svcAuto, property: svcProperty, seasonal: svcSeasonal }
 const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
 const groupOrder = ['auto', 'property', 'seasonal']
@@ -86,13 +78,12 @@ export default function Landing({ lang, setLang }) {
           <a href="#top" className="flex items-center shrink-0">
             <img src={logo} alt={BUSINESS} className="h-10 md:h-13 lg:h-16 w-auto object-contain" />
           </a>
-          <nav className="hidden lg:flex items-center gap-8 text-base font-semibold text-ink/80">
+          <nav className="hidden lg:flex items-center gap-9 lg:gap-10 text-base font-semibold text-ink/80">
             <a href="#services" className={navLinkCls}>{t.nav.services}</a>
             <a href="#plans" className={navLinkCls}>{t.nav.plans}</a>
             <a href="#work" className={navLinkCls}>{t.nav.ourWork}</a>
             <a href="#contact" className={navLinkCls}>{t.nav.contact}</a>
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-ink/45 hover:text-ink/70 text-xs font-bold transition-colors" aria-label="Switch language">EN / ES</button>
-            <a href="#contact" className="inline-flex items-center justify-center h-11 px-6 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 transition-colors whitespace-nowrap">{t.nav.quoteShort}</a>
           </nav>
           <div className="flex items-center gap-3 shrink-0 lg:hidden">
             <a href="#contact" className="inline-flex items-center justify-center h-10 md:h-11 px-4 md:px-5 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
@@ -112,56 +103,36 @@ export default function Landing({ lang, setLang }) {
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative bg-mist overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:min-h-[660px]">
-          <div className="lg:w-1/2 flex items-center px-6 sm:px-10 lg:px-0 lg:pl-12 xl:pl-20 lg:pr-10 py-14 lg:py-0">
-            <div className="w-full max-w-xl mx-auto lg:mx-0 lg:max-w-lg">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
-              <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3.25rem] lg:text-[clamp(3rem,5vw,4.75rem)] font-extrabold leading-[1.02] tracking-tight text-ink">
-                {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
-              </h1>
-              <p className="mt-5 text-lg text-steel max-w-md">{t.hero.sub}</p>
-              <p className="mt-5 hidden sm:flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink/50">
-                {joinDots(t.hero.serviceLine)}
-              </p>
-              <p className="mt-5 flex sm:hidden items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink/50">
-                {joinDots(t.hero.serviceLineShort)}
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-4">
-                <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
-                <a href="#work" className="inline-flex items-center gap-1.5 text-ink font-bold text-lg hover:underline">{t.hero.cta2} <Icon name="arrowRight" size={18} /></a>
-              </div>
-              <p className="mt-6 flex items-center gap-2 text-sm text-steel">
-                <span>{t.trust.points[0].title}</span>
-                <span aria-hidden="true">•</span>
-                <span>{t.trust.points[2].title}</span>
-              </p>
+      <section id="top" className="bg-mist">
+        <div className="mx-auto max-w-6xl px-4 py-14 lg:py-20 grid grid-cols-1 lg:grid-cols-[46%_54%] gap-10 lg:gap-14 items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
+            <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3.25rem] lg:text-[3.5rem] font-extrabold leading-[1.05] tracking-tight text-ink">
+              {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
+            </h1>
+            <p className="mt-5 text-lg text-steel max-w-md">{t.hero.sub}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4">
+              <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
+              <a href="#work" className="inline-flex items-center gap-1.5 text-ink font-bold text-lg hover:underline">{t.hero.cta2} <Icon name="arrowRight" size={18} /></a>
             </div>
+            <p className="mt-6 flex items-center gap-2 text-sm text-steel">
+              <span>{t.trust.points[0].title}</span>
+              <span aria-hidden="true">•</span>
+              <span>{t.trust.points[2].title}</span>
+            </p>
           </div>
-          <div className="relative w-full h-[300px] sm:h-[400px] lg:w-1/2 lg:h-auto">
+          <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] rounded-2xl overflow-hidden shadow-sm">
             <button
               type="button"
               onClick={() => setLightbox({ src: heroPhoto, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
               aria-label={lang === 'en' ? 'Enlarge photo' : 'Ampliar foto'}
               className="absolute inset-0 w-full h-full cursor-zoom-in"
             >
-              <img src={heroPhoto} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover brightness-95 contrast-105" />
+              <img src={heroPhoto} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
             </button>
           </div>
         </div>
       </section>
-
-      {/* HERO -> SERVICES TRANSITION STRIP */}
-      <div className="bg-ink">
-        <div className="mx-auto max-w-6xl px-4 h-11 flex items-center justify-center">
-          <p className="hidden md:flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-sand/80">
-            {joinDots([...t.hero.serviceLine, 'Warsaw, IN'])}
-          </p>
-          <p className="md:hidden flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-sand/80">
-            {joinDots(t.hero.serviceLineShort)}
-          </p>
-        </div>
-      </div>
 
       {/* SERVICES */}
       <section id="services" className="mx-auto max-w-6xl px-4 py-12 md:py-20 scroll-mt-20">
