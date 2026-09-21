@@ -11,6 +11,15 @@ const NAVY = '#123b55'
 const NAVY2 = '#1a4d6e'
 const GOLD = '#f3c64e'
 const SAND = '#f7f5ef'
+const MIST = '#dfeef5'
+
+// Brand-only background swatches for Split/Clean Brand — no free color picker, matches the
+// site's own palette (header/hero mist, section sand, contact navy) so pieces always stay on-brand.
+const BG_COLORS = {
+  navy: { hex: NAVY, mode: 'light', label: 'Navy' },
+  sand: { hex: SAND, mode: 'dark', label: 'Sand' },
+  mist: { hex: MIST, mode: 'dark', label: 'Mist' },
+}
 
 const FORMATS = [
   { id: 'ig_post', label: 'Instagram / Facebook Post', w: 1080, h: 1080 },
@@ -43,7 +52,7 @@ const CTA_PRESETS = {
 
 const TITLE_SIZE = { small: 0.045, medium: 0.065, large: 0.085 }
 const SUB_SIZE = { small: 0.024, medium: 0.03, large: 0.036 }
-const LOGO_W = { small: 0.14, medium: 0.2, large: 0.28 }
+const LOGO_W = { small: 0.17, medium: 0.24, large: 0.32 }
 // Hand-measured bounding box of the house/car mark within logo-new.png, before the gap that starts the "GUTIERREZ" wordmark.
 const LOGO_ICON_CROP = { w: 606, h: 398 }
 const LOGO_FULL_SIZE = { w: 1720, h: 398 }
@@ -431,24 +440,28 @@ function renderSplit(ctx, state) {
   const frames = computeFrames(state.format, 'split', null)
   drawPhotoOrPlaceholder(ctx, state.photo, frames.main)
 
-  const light = state.style === 'light'
-  ctx.fillStyle = light ? SAND : NAVY
+  const bg = BG_COLORS[state.style] || BG_COLORS.navy
+  ctx.fillStyle = bg.hex
   ctx.fillRect(frames.info.x, frames.info.y, frames.info.w, frames.info.h)
 
-  drawInfoPanelText(ctx, frames.info, state, light ? 'dark' : 'light')
+  drawInfoPanelText(ctx, frames.info, state, bg.mode)
 }
 
 function renderCleanBrand(ctx, state) {
   const { format, style } = state
   const { w, h } = format
   let mode = 'light'
-  if (style === 'light') { ctx.fillStyle = SAND; ctx.fillRect(0, 0, w, h); mode = 'dark' }
-  else if (style === 'photo') {
+  if (style === 'photo') {
     if (state.photo?.img) drawPhotoInFrame(ctx, state.photo, { x: 0, y: 0, w, h })
     else { ctx.fillStyle = NAVY; ctx.fillRect(0, 0, w, h) }
     ctx.fillStyle = 'rgba(18,59,85,0.55)'
     ctx.fillRect(0, 0, w, h)
-  } else { ctx.fillStyle = NAVY; ctx.fillRect(0, 0, w, h) }
+  } else {
+    const bg = BG_COLORS[style] || BG_COLORS.navy
+    ctx.fillStyle = bg.hex
+    ctx.fillRect(0, 0, w, h)
+    mode = bg.mode
+  }
 
   const hasPhoto = style !== 'photo' && !!state.photo?.img
   if (hasPhoto) {
@@ -591,7 +604,7 @@ export default function SocialDoc() {
   const [pieceLang, setPieceLang] = useState('es')
   const [adType, setAdType] = useState('general')
   const [templateId, setTemplateId] = useState('clean_brand')
-  const [style, setStyle] = useState('dark')
+  const [style, setStyle] = useState('navy')
 
   const [serviceId, setServiceId] = useState('')
   const [photo, setPhoto] = useState(emptyPhoto)
@@ -838,8 +851,27 @@ export default function SocialDoc() {
           )}
 
           {(templateId === 'split' || templateId === 'clean_brand') && (
-            <Field label="Estilo">
-              <OptionRow options={['dark', 'light', 'photo']} value={style} onChange={setStyle} labels={{ dark: 'Dark', light: 'Light', photo: 'Photo' }} />
+            <Field label="Color de fondo">
+              <div className="flex items-center gap-2">
+                {Object.entries(BG_COLORS).map(([key, c]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setStyle(key)}
+                    aria-label={c.label}
+                    title={c.label}
+                    className={`w-9 h-9 rounded-full border-2 transition-transform ${style === key ? 'border-ink scale-110' : 'border-ink/15'}`}
+                    style={{ backgroundColor: c.hex }}
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setStyle('photo')}
+                  className={`h-9 px-3 rounded-full border text-[11px] font-bold ${style === 'photo' ? 'border-gold bg-gold/15 text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30'}`}
+                >
+                  Photo
+                </button>
+              </div>
             </Field>
           )}
 
