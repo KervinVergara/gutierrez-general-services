@@ -25,11 +25,13 @@ const TEMPLATES = [
   { id: 'clean_brand', label: 'Clean Brand' },
 ]
 
+// Editor control labels — always Spanish, regardless of "Idioma de la pieza" (that only
+// affects the ad copy that gets drawn on the canvas, not the panel controls around it).
 const AD_TYPES = [
-  { id: 'service', es: 'Servicio', en: 'Service' },
-  { id: 'promo', es: 'Promoción', en: 'Promotion' },
-  { id: 'before_after', es: 'Antes / Después', en: 'Before / After' },
-  { id: 'general', es: 'General', en: 'General' },
+  { id: 'service', label: 'Servicio' },
+  { id: 'promo', label: 'Promoción' },
+  { id: 'before_after', label: 'Antes / Después' },
+  { id: 'general', label: 'General' },
 ]
 
 const CTA_TYPES = ['call', 'quote', 'message', 'book', 'custom']
@@ -522,12 +524,19 @@ async function render(canvas, state) {
   ctx.clearRect(0, 0, w, h)
   ctx.textBaseline = 'alphabetic'
 
-  if (state.templateId === 'split') renderSplit(ctx, state)
-  else if (state.templateId === 'clean_brand') renderCleanBrand(ctx, state)
-  else if (state.templateId === 'before_after') renderBeforeAfter(ctx, state)
-  else renderPhotoHero(ctx, state)
+  try {
+    if (state.templateId === 'split') renderSplit(ctx, state)
+    else if (state.templateId === 'clean_brand') renderCleanBrand(ctx, state)
+    else if (state.templateId === 'before_after') renderBeforeAfter(ctx, state)
+    else renderPhotoHero(ctx, state)
+  } catch (err) {
+    console.error('Publicidad: fallo al dibujar la plantilla', err)
+  }
 
-  if (state.logoOn) drawLogo(ctx, state.logoImg, state.format, state.logoPos, state.logoSize, state.logoVariant)
+  if (state.logoOn) {
+    try { drawLogo(ctx, state.logoImg, state.format, state.logoPos, state.logoSize, state.logoVariant) }
+    catch (err) { console.error('Publicidad: fallo al dibujar el logo', err) }
+  }
 }
 
 function Collapsible({ title, defaultOpen, children }) {
@@ -606,6 +615,7 @@ export default function SocialDoc() {
   const [title, setTitle] = useState(() => content.es.hero.titleLines.join('\n'))
   const [subtitle, setSubtitle] = useState(() => content.es.hero.sub)
   const [description, setDescription] = useState('')
+  const [autoSource, setAutoSource] = useState('hero')
   const [price, setPrice] = useState('')
   const [oldPrice, setOldPrice] = useState('')
   const [showOldPrice, setShowOldPrice] = useState(false)
@@ -640,6 +650,20 @@ export default function SocialDoc() {
   useEffect(() => { loadLogo().then(setLogoImg) }, [])
   useEffect(() => { setBeforeLabel(pieceLang === 'es' ? 'ANTES' : 'BEFORE'); setAfterLabel(pieceLang === 'es' ? 'DESPUÉS' : 'AFTER') }, [pieceLang])
 
+  // Re-translate the auto-filled title/subtitle when the piece language changes,
+  // but only while they still come from the hero default or a selected service —
+  // once the staff member edits them by hand, the language toggle leaves them alone.
+  useEffect(() => {
+    if (autoSource === 'hero') {
+      setTitle(content[pieceLang].hero.titleLines.join('\n'))
+      setSubtitle(content[pieceLang].hero.sub)
+    } else if (autoSource) {
+      const s = content[pieceLang].services.find((x) => x.id === autoSource)
+      if (s) { setTitle(s.title); if (adType === 'promo') setDescription(s.lead); else setSubtitle(s.lead) }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pieceLang])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -660,6 +684,7 @@ export default function SocialDoc() {
     setServiceId(id)
     const s = SERVICES.find((x) => x.id === id)
     if (!s) return
+    setAutoSource(id)
     setTitle(s.title)
     if (adType === 'promo') { setDescription(s.lead); if (s.price) setPrice(`${content[pieceLang].from} ${s.price}`) }
     else setSubtitle(s.lead)
@@ -762,7 +787,7 @@ export default function SocialDoc() {
             <div className="flex flex-wrap gap-1.5">
               {AD_TYPES.map((t) => (
                 <button key={t.id} type="button" onClick={() => selectAdType(t.id)} className={`h-9 px-3 rounded-full border text-xs font-bold ${adType === t.id ? 'bg-ink text-gold border-ink' : 'bg-white border-ink/15 hover:border-ink'}`}>
-                  {t[pieceLang]}
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -788,7 +813,7 @@ export default function SocialDoc() {
                 <Field label="Etiqueta BEFORE"><input className={inputCls} value={beforeLabel} onChange={(e) => setBeforeLabel(e.target.value)} /></Field>
                 <Field label="Etiqueta AFTER"><input className={inputCls} value={afterLabel} onChange={(e) => setAfterLabel(e.target.value)} /></Field>
               </div>
-              <Field label="Título (opcional)"><input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
+              <Field label="Título (opcional)"><input className={inputCls} value={title} onChange={(e) => { setAutoSource(null); setTitle(e.target.value) }} /></Field>
             </>
           ) : (
             <PhotoField label="Foto" photo={photo} setPhoto={setPhoto} />
@@ -796,8 +821,8 @@ export default function SocialDoc() {
 
           {adType === 'promo' ? (
             <>
-              <Field label="Título"><input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
-              <Field label="Descripción"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+              <Field label="Título"><input className={inputCls} value={title} onChange={(e) => { setAutoSource(null); setTitle(e.target.value) }} /></Field>
+              <Field label="Descripción"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={description} onChange={(e) => { setAutoSource(null); setDescription(e.target.value) }} /></Field>
               <Field label="Precio / Oferta"><input className={inputCls} placeholder="Desde $700" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
               <label className="flex items-center gap-2 text-sm text-ink/80"><input type="checkbox" checked={showOldPrice} onChange={(e) => setShowOldPrice(e.target.checked)} className="w-4 h-4 accent-[var(--color-gold)]" /> Mostrar precio anterior</label>
               {showOldPrice && <Field label="Precio anterior"><input className={inputCls} value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} /></Field>}
@@ -806,8 +831,8 @@ export default function SocialDoc() {
             </>
           ) : adType !== 'before_after' && (
             <>
-              <Field label="Título"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
-              <Field label="Subtítulo"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={subtitle} onChange={(e) => setSubtitle(e.target.value)} /></Field>
+              <Field label="Título"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={title} onChange={(e) => { setAutoSource(null); setTitle(e.target.value) }} /></Field>
+              <Field label="Subtítulo"><textarea rows="2" className={`${inputCls} w-full h-auto py-2`} value={subtitle} onChange={(e) => { setAutoSource(null); setSubtitle(e.target.value) }} /></Field>
             </>
           )}
         </Collapsible>
