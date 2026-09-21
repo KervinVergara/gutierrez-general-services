@@ -6,13 +6,13 @@ export const BUSINESS = 'Gutierrez General Services LLC'
 
 export const content = {
   en: {
-    nav: { services: 'Services', plans: 'Plans', ourWork: 'Our Work', seasonal: 'Seasonal Care', contact: 'Contact', quote: 'Get a Free Quote', call: 'Call now' },
+    nav: { services: 'Services', plans: 'Plans', ourWork: 'Our Work', seasonal: 'Seasonal Care', contact: 'Contact', quote: 'Get a Free Quote', quoteShort: 'Get a Quote', call: 'Call now' },
     hero: {
       kicker: 'Cleaner spaces. Brighter days.',
-      titleLines: ['Your Car. Your Home.', 'Taken Care Of.'],
-      sub: 'Professional auto detailing, property care and seasonal services — without the hassle.',
-      cta1: 'Get a Quote',
-      cta2: 'View Services',
+      titleLines: ['Your Car.', 'Your Home.', 'Taken Care Of.'],
+      sub: 'Auto detailing, property care and seasonal services in Warsaw, Indiana.',
+      cta1: 'Get a Free Quote',
+      cta2: 'View Our Work',
     },
     details: 'View details', close: 'Close',
     servicesEyebrow: 'Our services',
@@ -141,13 +141,13 @@ export const content = {
     feedback: { title: 'Suggestions', placeholder: 'Write a suggestion…', empty: 'No suggestions yet.' },
   },
   es: {
-    nav: { services: 'Servicios', plans: 'Planes', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', call: 'Llamar' },
+    nav: { services: 'Servicios', plans: 'Planes', ourWork: 'Nuestro trabajo', seasonal: 'Cuidado de temporada', contact: 'Contacto', quote: 'Cotización gratis', quoteShort: 'Cotizar', call: 'Llamar' },
     hero: {
       kicker: 'Espacios más limpios. Días más brillantes.',
-      titleLines: ['Su carro. Su casa.', 'Bien cuidados.'],
-      sub: 'Detallado profesional de vehículos, cuidado de propiedades y servicios de temporada — sin complicaciones.',
-      cta1: 'Solicitar cotización',
-      cta2: 'Ver servicios',
+      titleLines: ['Su carro.', 'Su casa.', 'Bien cuidados.'],
+      sub: 'Detallado de vehículos, cuidado de propiedades y servicios de temporada en Warsaw, Indiana.',
+      cta1: 'Cotización gratis',
+      cta2: 'Ver nuestro trabajo',
     },
     details: 'Ver detalles', close: 'Cerrar',
     servicesEyebrow: 'Nuestros servicios',

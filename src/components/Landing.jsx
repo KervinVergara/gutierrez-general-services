@@ -4,8 +4,7 @@ import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import FeedbackWidget from './FeedbackWidget'
 import logo from '../assets/photos/logo-new.png'
-import heroMain from '../assets/photos/stock-exterior-siding.jpeg'
-import heroOverlay from '../assets/photos/curated/01_lavado_en_accion.jpeg'
+import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.jpeg'
 import svcAuto from '../assets/photos/curated/02_brillo_pintura.jpeg'
 import svcProperty from '../assets/photos/stock-exterior-gutter.jpeg'
 import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
@@ -34,6 +33,7 @@ export default function Landing({ lang, setLang }) {
   const [presetService, setPresetService] = useState('')
   const [presetType, setPresetType] = useState('')
   const [lightbox, setLightbox] = useState(null)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     if (!lightbox) return
@@ -41,6 +41,13 @@ export default function Landing({ lang, setLang }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [lightbox])
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const waHref = `https://wa.me/${PHONE_WA}?text=${encodeURIComponent(WA_GREETING[lang])}`
   const byGroup = groupOrder.map((g) => ({ key: g, items: t.services.filter((s) => s.group === g && !s.hidden) }))
@@ -65,20 +72,23 @@ export default function Landing({ lang, setLang }) {
   return (
     <div className="min-h-screen bg-sand">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-sand/95 backdrop-blur-sm border-b border-ink/10">
-        <div className="mx-auto max-w-6xl px-4 h-24 flex items-center justify-between gap-4">
+      <header className={`sticky top-0 z-40 transition-colors duration-200 ${scrolled ? 'bg-sand border-b border-ink/10 shadow-[0_2px_10px_-4px_rgba(18,59,85,0.12)]' : 'bg-sand/95 backdrop-blur-sm border-b border-transparent'}`}>
+        <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logo} alt={BUSINESS} className="h-12 md:h-16 w-auto object-contain" />
+            <img src={logo} alt={BUSINESS} className="h-10 md:h-12 w-auto object-contain" />
           </a>
           <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-ink/75">
             <a href="#services" className={navLinkCls}>{t.nav.services}</a>
             <a href="#plans" className={navLinkCls}>{t.nav.plans}</a>
             <a href="#work" className={navLinkCls}>{t.nav.ourWork}</a>
             <a href="#contact" className={navLinkCls}>{t.nav.contact}</a>
-            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className={navLinkCls} aria-label="Switch language">EN / ES</button>
+            <span className="w-px h-5 bg-ink/15" aria-hidden="true" />
+            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-ink/60 hover:text-ink text-sm font-bold transition-colors" aria-label="Switch language">EN / ES</button>
+            <a href="#contact" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 transition-colors whitespace-nowrap">{t.nav.quoteShort}</a>
           </nav>
-          <div className="flex items-center gap-3 shrink-0">
-            <button onClick={() => setOpen(!open)} className="lg:hidden grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
+          <div className="flex items-center gap-2 shrink-0 lg:hidden">
+            <a href="#contact" className="inline-flex items-center justify-center h-10 px-4 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
+            <button onClick={() => setOpen(!open)} className="grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
               <Icon name={open ? 'x' : 'menu'} size={20} />
             </button>
           </div>
@@ -95,46 +105,37 @@ export default function Landing({ lang, setLang }) {
 
       {/* HERO */}
       <section id="top" className="bg-mist">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-12 md:gap-10 items-start">
-          <div className="md:pt-4">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:py-14 grid md:grid-cols-5 gap-10 md:gap-8 items-center">
+          <div className="md:col-span-3">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.hero.kicker}</p>
-            <h1 className="mt-4 text-[2.6rem] sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.05] text-ink">
+            <h1 className="mt-4 text-[2.75rem] sm:text-6xl md:text-[3.75rem] font-extrabold leading-[1.03] tracking-tight text-ink">
               {t.hero.titleLines.map((line) => <span key={line} className="block">{line}</span>)}
             </h1>
-            <p className="mt-6 text-lg text-steel max-w-md">{t.hero.sub}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <p className="mt-5 text-lg text-steel max-w-md">{t.hero.sub}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4">
               <a href="#contact" className="inline-flex items-center justify-center h-13 px-7 rounded-full bg-gold text-ink font-bold text-lg hover:bg-gold-2">{t.hero.cta1}</a>
-              <a href="#services" className="inline-flex items-center justify-center h-13 px-6 rounded-full border-2 border-ink/15 text-ink font-bold text-lg hover:border-ink">{t.hero.cta2}</a>
+              <a href="#work" className="inline-flex items-center gap-1.5 text-ink font-bold text-lg hover:underline">{t.hero.cta2} <Icon name="arrowRight" size={18} /></a>
             </div>
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <a href={`tel:${PHONE_TEL}`} className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
-                <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="phone" size={18} /></span>
-                {PHONE_DISPLAY}
-              </a>
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-bold text-ink hover:underline">
-                <span className="grid place-items-center w-10 h-10 rounded-full bg-white text-ink shadow-sm"><Icon name="whatsapp" size={18} /></span>
-                WhatsApp
-              </a>
-            </div>
+            <p className="mt-5 text-sm text-steel flex items-center gap-2">
+              <span>{t.trust.points[0].title}</span>
+              <span aria-hidden="true">•</span>
+              <span>{t.trust.points[2].title}</span>
+            </p>
           </div>
-          <div className="relative max-w-sm md:max-w-full mx-auto md:mx-0">
-            <div className="relative aspect-[4/5] md:aspect-[4/3] rounded-3xl overflow-hidden shadow-sm">
-              <img src={heroMain} alt={lang === 'en' ? 'Exterior pressure washing at a home' : 'Lavado a presión exterior en una vivienda'} className="w-full h-full object-cover" />
-              <span className="absolute bottom-3 left-3 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{lang === 'en' ? 'Property care' : 'Cuidado de propiedad'}</span>
-            </div>
+          <div className="md:col-span-2">
             <button
               type="button"
-              onClick={() => setLightbox({ src: heroOverlay, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
-              className="hidden sm:block absolute -bottom-6 right-2 md:right-4 w-32 md:w-40 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg cursor-zoom-in"
+              onClick={() => setLightbox({ src: heroPhoto, alt: lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo' })}
+              className="relative block w-full max-w-sm md:max-w-full mx-auto aspect-[3/4] rounded-3xl overflow-hidden shadow-sm cursor-zoom-in"
             >
-              <img src={heroOverlay} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
+              <img src={heroPhoto} alt={lang === 'en' ? 'Team member washing a vehicle' : 'Trabajador lavando un vehículo'} className="w-full h-full object-cover" />
             </button>
           </div>
         </div>
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="mx-auto max-w-6xl px-4 py-12 md:py-20">
+      <section id="services" className="mx-auto max-w-6xl px-4 py-12 md:py-20 scroll-mt-20">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.servicesEyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.servicesTitle}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.servicesSub}</p>
@@ -212,7 +213,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* MONTHLY CARE PLANS */}
-      <section id="plans" className="bg-mist">
+      <section id="plans" className="bg-mist scroll-mt-20">
         <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.plans.eyebrow}</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.plans.title}</h2>
@@ -225,7 +226,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* OUR WORK */}
-      <section id="work" className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+      <section id="work" className="mx-auto max-w-6xl px-4 py-16 md:py-24 scroll-mt-20">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.gallery.eyebrow}</p>
         <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">{t.gallery.title}</h2>
         <p className="mt-3 text-lg text-steel max-w-2xl">{t.gallery.sub}</p>
@@ -264,7 +265,7 @@ export default function Landing({ lang, setLang }) {
       </section>
 
       {/* QUOTE / CONTACT */}
-      <section id="contact" className="relative bg-ink text-white overflow-hidden">
+      <section id="contact" className="relative bg-ink text-white overflow-hidden scroll-mt-20">
         <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">{t.contact.title}</h2>
