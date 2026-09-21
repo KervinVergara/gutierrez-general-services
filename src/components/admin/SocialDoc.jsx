@@ -8,7 +8,6 @@ const WEBSITE = 'gutierrez-general-services.web.app'
 const LOCATION = 'Warsaw, Indiana'
 
 const NAVY = '#123b55'
-const NAVY2 = '#1a4d6e'
 const GOLD = '#f3c64e'
 const SAND = '#f7f5ef'
 const MIST = '#dfeef5'
@@ -50,9 +49,10 @@ const CTA_PRESETS = {
   en: { call: 'Call Now', quote: 'Get a Free Quote', message: 'Message Us', book: 'Book Now' },
 }
 
-const TITLE_SIZE = { small: 0.045, medium: 0.065, large: 0.085 }
-const SUB_SIZE = { small: 0.024, medium: 0.03, large: 0.036 }
-const LOGO_W = { small: 0.17, medium: 0.24, large: 0.32 }
+// Base fractions of canvas width at 100% scale — the "Tamaño del título" slider multiplies these.
+const TITLE_BASE = 0.065
+const SUB_BASE = 0.03
+const LOGO_W = { small: 0.24, medium: 0.34, large: 0.46 }
 // Hand-measured bounding box of the house/car mark within logo-new.png, before the gap that starts the "GUTIERREZ" wordmark.
 const LOGO_ICON_CROP = { w: 606, h: 398 }
 const LOGO_FULL_SIZE = { w: 1720, h: 398 }
@@ -165,10 +165,8 @@ function drawContain(ctx, img, frame) {
 
 function drawPhotoPlaceholder(ctx, frame) {
   const { x, y, w, h } = frame
-  const grad = ctx.createLinearGradient(x, y, x + w, y + h)
-  grad.addColorStop(0, NAVY2)
-  grad.addColorStop(1, NAVY)
-  ctx.fillStyle = grad
+  // Light fill, not navy — the logo itself is navy-colored and needs a light backdrop to read.
+  ctx.fillStyle = MIST
   ctx.fillRect(x, y, w, h)
 }
 
@@ -189,7 +187,9 @@ function drawLogo(ctx, logoImg, format, pos, sizeKey, variant) {
   if (!logoImg) return
   const { w, h } = format
   const useIcon = variant === 'icon'
-  const targetH = w * LOGO_W[sizeKey] * (LOGO_FULL_SIZE.h / LOGO_FULL_SIZE.w)
+  // Base off the shorter side so the logo doesn't blow up on short-but-wide formats
+  // like Facebook Horizontal (1200x630), where it used to overshoot the canvas height.
+  const targetH = Math.min(w, h) * LOGO_W[sizeKey] * (LOGO_FULL_SIZE.h / LOGO_FULL_SIZE.w)
   const lh = targetH
   const lw = useIcon ? targetH * (LOGO_ICON_CROP.w / LOGO_ICON_CROP.h) : targetH * (LOGO_FULL_SIZE.w / LOGO_FULL_SIZE.h)
   const margin = Math.min(w, h) * 0.045
@@ -285,8 +285,9 @@ function drawCtaChip(ctx, alignX, y, textAlign, cta, w, maxWidth) {
 }
 
 function drawContentBlock(ctx, state, padBottom, mode) {
-  const { format, textAlign, titleSize } = state
+  const { format, textAlign, titleScale } = state
   const { w, h } = format
+  const scale = titleScale / 100
   const pad = Math.min(w, h) * 0.07
   const alignX = textAlign === 'center' ? w / 2 : textAlign === 'right' ? w - pad : pad
   ctx.textAlign = textAlign
@@ -312,27 +313,28 @@ function drawContentBlock(ctx, state, padBottom, mode) {
 
   const maxTextW = w - pad * 2
   if (texts.subtitle) {
-    const { size: subSize, lines: subLines } = fitWrappedText(ctx, texts.subtitle, 600, w * SUB_SIZE[titleSize], w * 0.014, maxTextW, 3)
+    const { size: subSize, lines: subLines } = fitWrappedText(ctx, texts.subtitle, 600, w * SUB_BASE * scale, w * 0.014, maxTextW, 3)
     ctx.fillStyle = mode === 'light' ? 'rgba(255,255,255,0.88)' : 'rgba(18,59,85,0.75)'
     for (let i = subLines.length - 1; i >= 0; i--) { ctx.fillText(subLines[i], alignX, y); y -= subSize * 1.35 }
     y -= w * 0.015
   }
 
-  const { size: titleFontSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * TITLE_SIZE[titleSize], w * 0.03, maxTextW, 3)
+  const { size: titleFontSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, w * TITLE_BASE * scale, w * 0.03, maxTextW, 3)
   ctx.fillStyle = mode === 'light' ? '#fff' : NAVY
   for (let i = titleLines.length - 1; i >= 0; i--) { ctx.fillText(titleLines[i], alignX, y); y -= titleFontSize * 1.15 }
 }
 
 function drawInfoPanelText(ctx, frame, state, mode) {
-  const { textAlign, titleSize, format } = state
+  const { textAlign, titleScale, format } = state
   const w = format.w
+  const scale = titleScale / 100
   const pad = frame.w * 0.12
   const alignX = textAlign === 'center' ? frame.x + frame.w / 2 : textAlign === 'right' ? frame.x + frame.w - pad : frame.x + pad
   ctx.textAlign = textAlign
   const texts = buildTexts(state)
   const maxTextW = frame.w - pad * 2
 
-  const titleBase = Math.min(w * TITLE_SIZE[titleSize] * 0.85, frame.w * 0.16)
+  const titleBase = Math.min(w * TITLE_BASE * scale * 0.85, frame.w * 0.16)
   const { size: titleFontSize, lines: titleLines } = fitWrappedText(ctx, texts.title, 800, titleBase, w * 0.024, maxTextW, 4)
   ctx.fillStyle = mode === 'light' ? '#fff' : NAVY
   let y = frame.y + frame.h * 0.26
@@ -340,7 +342,7 @@ function drawInfoPanelText(ctx, frame, state, mode) {
 
   if (texts.subtitle) {
     y += w * 0.012
-    const subBase = Math.min(w * SUB_SIZE[titleSize], frame.w * 0.075)
+    const subBase = Math.min(w * SUB_BASE * scale, frame.w * 0.075)
     const { size: subFontSize, lines: subLines } = fitWrappedText(ctx, texts.subtitle, 600, subBase, w * 0.013, maxTextW, 3)
     ctx.fillStyle = mode === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(18,59,85,0.75)'
     subLines.forEach((l) => { ctx.fillText(l, alignX, y); y += subFontSize * 1.35 })
@@ -627,7 +629,7 @@ export default function SocialDoc() {
 
   const [overlay, setOverlay] = useState(30)
   const [textAlign, setTextAlign] = useState('center')
-  const [titleSize, setTitleSize] = useState('medium')
+  const [titleScale, setTitleScale] = useState(100)
   const [safeGuide, setSafeGuide] = useState(false)
 
   const [logoOn, setLogoOn] = useState(true)
@@ -671,9 +673,9 @@ export default function SocialDoc() {
     render(canvas, {
       format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation,
       title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel,
-      overlay, textAlign, titleSize, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg,
+      overlay, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg,
     })
-  }, [format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation, title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel, overlay, textAlign, titleSize, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg])
+  }, [format, pieceLang, adType, templateId, style, photo, photoBefore, photoAfter, orientation, title, subtitle, description, price, oldPrice, showOldPrice, validity, showValidity, beforeLabel, afterLabel, overlay, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, showPhone, showWebsite, showLocation, ctaType, ctaCustom, logoImg])
 
   function selectAdType(t) {
     setAdType(t)
@@ -747,12 +749,12 @@ export default function SocialDoc() {
 
   function savePreset() {
     if (!presetName.trim()) return
-    const p = { id: Date.now(), name: presetName.trim(), formatId, templateId, style, textAlign, titleSize, logoOn, logoVariant, logoPos, logoSize, overlay, showPhone, showWebsite, showLocation, ctaType, ctaCustom }
+    const p = { id: Date.now(), name: presetName.trim(), formatId, templateId, style, textAlign, titleScale, logoOn, logoVariant, logoPos, logoSize, overlay, showPhone, showWebsite, showLocation, ctaType, ctaCustom }
     const list = [...presets, p]
     setPresets(list); savePresetsList(list); setPresetName('')
   }
   function applyPreset(p) {
-    setFormatId(p.formatId); setTemplateId(p.templateId); setStyle(p.style); setTextAlign(p.textAlign); setTitleSize(p.titleSize)
+    setFormatId(p.formatId); setTemplateId(p.templateId); setStyle(p.style); setTextAlign(p.textAlign); setTitleScale(p.titleScale || 100)
     setLogoOn(p.logoOn); setLogoVariant(p.logoVariant || 'full'); setLogoPos(p.logoPos); setLogoSize(p.logoSize); setOverlay(p.overlay)
     setShowPhone(p.showPhone); setShowWebsite(p.showWebsite); setShowLocation(p.showLocation); setCtaType(p.ctaType); setCtaCustom(p.ctaCustom || '')
   }
@@ -885,8 +887,8 @@ export default function SocialDoc() {
           <Field label="Alineación de texto">
             <OptionRow options={['left', 'center', 'right']} value={textAlign} onChange={setTextAlign} labels={{ left: 'Left', center: 'Center', right: 'Right' }} />
           </Field>
-          <Field label="Tamaño del título">
-            <OptionRow options={['small', 'medium', 'large']} value={titleSize} onChange={setTitleSize} labels={{ small: 'Small', medium: 'Medium', large: 'Large' }} />
+          <Field label={`Tamaño del título — ${titleScale}%`}>
+            <input type="range" min="60" max="160" step="5" value={titleScale} onChange={(e) => setTitleScale(Number(e.target.value))} className="accent-[var(--color-gold)]" />
           </Field>
 
           {tall && (
