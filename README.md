@@ -37,4 +37,8 @@ npx playwright install chromium   # una sola vez
 npm run test:e2e
 ```
 
-Pendiente: pruebas de integración contra el Firebase Emulator Suite (Firestore + Auth locales) para probar el flujo completo de guardado sin tocar el proyecto real.
+**Reglas de Firestore** (Firebase Emulator Suite) — corre las reglas de seguridad reales (`firestore.rules`) contra un Firestore local, sin tocar el proyecto real. Prueba, por ejemplo, que un visitante anónimo puede crear una cotización pero no puede leerlas, que el campo `status` no se puede falsificar al crear, y que la colección `feedback` (antes 100% pública) ahora está protegida.
+```
+npm run test:rules
+```
+La primera vez, si no tienes el Firebase CLI instalado globalmente: `npm install -g firebase-tools`. El comando levanta el emulador de Firestore, corre las pruebas, y lo apaga solo — no requiere el proyecto real ni credenciales.
