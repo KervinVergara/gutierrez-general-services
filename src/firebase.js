@@ -25,9 +25,9 @@ export const auth = app ? getAuth(app) : null
 // Safe to leave the env var empty: the app just runs without it, same as today.
 const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
 if (app && recaptchaSiteKey) {
-  import('firebase/app-check').then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+  import('firebase/app-check').then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
     })
   })
