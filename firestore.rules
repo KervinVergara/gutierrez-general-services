@@ -17,6 +17,17 @@ service cloud.firestore {
              || (field in request.resource.data && request.resource.data[field] == resource.data[field]);
     }
 
+    // Forces every create/update on the audited internal collections to
+    // stamp who made it, as their OWN uid — a client can truthfully claim
+    // "I did this", never "someone else did this". A Cloud Functions
+    // trigger reads updatedBy off these writes to build an audit trail in
+    // /auditLog. Doesn't apply to delete (there's no new document to check
+    // against), so a delete's actor isn't captured this way — see
+    // functions/index.js and the project notes for that limitation.
+    function stampedActor() {
+      return request.resource.data.updatedBy == request.auth.uid;
+    }
+
     match /quotes/{id} {
       // Public submissions now go through the submitQuote Cloud Function
       // (functions/index.js), which validates + rate-limits server-side and
@@ -45,24 +56,37 @@ service cloud.firestore {
     }
     match /clients/{id} {
       // Internal CRM data — only signed-in staff can read/write; updates can't rewrite createdAt.
-      allow read, create, delete: if isStaff();
-      allow update: if isStaff() && unchanged('createdAt');
+      // Create/update must be honestly attributed to the account making them (stampedActor).
+      allow read, delete: if isStaff();
+      allow create: if isStaff() && stampedActor();
+      allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
     match /jobs/{id} {
       // Completed/scheduled service records — only signed-in staff; updates can't rewrite
       // createdAt or origin (whether the job came from a quote, a plan, or manual entry).
-      allow read, create, delete: if isStaff();
-      allow update: if isStaff() && unchanged('createdAt') && unchanged('origin');
+      allow read, delete: if isStaff();
+      allow create: if isStaff() && stampedActor();
+      allow update: if isStaff() && unchanged('createdAt') && unchanged('origin') && stampedActor();
     }
     match /finance/{id} {
       // Income/expense ledger — only signed-in staff; updates can't rewrite createdAt.
-      allow read, create, delete: if isStaff();
-      allow update: if isStaff() && unchanged('createdAt');
+      allow read, delete: if isStaff();
+      allow create: if isStaff() && stampedActor();
+      allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
     match /plans/{id} {
       // Recurring maintenance plans — only signed-in staff; updates can't rewrite createdAt.
-      allow read, create, delete: if isStaff();
-      allow update: if isStaff() && unchanged('createdAt');
+      allow read, delete: if isStaff();
+      allow create: if isStaff() && stampedActor();
+      allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
+    match /auditLog/{id} {
+      // Written only by the Cloud Functions triggers below, via the Admin SDK
+      // (which bypasses these rules entirely) — never directly by a client,
+      // so a compromised admin session can't edit or erase its own trail.
+      allow read: if isStaff();
+    }
+    // rateLimits is intentionally left with no match block above (default
+    // deny) — only functions/index.js's Admin SDK ever touches it.
   }
 }

@@ -13,6 +13,10 @@ let authStateCallback = null
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: (_auth, cb) => { authStateCallback = cb; return () => {} },
   signInWithEmailAndPassword: vi.fn(),
+  signInWithPopup: vi.fn(),
+  linkWithPopup: vi.fn(),
+  unlink: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
   signOut: vi.fn(),
 }))
 
@@ -41,6 +45,7 @@ describe('Admin — logged out', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Panel interno' })).toBeInTheDocument())
     expect(screen.getByLabelText('Correo')).toBeInTheDocument()
     expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Iniciar sesión con Google' })).toBeInTheDocument()
 
     // None of the internal tabs (which is where real client/job/finance data lives)
     // should ever render before a session exists.

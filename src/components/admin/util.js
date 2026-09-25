@@ -74,3 +74,12 @@ export function last6Months() {
   }
   return out
 }
+
+// Stamps the uid + email of whoever is making this write, enforced by
+// firestore.rules (request.resource.data.updatedBy must equal
+// request.auth.uid — a client can only ever claim its own identity, never
+// someone else's). A Cloud Functions trigger reads this field to build an
+// audit trail of who changed what in clients/jobs/finance/plans.
+export function withAudit(data, auth) {
+  return { ...data, updatedBy: auth.currentUser?.uid || '', updatedByEmail: auth.currentUser?.email || '' }
+}

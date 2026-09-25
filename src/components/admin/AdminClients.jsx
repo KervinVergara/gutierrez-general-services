@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import Icon from '../Icon'
 import { Field, inputCls, Loading, EmptyState } from './shared'
-import { sanitizePhone, money, fmtDate, todayStr } from './util'
+import { sanitizePhone, money, fmtDate, todayStr, withAudit } from './util'
 
 const emptyForm = { name: '', phone: '', email: '', zip: '', notes: '' }
 const emptyVehicle = { make: '', model: '', year: '', color: '', plate: '', notes: '' }
@@ -71,7 +71,7 @@ export default function AdminClients({ goTo, focus, onFocusHandled }) {
     const { doc, setDoc, serverTimestamp, getDoc } = await import('firebase/firestore')
     const ref = doc(db, 'clients', id)
     const existing = await getDoc(ref)
-    const data = { name: form.name, phone: form.phone, email: form.email, zip: form.zip, notes: form.notes, updatedAt: serverTimestamp() }
+    const data = withAudit({ name: form.name, phone: form.phone, email: form.email, zip: form.zip, notes: form.notes, updatedAt: serverTimestamp() }, auth)
     if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'manual'; data.vehicles = []; data.properties = [] }
     await setDoc(ref, data, { merge: true })
     cancel()
@@ -85,7 +85,7 @@ export default function AdminClients({ goTo, focus, onFocusHandled }) {
 
   async function saveList(client, key, list) {
     const { doc, updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, 'clients', client.id), { [key]: list })
+    await updateDoc(doc(db, 'clients', client.id), withAudit({ [key]: list }, auth))
   }
 
   return (

@@ -34,6 +34,7 @@ beforeEach(async () => {
 // for every internal collection — that's the whole point of this claim.
 const staffDb = () => testEnv.authenticatedContext('staff-1', { admin: true }).firestore()
 const otherUserDb = () => testEnv.authenticatedContext('random-user', {}).firestore()
+const staff2Db = () => testEnv.authenticatedContext('staff-2', { admin: true }).firestore()
 const anonDb = () => testEnv.unauthenticatedContext().firestore()
 
 const validQuote = {
@@ -118,8 +119,34 @@ describe('internal-only collections (clients, jobs, finance, plans)', () => {
   })
 
   it('lets staff (admin claim) read and write', async () => {
-    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c1'), { name: 'Jane Doe' }))
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c1'), { name: 'Jane Doe', updatedBy: 'staff-1' }))
     await assertSucceeds(getDoc(doc(staffDb(), 'clients', 'c1')))
+  })
+})
+
+describe('writes to clients/jobs/finance/plans must be honestly attributed (stampedActor)', () => {
+  it('blocks staff from creating a client record without an updatedBy field', async () => {
+    await assertFails(setDoc(doc(staffDb(), 'clients', 'c-noactor'), { name: 'Jane Doe' }))
+  })
+
+  it('blocks staff from creating a client record claiming to be a different uid', async () => {
+    await assertFails(setDoc(doc(staffDb(), 'clients', 'c-spoofed'), { name: 'Jane Doe', updatedBy: 'someone-else' }))
+  })
+
+  it('lets staff update without re-passing updatedBy, as long as it still matches them (Firestore merges the old value in)', async () => {
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-update'), { name: 'Jane Doe', updatedBy: 'staff-1' }))
+    // updateDoc merges into the existing document — updatedBy: 'staff-1' carries over
+    // from the create above, and since the same 'staff-1' is still the one writing,
+    // request.resource.data.updatedBy (the merged result) still equals request.auth.uid.
+    await assertSucceeds(updateDoc(doc(staffDb(), 'clients', 'c-update'), { notes: 'called back' }))
+  })
+
+  it('blocks a DIFFERENT staff account from updating a record without re-stamping it as their own', async () => {
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-handoff'), { name: 'Jane Doe', updatedBy: 'staff-1' }))
+    // staff-2 doesn't touch updatedBy — the merged document still says 'staff-1',
+    // which no longer matches staff-2's own uid, so this must fail.
+    await assertFails(updateDoc(doc(staff2Db(), 'clients', 'c-handoff'), { notes: 'called back' }))
+    await assertSucceeds(updateDoc(doc(staff2Db(), 'clients', 'c-handoff'), { notes: 'called back', updatedBy: 'staff-2' }))
   })
 })
 
@@ -135,41 +162,41 @@ describe('field immutability on update (createdAt / origin cannot be rewritten b
   })
 
   it('blocks staff from changing createdAt on a client record', async () => {
-    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-immutable'), { name: 'Jane Doe', createdAt: 1000 }))
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-immutable'), { name: 'Jane Doe', createdAt: 1000, updatedBy: 'staff-1' }))
 
-    await assertFails(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { createdAt: 2000 }))
-    await assertSucceeds(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { notes: 'called back' }))
+    await assertFails(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { createdAt: 2000, updatedBy: 'staff-1' }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { notes: 'called back', updatedBy: 'staff-1' }))
   })
 
   it('blocks staff from changing createdAt or origin on a job, but allows other edits (e.g. correcting the charged amount)', async () => {
     const ref = await addDoc(collection(staffDb(), 'jobs'), {
       clientId: 'c1', clientName: 'Jane Doe', service: 'detailing', date: '2026-01-01',
       amountCharged: 100, status: 'scheduled', paymentStatus: 'pending',
-      origin: 'manual', createdAt: 1000,
+      origin: 'manual', createdAt: 1000, updatedBy: 'staff-1',
     })
 
-    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { createdAt: 2000 }))
-    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { origin: 'plan' }))
-    await assertSucceeds(updateDoc(doc(staffDb(), 'jobs', ref.id), { amountCharged: 120 }))
+    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { createdAt: 2000, updatedBy: 'staff-1' }))
+    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { origin: 'plan', updatedBy: 'staff-1' }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'jobs', ref.id), { amountCharged: 120, updatedBy: 'staff-1' }))
   })
 
   it('blocks staff from changing createdAt on a finance entry, but allows editing the amount', async () => {
     const ref = await addDoc(collection(staffDb(), 'finance'), {
-      type: 'expense', description: 'Supplies', amount: 50, date: '2026-01-01', category: 'Supplies', createdAt: 1000,
+      type: 'expense', description: 'Supplies', amount: 50, date: '2026-01-01', category: 'Supplies', createdAt: 1000, updatedBy: 'staff-1',
     })
 
-    await assertFails(updateDoc(doc(staffDb(), 'finance', ref.id), { createdAt: 2000 }))
-    await assertSucceeds(updateDoc(doc(staffDb(), 'finance', ref.id), { amount: 75 }))
+    await assertFails(updateDoc(doc(staffDb(), 'finance', ref.id), { createdAt: 2000, updatedBy: 'staff-1' }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'finance', ref.id), { amount: 75, updatedBy: 'staff-1' }))
   })
 
   it('blocks staff from changing createdAt on a plan', async () => {
     const ref = await addDoc(collection(staffDb(), 'plans'), {
       clientId: 'c1', clientName: 'Jane Doe', name: 'Monthly wash', price: 60,
-      frequency: 'monthly', startDate: '2026-01-01', nextVisit: '2026-01-01', status: 'active', items: [], createdAt: 1000,
+      frequency: 'monthly', startDate: '2026-01-01', nextVisit: '2026-01-01', status: 'active', items: [], createdAt: 1000, updatedBy: 'staff-1',
     })
 
-    await assertFails(updateDoc(doc(staffDb(), 'plans', ref.id), { createdAt: 2000 }))
-    await assertSucceeds(updateDoc(doc(staffDb(), 'plans', ref.id), { status: 'paused' }))
+    await assertFails(updateDoc(doc(staffDb(), 'plans', ref.id), { createdAt: 2000, updatedBy: 'staff-1' }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'plans', ref.id), { status: 'paused', updatedBy: 'staff-1' }))
   })
 })
 

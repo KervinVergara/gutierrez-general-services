@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, addDaysStr, addMonthsStr } from './util'
+import { money, fmtDate, todayStr, addDaysStr, addMonthsStr, withAudit } from './util'
 
 const SERVICE_TITLES = content.es.services.map((s) => s.title)
 const STATUSES = ['scheduled', 'in_progress', 'done', 'cancelled']
@@ -79,9 +79,9 @@ export default function AdminJobs({ focus, onFocusHandled }) {
     const ref = doc(db, 'finance', `job_${job.id}`)
     const paidAmount = job.paymentStatus === 'paid' ? Number(job.amountCharged) : job.paymentStatus === 'partial' ? Number(job.amountPaid) : 0
     if (paidAmount > 0) {
-      await setDoc(ref, {
+      await setDoc(ref, withAudit({
         type: 'income', amount: paidAmount, description: `${job.service} — ${job.clientName}`, jobId: job.id, date: job.date,
-      })
+      }, auth))
     } else {
       await deleteDoc(ref).catch(() => {})
     }
@@ -104,14 +104,14 @@ export default function AdminJobs({ focus, onFocusHandled }) {
     if (!c) { setErr('Selecciona un cliente.'); return }
     setErr('')
     const { collection, doc, addDoc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-    const data = {
+    const data = withAudit({
       clientId: form.clientId, clientName: c.name || c.phone, category: form.category,
       service: form.service, date: form.date, time: form.time, address: form.address,
       amountCharged: form.amountCharged ? Number(form.amountCharged) : 0,
       status: form.status, paymentStatus: form.paymentStatus,
       amountPaid: form.paymentStatus === 'paid' ? Number(form.amountCharged || 0) : form.paymentStatus === 'partial' ? Number(form.amountPaid || 0) : 0,
       paymentMethod: form.paymentMethod, notes: form.notes, vehicleId: form.vehicleId, propertyId: form.propertyId,
-    }
+    }, auth)
     let id = editingId
     if (editingId === 'new') {
       const ref = await addDoc(collection(db, 'jobs'), { ...data, origin: 'manual', createdAt: serverTimestamp() })
@@ -136,7 +136,7 @@ export default function AdminJobs({ focus, onFocusHandled }) {
 
   async function saveNextService(job, next) {
     const { doc, updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, 'jobs', job.id), { nextService: next })
+    await updateDoc(doc(db, 'jobs', job.id), withAudit({ nextService: next }, auth))
     setNextFor(null)
   }
 

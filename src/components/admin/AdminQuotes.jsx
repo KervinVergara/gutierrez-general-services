@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { FilterBtn, Field, inputCls, Loading, EmptyState } from './shared'
-import { sanitizePhone, money, todayStr, daysSince } from './util'
+import { sanitizePhone, money, todayStr, daysSince, withAudit } from './util'
 
 const STATUSES = ['new', 'contacted', 'quoted', 'accepted', 'scheduled', 'done', 'lost']
 const LABEL = { new: 'Nuevo', contacted: 'Contactado', quoted: 'Cotizado', accepted: 'Aceptado', scheduled: 'Agendado', done: 'Terminado', lost: 'Perdido' }
@@ -129,15 +129,15 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
       if (!clientId) { setErr('Esta cotización no tiene un teléfono válido.'); return }
       const clientRef = doc(db, 'clients', clientId)
       const existing = await getDoc(clientRef)
-      const clientData = {
+      const clientData = withAudit({
         name: q.name || existing.data()?.name || '', phone: q.phone,
         email: q.email || existing.data()?.email || '', zip: q.zip || existing.data()?.zip || '',
         updatedAt: serverTimestamp(),
-      }
+      }, auth)
       if (!existing.exists()) { clientData.createdAt = serverTimestamp(); clientData.source = 'quote'; clientData.vehicles = []; clientData.properties = [] }
       await setDoc(clientRef, clientData, { merge: true })
 
-      const jobRef = await addDoc(collection(db, 'jobs'), {
+      const jobRef = await addDoc(collection(db, 'jobs'), withAudit({
         clientId, clientName: clientData.name || q.name || q.phone,
         category: q.category || '', service: serviceName(q.service) !== '—' ? serviceName(q.service) : (q.service || ''),
         date: q.preferredDate || todayStr(), time: '', address: q.zip || '',
@@ -145,7 +145,7 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
         status: 'scheduled', paymentStatus: 'pending', paymentMethod: '',
         notes: q.message || q.description || '', origin: 'quote', quoteId: q.id,
         createdAt: serverTimestamp(),
-      })
+      }, auth))
       await updateDoc(doc(db, 'quotes', q.id), { status: 'scheduled', jobId: jobRef.id, updatedAt: serverTimestamp() })
     } catch (e) {
       setErr(e.message)

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import Icon from '../Icon'
 import { Field, inputCls, StatCard, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, addMonthsStr, monthKey, monthLabel, last6Months } from './util'
+import { money, fmtDate, todayStr, addMonthsStr, monthKey, monthLabel, last6Months, withAudit } from './util'
 
 const CATEGORIES = ['Supplies', 'Fuel', 'Equipment', 'Advertising', 'Maintenance', 'Other']
 const emptyForm = { description: '', amount: '', date: todayStr(), category: CATEGORIES[0] }
@@ -74,7 +74,7 @@ export default function AdminFinance() {
     if (!form.description || !form.amount) { setErr('Completa descripción y monto.'); return }
     setErr('')
     const { collection, doc, addDoc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-    const data = { type: 'expense', description: form.description, amount: Number(form.amount), date: form.date, category: form.category }
+    const data = withAudit({ type: 'expense', description: form.description, amount: Number(form.amount), date: form.date, category: form.category }, auth)
     if (editingId === 'new') await addDoc(collection(db, 'finance'), { ...data, createdAt: serverTimestamp() })
     else await updateDoc(doc(db, 'finance', editingId), data)
     setForm(emptyForm)

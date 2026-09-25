@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { auth, db, isConfigured } from '../firebase'
 import Icon from './Icon'
 import { TabBtn } from './admin/shared'
-import { sanitizePhone } from './admin/util'
+import { sanitizePhone, withAudit } from './admin/util'
 import AdminSearch from './admin/AdminSearch'
 import AdminDashboard from './admin/AdminDashboard'
 import AdminQuotes from './admin/AdminQuotes'
@@ -12,6 +12,7 @@ import AdminPlans from './admin/AdminPlans'
 import AdminFinance from './admin/AdminFinance'
 import AdminRequests from './admin/AdminRequests'
 import AdminDocs from './admin/AdminDocs'
+import AdminAudit from './admin/AdminAudit'
 
 const TABS = [
   { id: 'dashboard', label: 'Inicio', Component: AdminDashboard },
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'finance', label: 'Finanzas', Component: AdminFinance },
   { id: 'requests', label: 'Cambios web', Component: AdminRequests },
   { id: 'docs', label: 'Documentos', Component: AdminDocs },
+  { id: 'audit', label: 'Auditoría', Component: AdminAudit },
 ]
 
 export default function Admin() {
@@ -95,13 +97,13 @@ export default function Admin() {
           if (!id) return
           const ref = doc(db, 'clients', id)
           const existing = await getDoc(ref)
-          const data = {
+          const data = withAudit({
             name: q.name || existing.data()?.name || '',
             phone: q.phone,
             email: q.email || existing.data()?.email || '',
             zip: q.zip || existing.data()?.zip || '',
             updatedAt: serverTimestamp(),
-          }
+          }, auth)
           if (!existing.exists()) { data.createdAt = serverTimestamp(); data.source = 'quote'; data.vehicles = []; data.properties = [] }
           await setDoc(ref, data, { merge: true })
         })
@@ -120,6 +122,57 @@ export default function Admin() {
     } catch (e) { setErr('Correo o contraseña incorrectos.') }
   }
 
+  // Google Sign-In: same account (by uid) can end up signed in either way
+  // once linked below — the admin custom claim (and firestore.rules) don't
+  // care which method was used, only which uid it is.
+  async function loginWithGoogle() {
+    setErr('')
+    try {
+      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth')
+      await signInWithPopup(auth, new GoogleAuthProvider())
+    } catch (e) {
+      if (e?.code === 'auth/account-exists-with-different-credential') {
+        setErr('Ya existe una cuenta con ese correo usando contraseña. Inicia sesión con la contraseña y usa "Vincular cuenta de Google" abajo.')
+      } else if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
+        setErr('No se pudo iniciar sesión con Google.')
+      }
+    }
+  }
+
+  // Lets an already-logged-in admin (via password) attach Google Sign-In to
+  // the SAME account, as a step toward dropping the password entirely (see
+  // unlinkPassword below). Must be signed in first — Firebase links to
+  // auth.currentUser, it doesn't create a second account.
+  async function linkGoogle() {
+    setErr('')
+    try {
+      const { GoogleAuthProvider, linkWithPopup } = await import('firebase/auth')
+      await linkWithPopup(auth.currentUser, new GoogleAuthProvider())
+      setUser({ ...auth.currentUser })
+    } catch (e) {
+      if (e?.code === 'auth/credential-already-in-use') {
+        setErr('Esa cuenta de Google ya está vinculada a otra cuenta.')
+      } else if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
+        setErr('No se pudo vincular la cuenta de Google.')
+      }
+    }
+  }
+
+  // Once Google is linked, this removes the password as a way in — from
+  // then on the only way to reach this account is Google Sign-In, which
+  // carries whatever 2FA is already active on that Google account.
+  async function unlinkPassword() {
+    if (!confirm('Esto quita la contraseña por completo. Solo podrás entrar con "Iniciar sesión con Google" de ahora en adelante. ¿Continuar?')) return
+    setErr('')
+    try {
+      const { unlink } = await import('firebase/auth')
+      await unlink(auth.currentUser, 'password')
+      setUser({ ...auth.currentUser })
+    } catch (e) {
+      setErr('No se pudo quitar la contraseña.')
+    }
+  }
+
   async function logout() {
     const { signOut } = await import('firebase/auth')
     await signOut(auth)
@@ -133,6 +186,8 @@ export default function Admin() {
       <Shell>
         <form onSubmit={login} className="mx-auto max-w-sm rounded-2xl bg-white p-8 grid gap-4 shadow-sm border border-ink/10">
           <h1 className="text-3xl font-extrabold uppercase">Panel interno</h1>
+          <button type="button" onClick={loginWithGoogle} className="h-12 rounded-lg border border-ink/20 font-semibold hover:bg-sand">Iniciar sesión con Google</button>
+          <div className="flex items-center gap-3 text-xs text-ink/40 uppercase"><span className="h-px flex-1 bg-ink/10" />o<span className="h-px flex-1 bg-ink/10" /></div>
           <label className="grid gap-1 text-sm font-medium">Correo<input name="email" type="email" required className="h-12 rounded-lg border border-ink/20 px-4" /></label>
           <label className="grid gap-1 text-sm font-medium">Contraseña<input name="password" type="password" required className="h-12 rounded-lg border border-ink/20 px-4" /></label>
           {err && <p className="text-sm text-red-700">{err}</p>}
@@ -154,6 +209,8 @@ export default function Admin() {
   }
 
   const Active = TABS.find((t) => t.id === tab).Component
+  const hasGoogle = user.providerData?.some((p) => p.providerId === 'google.com')
+  const hasPassword = user.providerData?.some((p) => p.providerId === 'password')
 
   return (
     <Shell right={
@@ -163,6 +220,22 @@ export default function Admin() {
         <button onClick={logout} className="text-sm font-semibold hover:text-gold whitespace-nowrap">Salir</button>
       </div>
     }>
+      {/* Aparece solo mientras la cuenta todavía tiene contraseña — guía para
+          pasar a un inicio de sesión sin contraseña (Google, con el 2FA que
+          ya tenga esa cuenta de Google). Desaparece sola una vez que se
+          quita la contraseña. */}
+      {hasPassword && (
+        <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm flex flex-wrap items-center gap-3 justify-between">
+          <p className="text-ink/80">{hasGoogle
+            ? 'Tu cuenta de Google ya está vinculada. Por seguridad, considera quitar la contraseña.'
+            : 'Recomendado: vincula tu cuenta de Google para iniciar sesión sin contraseña.'}</p>
+          <div className="flex gap-2 shrink-0">
+            {!hasGoogle && <button onClick={linkGoogle} className="h-9 px-3 rounded-lg bg-ink text-gold text-xs font-bold">Vincular Google</button>}
+            {hasGoogle && <button onClick={unlinkPassword} className="h-9 px-3 rounded-lg border border-red-700 text-red-700 text-xs font-bold">Quitar contraseña</button>}
+          </div>
+        </div>
+      )}
+      {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
       <div className="flex items-center gap-1 mb-8 border-b border-ink/10 overflow-x-auto overflow-y-hidden flex-nowrap">
         {TABS.map((t) => <TabBtn key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</TabBtn>)}
       </div>

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, nextVisitFrom } from './util'
+import { money, fmtDate, todayStr, nextVisitFrom, withAudit } from './util'
 
 const FREQUENCIES = [
   { id: 'weekly', label: 'Semanal' }, { id: 'biweekly', label: 'Quincenal' }, { id: 'monthly', label: 'Mensual' },
@@ -66,17 +66,17 @@ export default function AdminPlans({ goTo, focus, onFocusHandled }) {
     if (!c) { setErr('Selecciona un cliente.'); return }
     setErr('')
     const { collection, addDoc, serverTimestamp } = await import('firebase/firestore')
-    await addDoc(collection(db, 'plans'), {
+    await addDoc(collection(db, 'plans'), withAudit({
       clientId: form.clientId, clientName: c.name || c.phone, name: form.name, price: Number(form.price) || 0,
       frequency: form.frequency, startDate: form.startDate, nextVisit: form.startDate, status: 'active', notes: form.notes,
       items: form.items, createdAt: serverTimestamp(),
-    })
+    }, auth))
     cancel()
   }
 
   async function setStatus(id, status) {
     const { doc, updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, 'plans', id), { status })
+    await updateDoc(doc(db, 'plans', id), withAudit({ status }, auth))
   }
 
   async function remove(id) {
@@ -87,13 +87,13 @@ export default function AdminPlans({ goTo, focus, onFocusHandled }) {
 
   async function generateNext(plan) {
     const { collection, doc, addDoc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-    await addDoc(collection(db, 'jobs'), {
+    await addDoc(collection(db, 'jobs'), withAudit({
       clientId: plan.clientId, clientName: plan.clientName, category: '', service: plan.name,
       date: plan.nextVisit, time: '', address: '', amountCharged: plan.price, amountPaid: 0,
       status: 'scheduled', paymentStatus: 'pending', paymentMethod: '', notes: plan.notes || '',
       origin: 'plan', planId: plan.id, createdAt: serverTimestamp(),
-    })
-    await updateDoc(doc(db, 'plans', plan.id), { nextVisit: nextVisitFrom(plan.nextVisit, plan.frequency) })
+    }, auth))
+    await updateDoc(doc(db, 'plans', plan.id), withAudit({ nextVisit: nextVisitFrom(plan.nextVisit, plan.frequency) }, auth))
     goTo?.('jobs')
   }
 
