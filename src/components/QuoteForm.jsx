@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { db, isConfigured } from '../firebase'
+import { functions, isConfigured } from '../firebase'
 import { PHONE_DISPLAY, PHONE_TEL, PHONE_WA } from '../content'
 import Icon from './Icon'
 
-const initialForm = { type: '', name: '', phone: '', email: '', zip: '', service: '', vehicle: '', message: '', consent: false }
+const initialForm = { type: '', name: '', phone: '', email: '', zip: '', service: '', vehicle: '', message: '', consent: false, website: '' }
 
 function waLink(form, serviceName) {
   const lines = [
@@ -45,17 +45,17 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
     setState('sending')
     try {
       if (!isConfigured) throw new Error('Firebase not configured')
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
+      // Submissions go through the submitQuote Cloud Function (see
+      // functions/index.js) instead of writing to Firestore directly — it
+      // validates + rate-limits server-side, App Check-verified. `website`
+      // is a hidden honeypot field (see the input below): real visitors
+      // never fill it, so it's always sent, even empty.
+      const { httpsCallable } = await import('firebase/functions')
+      const submitQuote = httpsCallable(functions, 'submitQuote')
       const { consent, ...data } = form
       if (!data.vehicle) delete data.vehicle
       if (!data.email) delete data.email
-      await addDoc(collection(db, 'quotes'), {
-        ...data,
-        lang,
-        status: 'new',
-        createdAt: serverTimestamp(),
-        userAgent: navigator.userAgent,
-      })
+      await submitQuote({ ...data, lang })
       setState('ok')
     } catch (err) {
       console.error(err)
@@ -84,6 +84,19 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
 
   return (
     <form id={id} onSubmit={submit} noValidate className="rounded-2xl bg-white p-5 md:p-6 grid gap-3.5 shadow-[0_18px_40px_-20px_rgba(18,59,85,0.35)]">
+      {/* Honeypot: invisible to real visitors (off-screen, unreachable by tab,
+          hidden from screen readers), so only a bot filling every field blindly
+          would ever populate it. submitQuote silently no-ops when it's non-empty. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        value={form.website}
+        onChange={set('website')}
+        className="absolute -left-[9999px] w-px h-px overflow-hidden"
+      />
       <fieldset className="grid gap-2">
         <legend className="text-sm font-bold text-ink">{t.typeLabel}</legend>
         <div className="grid grid-cols-3 gap-2.5">

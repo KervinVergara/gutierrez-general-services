@@ -4,18 +4,16 @@ import userEvent from '@testing-library/user-event'
 import QuoteForm from '../QuoteForm'
 import { content } from '../../content'
 
-// QuoteForm only needs `db` and `isConfigured` from ../firebase — mock them so
-// tests never touch the real Firebase project.
+// QuoteForm only needs `functions` and `isConfigured` from ../firebase — mock
+// them so tests never touch the real Firebase project.
 vi.mock('../../firebase', () => ({
-  db: {},
+  functions: {},
   isConfigured: true,
 }))
 
-const addDocMock = vi.fn()
-vi.mock('firebase/firestore', () => ({
-  addDoc: (...args) => addDocMock(...args),
-  collection: vi.fn(() => 'quotes-collection'),
-  serverTimestamp: vi.fn(() => 'server-timestamp'),
+const submitQuoteMock = vi.fn()
+vi.mock('firebase/functions', () => ({
+  httpsCallable: vi.fn(() => (...args) => submitQuoteMock(...args)),
 }))
 
 const t = content.en.contact
@@ -35,7 +33,7 @@ async function fillMinimumValidForm(user) {
 
 describe('QuoteForm', () => {
   beforeEach(() => {
-    addDocMock.mockReset()
+    submitQuoteMock.mockReset()
   })
 
   it('only shows the detail fields after a service type is picked', async () => {
@@ -68,18 +66,18 @@ describe('QuoteForm', () => {
   })
 
   it('shows a success screen once a valid quote is submitted', async () => {
-    addDocMock.mockResolvedValueOnce({ id: 'abc123' })
+    submitQuoteMock.mockResolvedValueOnce({ data: { ok: true, id: 'abc123' } })
     setup()
     const user = userEvent.setup()
     await fillMinimumValidForm(user)
     await user.click(screen.getByRole('button', { name: t.send }))
 
     await waitFor(() => expect(screen.getByText(t.ok)).toBeInTheDocument())
-    expect(addDocMock).toHaveBeenCalledTimes(1)
+    expect(submitQuoteMock).toHaveBeenCalledTimes(1)
   })
 
   it('shows the phone-fallback error message if the save fails', async () => {
-    addDocMock.mockRejectedValueOnce(new Error('network down'))
+    submitQuoteMock.mockRejectedValueOnce(new Error('network down'))
     setup()
     const user = userEvent.setup()
     await fillMinimumValidForm(user)
@@ -87,5 +85,18 @@ describe('QuoteForm', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
     expect(screen.getByRole('alert')).toHaveTextContent(t.err)
+  })
+
+  it('sends the honeypot field to submitQuote, empty for a real user (never filled or seen)', async () => {
+    submitQuoteMock.mockResolvedValueOnce({ data: { ok: true, id: 'abc123' } })
+    setup()
+    const user = userEvent.setup()
+    await fillMinimumValidForm(user)
+    await user.click(screen.getByRole('button', { name: t.send }))
+
+    await waitFor(() => expect(submitQuoteMock).toHaveBeenCalledTimes(1))
+    const payload = submitQuoteMock.mock.calls[0][0]
+    expect(payload.website).toBe('')
+    expect(payload).not.toHaveProperty('consent')
   })
 })

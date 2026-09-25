@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
+import { getFunctions } from 'firebase/functions'
 
 // Copy these values from Firebase Console → Project settings → Your apps (Web).
 // In production put them in a .env file as VITE_FIREBASE_* (see .env.example).
@@ -18,6 +19,10 @@ export const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.proj
 const app = isConfigured ? initializeApp(firebaseConfig) : null
 export const db = app ? getFirestore(app) : null
 export const auth = app ? getAuth(app) : null
+// Backs the public quote form's submitQuote call (functions/index.js) —
+// server-side validation + rate limiting, since App Check enforcement on
+// that function requires the same App Check instance initialized below.
+export const functions = app ? getFunctions(app) : null
 
 // App Check (anti-bot / anti-abuse on Firestore writes from the public form).
 // Inert until VITE_RECAPTCHA_SITE_KEY is set — see README "App Check" section

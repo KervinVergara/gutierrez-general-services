@@ -43,30 +43,23 @@ const validQuote = {
 }
 
 describe('quotes collection', () => {
-  it('lets an anonymous visitor create a valid quote request', async () => {
-    await assertSucceeds(addDoc(collection(anonDb(), 'quotes'), validQuote))
-  })
-
-  it('rejects a quote missing required fields', async () => {
-    const { name, ...incomplete } = validQuote
-    await assertFails(addDoc(collection(anonDb(), 'quotes'), incomplete))
-  })
-
-  it('rejects a quote with status other than "new" from an anonymous visitor', async () => {
-    await assertFails(addDoc(collection(anonDb(), 'quotes'), { ...validQuote, status: 'accepted' }))
-  })
-
-  it('blocks anonymous read/update/delete of quotes', async () => {
+  // Public submissions no longer go through Firestore directly — they go
+  // through the submitQuote Cloud Function (functions/index.js), which uses
+  // the Admin SDK and so bypasses these rules entirely. Only staff can
+  // create/read/update/delete quotes as a client.
+  it('blocks anonymous create/read/update/delete of quotes (submissions go through the Cloud Function instead)', async () => {
     const ref = await addDoc(collection(staffDb(), 'quotes'), validQuote)
 
+    await assertFails(addDoc(collection(anonDb(), 'quotes'), validQuote))
     await assertFails(getDoc(doc(anonDb(), 'quotes', ref.id)))
     await assertFails(updateDoc(doc(anonDb(), 'quotes', ref.id), { status: 'contacted' }))
     await assertFails(deleteDoc(doc(anonDb(), 'quotes', ref.id)))
   })
 
-  it('blocks a signed-in account without the admin claim from reading/updating/deleting quotes', async () => {
+  it('blocks a signed-in account without the admin claim from creating/reading/updating/deleting quotes', async () => {
     const ref = await addDoc(collection(staffDb(), 'quotes'), validQuote)
 
+    await assertFails(addDoc(collection(otherUserDb(), 'quotes'), validQuote))
     await assertFails(getDoc(doc(otherUserDb(), 'quotes', ref.id)))
     await assertFails(updateDoc(doc(otherUserDb(), 'quotes', ref.id), { status: 'contacted' }))
     await assertFails(deleteDoc(doc(otherUserDb(), 'quotes', ref.id)))
@@ -180,11 +173,11 @@ describe('field immutability on update (createdAt / origin cannot be rewritten b
   })
 })
 
-describe('extra-field injection is rejected on public create paths', () => {
-  it('rejects a quote create with an unexpected extra field (e.g. trying to smuggle in a role/admin flag)', async () => {
-    await assertFails(addDoc(collection(anonDb(), 'quotes'), { ...validQuote, role: 'admin' }))
-  })
-
+describe('extra-field injection is rejected on the public feedback create path', () => {
+  // quotes no longer has a public create path in these rules at all (see the
+  // 'quotes collection' describe above) — field-level validation for public
+  // submissions now lives in functions/index.js instead. feedback is the
+  // only collection that still takes a public, rules-validated write.
   it('rejects a feedback create with an unexpected extra field', async () => {
     await assertFails(addDoc(collection(anonDb(), 'feedback'), { text: 'hi', status: 'pending', createdAt: Date.now(), admin: true }))
   })

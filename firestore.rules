@@ -18,16 +18,14 @@ service cloud.firestore {
     }
 
     match /quotes/{id} {
-      // Anyone can submit a quote request from the landing page (only the expected fields).
-      allow create: if request.resource.data.keys().hasOnly(['type','name','phone','email','zip','service','vehicle','message','lang','status','createdAt','userAgent'])
-                    && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 120
-                    && request.resource.data.phone is string && request.resource.data.phone.size() > 5 && request.resource.data.phone.size() < 40
-                    && request.resource.data.message.size() < 2000
-                    && request.resource.data.status == 'new';
-      // Signed-in staff can also create a quote manually (e.g. a phone-in lead), with extra fields.
-      allow create: if isStaff();
-      // Only signed-in staff can read/delete; updates additionally can't rewrite createdAt.
-      allow read, delete: if isStaff();
+      // Public submissions now go through the submitQuote Cloud Function
+      // (functions/index.js), which validates + rate-limits server-side and
+      // writes via the Admin SDK — the Admin SDK bypasses these rules
+      // entirely, so no client-facing "allow create" is needed for that
+      // path anymore. Only staff can create directly (e.g. a phone-in lead
+      // entered manually), and only staff can read/delete; updates
+      // additionally can't rewrite createdAt.
+      allow create, read, delete: if isStaff();
       allow update: if isStaff() && unchanged('createdAt');
     }
     match /feedback/{id} {
