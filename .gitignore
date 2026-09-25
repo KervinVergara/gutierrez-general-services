@@ -7,3 +7,6 @@ test-results
 playwright-report
 blob-report
 *-debug.log
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json

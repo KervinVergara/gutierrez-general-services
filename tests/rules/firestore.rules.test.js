@@ -29,6 +29,13 @@ beforeEach(async () => {
   await testEnv.clearFirestore()
 })
 
+// Staff = a signed-in account that also carries the "admin" custom claim.
+// A signed-in account WITHOUT that claim must be treated the same as anonymous
+// for every internal collection — that's the whole point of this claim.
+const staffDb = () => testEnv.authenticatedContext('staff-1', { admin: true }).firestore()
+const otherUserDb = () => testEnv.authenticatedContext('random-user', {}).firestore()
+const anonDb = () => testEnv.unauthenticatedContext().firestore()
+
 const validQuote = {
   type: 'auto', name: 'Test Client', phone: '5745551234', email: '', zip: '46580',
   service: 'detailing', vehicle: '2020 Ford F-150', message: '', lang: 'en',
@@ -37,37 +44,39 @@ const validQuote = {
 
 describe('quotes collection', () => {
   it('lets an anonymous visitor create a valid quote request', async () => {
-    const db = testEnv.unauthenticatedContext().firestore()
-    await assertSucceeds(addDoc(collection(db, 'quotes'), validQuote))
+    await assertSucceeds(addDoc(collection(anonDb(), 'quotes'), validQuote))
   })
 
   it('rejects a quote missing required fields', async () => {
-    const db = testEnv.unauthenticatedContext().firestore()
     const { name, ...incomplete } = validQuote
-    await assertFails(addDoc(collection(db, 'quotes'), incomplete))
+    await assertFails(addDoc(collection(anonDb(), 'quotes'), incomplete))
   })
 
   it('rejects a quote with status other than "new" from an anonymous visitor', async () => {
-    const db = testEnv.unauthenticatedContext().firestore()
-    await assertFails(addDoc(collection(db, 'quotes'), { ...validQuote, status: 'accepted' }))
+    await assertFails(addDoc(collection(anonDb(), 'quotes'), { ...validQuote, status: 'accepted' }))
   })
 
   it('blocks anonymous read/update/delete of quotes', async () => {
-    const adminDb = testEnv.authenticatedContext('staff-1').firestore()
-    const ref = await addDoc(collection(adminDb, 'quotes'), validQuote)
+    const ref = await addDoc(collection(staffDb(), 'quotes'), validQuote)
 
-    const anonDb = testEnv.unauthenticatedContext().firestore()
-    await assertFails(getDoc(doc(anonDb, 'quotes', ref.id)))
-    await assertFails(updateDoc(doc(anonDb, 'quotes', ref.id), { status: 'contacted' }))
-    await assertFails(deleteDoc(doc(anonDb, 'quotes', ref.id)))
+    await assertFails(getDoc(doc(anonDb(), 'quotes', ref.id)))
+    await assertFails(updateDoc(doc(anonDb(), 'quotes', ref.id), { status: 'contacted' }))
+    await assertFails(deleteDoc(doc(anonDb(), 'quotes', ref.id)))
   })
 
-  it('lets signed-in staff read, update and delete quotes', async () => {
-    const staffDb = testEnv.authenticatedContext('staff-1').firestore()
-    const ref = await addDoc(collection(staffDb, 'quotes'), validQuote)
-    await assertSucceeds(getDoc(doc(staffDb, 'quotes', ref.id)))
-    await assertSucceeds(updateDoc(doc(staffDb, 'quotes', ref.id), { status: 'contacted' }))
-    await assertSucceeds(deleteDoc(doc(staffDb, 'quotes', ref.id)))
+  it('blocks a signed-in account without the admin claim from reading/updating/deleting quotes', async () => {
+    const ref = await addDoc(collection(staffDb(), 'quotes'), validQuote)
+
+    await assertFails(getDoc(doc(otherUserDb(), 'quotes', ref.id)))
+    await assertFails(updateDoc(doc(otherUserDb(), 'quotes', ref.id), { status: 'contacted' }))
+    await assertFails(deleteDoc(doc(otherUserDb(), 'quotes', ref.id)))
+  })
+
+  it('lets staff (admin claim) read, update and delete quotes', async () => {
+    const ref = await addDoc(collection(staffDb(), 'quotes'), validQuote)
+    await assertSucceeds(getDoc(doc(staffDb(), 'quotes', ref.id)))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'quotes', ref.id), { status: 'contacted' }))
+    await assertSucceeds(deleteDoc(doc(staffDb(), 'quotes', ref.id)))
   })
 })
 
@@ -75,41 +84,48 @@ describe('feedback collection', () => {
   const validFeedback = { text: 'Please add a dark mode toggle.', status: 'pending', createdAt: Date.now() }
 
   it('lets anyone submit feedback', async () => {
-    const db = testEnv.unauthenticatedContext().firestore()
-    await assertSucceeds(addDoc(collection(db, 'feedback'), validFeedback))
+    await assertSucceeds(addDoc(collection(anonDb(), 'feedback'), validFeedback))
   })
 
   it('blocks anonymous read and delete of feedback (previously world-readable/deletable)', async () => {
-    const staffDb = testEnv.authenticatedContext('staff-1').firestore()
-    const ref = await addDoc(collection(staffDb, 'feedback'), validFeedback)
+    const ref = await addDoc(collection(staffDb(), 'feedback'), validFeedback)
 
-    const anonDb = testEnv.unauthenticatedContext().firestore()
-    await assertFails(getDoc(doc(anonDb, 'feedback', ref.id)))
-    await assertFails(deleteDoc(doc(anonDb, 'feedback', ref.id)))
-    await assertFails(getDocs(collection(anonDb, 'feedback')))
+    await assertFails(getDoc(doc(anonDb(), 'feedback', ref.id)))
+    await assertFails(deleteDoc(doc(anonDb(), 'feedback', ref.id)))
+    await assertFails(getDocs(collection(anonDb(), 'feedback')))
   })
 
-  it('lets signed-in staff read and mark feedback done, but not edit its text', async () => {
-    const staffDb = testEnv.authenticatedContext('staff-1').firestore()
-    const ref = await addDoc(collection(staffDb, 'feedback'), validFeedback)
-    await assertSucceeds(getDoc(doc(staffDb, 'feedback', ref.id)))
-    await assertSucceeds(updateDoc(doc(staffDb, 'feedback', ref.id), { status: 'done' }))
-    await assertFails(updateDoc(doc(staffDb, 'feedback', ref.id), { text: 'edited' }))
+  it('blocks a signed-in account without the admin claim from reading feedback', async () => {
+    const ref = await addDoc(collection(staffDb(), 'feedback'), validFeedback)
+    await assertFails(getDoc(doc(otherUserDb(), 'feedback', ref.id)))
+    await assertFails(updateDoc(doc(otherUserDb(), 'feedback', ref.id), { status: 'done' }))
+  })
+
+  it('lets staff read and mark feedback done, but not edit its text', async () => {
+    const ref = await addDoc(collection(staffDb(), 'feedback'), validFeedback)
+    await assertSucceeds(getDoc(doc(staffDb(), 'feedback', ref.id)))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'feedback', ref.id), { status: 'done' }))
+    await assertFails(updateDoc(doc(staffDb(), 'feedback', ref.id), { text: 'edited' }))
   })
 })
 
 describe('internal-only collections (clients, jobs, finance, plans)', () => {
   it('blocks anonymous access entirely', async () => {
-    const db = testEnv.unauthenticatedContext().firestore()
-    await assertFails(addDoc(collection(db, 'clients'), { name: 'x' }))
-    await assertFails(getDocs(collection(db, 'jobs')))
-    await assertFails(getDocs(collection(db, 'finance')))
-    await assertFails(getDocs(collection(db, 'plans')))
+    await assertFails(addDoc(collection(anonDb(), 'clients'), { name: 'x' }))
+    await assertFails(getDocs(collection(anonDb(), 'jobs')))
+    await assertFails(getDocs(collection(anonDb(), 'finance')))
+    await assertFails(getDocs(collection(anonDb(), 'plans')))
   })
 
-  it('lets signed-in staff read and write', async () => {
-    const db = testEnv.authenticatedContext('staff-1').firestore()
-    await assertSucceeds(setDoc(doc(db, 'clients', 'c1'), { name: 'Jane Doe' }))
-    await assertSucceeds(getDoc(doc(db, 'clients', 'c1')))
+  it('blocks a signed-in account without the admin claim (this is the fix for the "any account = full CRM access" gap)', async () => {
+    await assertFails(addDoc(collection(otherUserDb(), 'clients'), { name: 'x' }))
+    await assertFails(getDocs(collection(otherUserDb(), 'jobs')))
+    await assertFails(getDocs(collection(otherUserDb(), 'finance')))
+    await assertFails(getDocs(collection(otherUserDb(), 'plans')))
+  })
+
+  it('lets staff (admin claim) read and write', async () => {
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c1'), { name: 'Jane Doe' }))
+    await assertSucceeds(getDoc(doc(staffDb(), 'clients', 'c1')))
   })
 })

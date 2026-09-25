@@ -1,6 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Only accounts explicitly granted the "admin" custom claim count as staff.
+    // Being signed in is NOT enough on its own — see scripts/set-admin-claim.mjs
+    // for how that claim gets assigned. This is what actually separates a
+    // regular Firebase Auth account from someone who can touch the CRM.
+    function isStaff() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     match /quotes/{id} {
       // Anyone can submit a quote request from the landing page (only the expected fields).
       allow create: if request.resource.data.keys().hasOnly(['type','name','phone','email','zip','service','vehicle','message','lang','status','createdAt','userAgent'])
@@ -9,9 +17,9 @@ service cloud.firestore {
                     && request.resource.data.message.size() < 2000
                     && request.resource.data.status == 'new';
       // Signed-in staff can also create a quote manually (e.g. a phone-in lead), with extra fields.
-      allow create: if request.auth != null;
-      // Only signed-in staff can read/update/delete.
-      allow read, update, delete: if request.auth != null;
+      allow create: if isStaff();
+      // Only staff (admin custom claim) can read/update/delete.
+      allow read, update, delete: if isStaff();
     }
     match /feedback/{id} {
       // Dev-stage widget: anyone with the site link can submit a change request (write-only,
@@ -21,26 +29,26 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasOnly(['text','status','createdAt'])
                     && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 2000
                     && request.resource.data.status == 'pending';
-      allow read, delete: if request.auth != null;
-      allow update: if request.auth != null
+      allow read, delete: if isStaff();
+      allow update: if isStaff()
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                     && request.resource.data.status in ['pending', 'done'];
     }
     match /clients/{id} {
-      // Internal CRM data — only signed-in staff can read/write.
-      allow read, create, update, delete: if request.auth != null;
+      // Internal CRM data — staff only.
+      allow read, create, update, delete: if isStaff();
     }
     match /jobs/{id} {
-      // Completed/scheduled service records — only signed-in staff.
-      allow read, create, update, delete: if request.auth != null;
+      // Completed/scheduled service records — staff only.
+      allow read, create, update, delete: if isStaff();
     }
     match /finance/{id} {
-      // Income/expense ledger — only signed-in staff.
-      allow read, create, update, delete: if request.auth != null;
+      // Income/expense ledger — staff only.
+      allow read, create, update, delete: if isStaff();
     }
     match /plans/{id} {
-      // Recurring maintenance plans — only signed-in staff.
-      allow read, create, update, delete: if request.auth != null;
+      // Recurring maintenance plans — staff only.
+      allow read, create, update, delete: if isStaff();
     }
   }
 }

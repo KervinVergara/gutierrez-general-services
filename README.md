@@ -17,6 +17,38 @@ npm run dev
 5. `npm i -g firebase-tools`, `firebase login`, `firebase use --add` (elegir el proyecto).
 6. `firebase deploy --only firestore:rules`
 
+## Control de acceso del panel (admin custom claim)
+
+`firestore.rules` ya NO trata "sesión iniciada" como sinónimo de "es del
+staff" — exige el custom claim `admin: true` en el token de Firebase Auth.
+Sin este claim, una cuenta autenticada no puede leer ni escribir `quotes`,
+`clients`, `jobs`, `finance` ni `plans`, igual que un visitante anónimo.
+
+Antes de desplegar `firestore.rules` a producción la primera vez con este
+cambio, hay que asignarle el claim a cada cuenta de staff — si no, se
+bloquean a sí mismos del panel.
+
+1. Firebase Console → ⚙️ Configuración del proyecto → Cuentas de servicio →
+   *Generar nueva clave privada*. Guarda el JSON **fuera** de esta carpeta
+   (nunca dentro de `gutierrez-services`).
+2. `npm install` (agrega `firebase-admin`, usado solo por estos scripts, nunca
+   por el sitio en sí).
+3. Ver quién existe hoy:
+   ```
+   GOOGLE_APPLICATION_CREDENTIALS="C:\ruta\a\la\clave.json" node scripts/list-users.mjs
+   ```
+4. Dar el claim a cada cuenta de staff real:
+   ```
+   GOOGLE_APPLICATION_CREDENTIALS="C:\ruta\a\la\clave.json" node scripts/set-admin-claim.mjs correo@ejemplo.com
+   ```
+5. Recién ahí: `firebase deploy --only firestore:rules`.
+6. Cada cuenta con el claim nuevo debe cerrar sesión y volver a entrar en
+   `/admin` (o esperar ~1h a que su token se refresque) para que el cambio
+   surta efecto.
+7. Borra el archivo de la clave privada de tu computador cuando termines —
+   no hace falta guardarlo, se puede regenerar cuando se necesite.
+
+
 ## Publicar
 ```
 npm run deploy
