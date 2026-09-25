@@ -1,9 +1,10 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { setGlobalOptions } = require('firebase-functions/v2')
-const admin = require('firebase-admin')
+const { initializeApp } = require('firebase-admin/app')
+const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 
-admin.initializeApp()
-const db = admin.firestore()
+initializeApp()
+const db = getFirestore()
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 
@@ -68,7 +69,7 @@ exports.submitQuote = onCall({ enforceAppCheck: true, cors: true }, async (reque
     if (count > RATE_LIMIT_MAX) {
       throw new HttpsError('resource-exhausted', 'Demasiadas solicitudes. Intenta de nuevo más tarde.')
     }
-    tx.set(rateRef, { count, windowStart, updatedAt: admin.firestore.FieldValue.serverTimestamp() })
+    tx.set(rateRef, { count, windowStart, updatedAt: FieldValue.serverTimestamp() })
   })
 
   const doc = {
@@ -82,7 +83,7 @@ exports.submitQuote = onCall({ enforceAppCheck: true, cors: true }, async (reque
     message: data.message || '',
     lang: data.lang,
     status: 'new',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     userAgent: request.rawRequest?.headers?.['user-agent'] || '',
   }
 
