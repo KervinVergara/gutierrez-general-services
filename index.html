@@ -9,6 +9,10 @@
     <meta name="google-site-verification" content="gA5hYWPAEqvBmWLBiGI8UV4ZKv4chr1VWmHpcJ647UQ" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!-- Preload the hero photo (the page's LCP element) so the browser starts
+         fetching it immediately instead of waiting for React to mount it. -->
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high" href="/src/assets/photos/curated/01_lavado_en_accion.webp" />
+
     <!-- Open Graph / WhatsApp / Facebook preview -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Gutierrez General Services LLC" />
