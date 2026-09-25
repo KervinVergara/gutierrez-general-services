@@ -324,6 +324,17 @@ export default function Landing({ lang, setLang }) {
         </div>
       )}
 
+      {/* WHATSAPP FLOATING BUTTON */}
+      <a
+        href={waHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="WhatsApp"
+        className="fixed bottom-5 left-5 z-30 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#20bd5a] transition-colors"
+      >
+        <Icon name="whatsapp" size={28} />
+      </a>
+
       {/* BACK TO TOP */}
       {showTop && (
         <button

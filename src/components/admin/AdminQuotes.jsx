@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { db } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { FilterBtn, Field, inputCls, Loading, EmptyState } from './shared'
-import { sanitizePhone, money, todayStr } from './util'
+import { sanitizePhone, money, todayStr, daysSince } from './util'
 
 const STATUSES = ['new', 'contacted', 'quoted', 'accepted', 'scheduled', 'done', 'lost']
 const LABEL = { new: 'Nuevo', contacted: 'Contactado', quoted: 'Cotizado', accepted: 'Aceptado', scheduled: 'Agendado', done: 'Terminado', lost: 'Perdido' }
@@ -16,6 +16,37 @@ const ALL_SERVICES = content.es.services.filter((s) => !s.hidden)
 const serviceName = (id) => content.es.services.find((s) => s.id === id)?.title || id || '—'
 const emptyManual = { name: '', phone: '', email: '', zip: '', category: '', service: '', message: '' }
 
+const STALE_DAYS = 3 // no activity in this many days while still 'new'/'contacted' → flagged as stale
+const STALE_STATUSES = ['new', 'contacted']
+
+function exportQuotesCSV(quotes) {
+  const headers = ['Fecha', 'Nombre', 'Telefono', 'Correo', 'Servicio', 'Direccion/ZIP', 'Estado', 'Precio estimado', 'Precio final', 'Mensaje']
+  const rows = quotes.map((q) => [
+    q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString('es-CO') : '',
+    q.name || '', q.phone || '', q.email || '', serviceName(q.service), q.zip || '',
+    LABEL[q.status] || q.status || '', q.estimatedPrice ?? '', q.finalPrice ?? '', (q.message || '').replace(/\n/g, ' '),
+  ])
+  const escape = (v) => `"${String(v).replace(/"/g, '""')}"`
+  const csv = [headers, ...rows].map((r) => r.map(escape).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `cotizaciones_${todayStr()}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function notifyNewQuote(q) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+  try {
+    new Notification('Nueva cotización — Gutierrez GS', {
+      body: `${q.name || 'Cliente'} · ${serviceName(q.service)}${q.phone ? ' · ' + q.phone : ''}`,
+      tag: q.id,
+    })
+  } catch { /* some browsers restrict Notification outside a user gesture context; fail silently */ }
+}
+
 export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
   const [quotes, setQuotes] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -24,17 +55,31 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
   const [creating, setCreating] = useState(false)
   const [manual, setManual] = useState(emptyManual)
   const [err, setErr] = useState('')
+  const [notifPerm, setNotifPerm] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
+  const knownIds = useRef(null) // null until first snapshot loads, so we never notify on initial load
 
   useEffect(() => {
     let unsub = null
     import('firebase/firestore').then(({ collection, onSnapshot, orderBy, query }) => {
       unsub = onSnapshot(query(collection(db, 'quotes'), orderBy('createdAt', 'desc')), (snap) => {
-        setQuotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        if (knownIds.current) {
+          for (const q of list) {
+            if (!knownIds.current.has(q.id)) notifyNewQuote(q)
+          }
+        }
+        knownIds.current = new Set(list.map((q) => q.id))
+        setQuotes(list)
         setLoaded(true)
       }, (e) => setErr(e.message))
     })
     return () => unsub && unsub()
   }, [])
+
+  function enableNotifications() {
+    if (typeof Notification === 'undefined') return
+    Notification.requestPermission().then(setNotifPerm)
+  }
 
   useEffect(() => {
     if (!focus || !loaded) return
@@ -117,7 +162,16 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
           <FilterBtn active={filter === 'all'} onClick={() => setFilter('all')}>Todas ({quotes.length})</FilterBtn>
           {STATUSES.map((s) => <FilterBtn key={s} active={filter === s} onClick={() => setFilter(s)}>{LABEL[s]} ({counts[s]})</FilterBtn>)}
         </div>
-        <button onClick={() => { setCreating(!creating); setManual(emptyManual) }} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-gold text-sm font-bold shrink-0"><Icon name="plus" size={16} /> Nueva cotización</button>
+        <div className="flex gap-2 shrink-0">
+          {notifPerm === 'default' && (
+            <button onClick={enableNotifications} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-ink/20 text-sm font-bold hover:border-ink">🔔 Activar notificaciones</button>
+          )}
+          {notifPerm === 'denied' && (
+            <span className="inline-flex items-center h-10 px-3 text-xs text-ink/40">Notificaciones bloqueadas por el navegador</span>
+          )}
+          <button onClick={() => exportQuotesCSV(shown)} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border border-ink/20 text-sm font-bold hover:border-ink"><Icon name="arrowRight" size={15} className="rotate-90" /> Exportar CSV</button>
+          <button onClick={() => { setCreating(!creating); setManual(emptyManual) }} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-gold text-sm font-bold"><Icon name="plus" size={16} /> Nueva cotización</button>
+        </div>
       </div>
 
       {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
@@ -158,6 +212,9 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${COLOR[q.status] || COLOR.new}`}>{LABEL[q.status] || q.status}</span>
                   <span className="text-xs text-ink/50">{q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString('es-CO') : '—'} · {q.lang?.toUpperCase() || 'ES'}</span>
+                  {STALE_STATUSES.includes(q.status) && daysSince(q.updatedAt || q.createdAt) >= STALE_DAYS && (
+                    <span className="rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800">Sin actividad {daysSince(q.updatedAt || q.createdAt)}d</span>
+                  )}
                   {q.category && <span className="text-[10px] font-bold uppercase tracking-wide text-ink/40 bg-mist rounded-full px-2 py-0.5">{q.category}</span>}
                 </div>
                 <h2 className="mt-2 text-2xl font-bold">{q.name}</h2>

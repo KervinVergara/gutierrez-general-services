@@ -45,6 +45,13 @@ export function daysUntil(dateStr) {
   return Math.round((d - now) / 86400000)
 }
 
+export function daysSince(d) {
+  if (!d) return null
+  if (d.toDate) d = d.toDate()
+  else if (typeof d === 'string') d = new Date(d)
+  return Math.floor((Date.now() - d.getTime()) / 86400000)
+}
+
 export function monthKey(d) {
   if (d?.toDate) d = d.toDate()
   else if (typeof d === 'string') d = new Date(d + 'T00:00:00')
