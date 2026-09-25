@@ -9,7 +9,17 @@ const crypto = require('node:crypto')
 initializeApp()
 const db = getFirestore()
 
-setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
+// Every function below runs as this dedicated service account instead of the
+// project's default Compute Engine service account (which historically carries
+// the broad, project-wide Editor role). The Admin SDK used throughout this file
+// bypasses firestore.rules entirely, so this runtime identity — not the rules —
+// is the real security boundary for what these functions can touch. It only has
+// Cloud Datastore User (Firestore read/write) + Eventarc Event Receiver (needed
+// for the audit triggers) + Secret Manager access scoped to RATE_LIMIT_IP_SALT
+// alone (granted directly on that secret, not project-wide).
+const RUNTIME_SERVICE_ACCOUNT = 'functions-runtime@gutierrez-generalservices.iam.gserviceaccount.com'
+
+setGlobalOptions({ region: 'us-central1', maxInstances: 10, serviceAccount: RUNTIME_SERVICE_ACCOUNT }) // redeploy: IAM role fix 2026-09-25
 
 // Salt for hashing IPs before they're stored in rateLimits (see below).
 // Set once via: firebase functions:secrets:set RATE_LIMIT_IP_SALT

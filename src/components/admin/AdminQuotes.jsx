@@ -106,6 +106,20 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
     setExpanded(null)
   }
 
+  async function deleteQuote(q) {
+    const warn = q.jobId
+      ? '¿Eliminar esta cotización? Ya está vinculada a un servicio — el servicio NO se borra, solo esta cotización.'
+      : '¿Eliminar esta cotización? Esta acción no se puede deshacer.'
+    if (!window.confirm(warn)) return
+    setErr('')
+    try {
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      await deleteDoc(doc(db, 'quotes', q.id))
+    } catch (e) {
+      setErr(e.message)
+    }
+  }
+
   async function createManual(e) {
     e.preventDefault()
     if (!manual.name || !manual.phone) { setErr('Nombre y teléfono son obligatorios.'); return }
@@ -234,6 +248,7 @@ export default function AdminQuotes({ goTo, focus, onFocusHandled }) {
                   {q.jobId && (
                     <button onClick={() => goTo?.('jobs', { id: q.jobId })} className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-green-50 text-green-800 text-sm font-bold hover:bg-green-100"><Icon name="arrowRight" size={15} /> Ver servicio</button>
                   )}
+                  <button onClick={() => deleteQuote(q)} className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-red-200 text-red-700 text-sm font-bold hover:border-red-400 hover:bg-red-50"><Icon name="trash" size={16} /> Eliminar</button>
                 </div>
               </div>
               <label className="text-sm font-medium grid gap-1 self-start">Estado
