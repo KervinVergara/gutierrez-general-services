@@ -26,34 +26,65 @@ const TABS = [
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
+  // isAdmin: undefined = aún no lo sabemos, true/false = confirmado desde el
+  // custom claim del token. Nunca se asume admin solo por haber sesión.
+  const [isAdmin, setIsAdmin] = useState(undefined)
   const [tab, setTab] = useState('dashboard')
   const [nav, setNav] = useState(null)
   const [adminLang, setAdminLang] = useState(() => localStorage.getItem('adminLang') || 'es')
   const [err, setErr] = useState('')
 
-  // Preference is saved for when the full admin translation ships — every screen is
-  // still Spanish-only today, so switching this never mixes languages on one screen.
   function toggleAdminLang() {
     const next = adminLang === 'es' ? 'en' : 'es'
     setAdminLang(next)
     localStorage.setItem('adminLang', next)
   }
 
-  // Generic cross-tab jump: goToTab('jobs', { id }) opens that job; goToTab('clients', { clientId })
-  // opens that client's ficha; etc. Each tab component reads only the fields it understands.
   function goToTab(tabId, payload) { setNav(payload || null); setTab(tabId) }
   function clearNav() { setNav(null) }
 
+  // Reads the admin custom claim from the current (or freshly refreshed) ID
+  // token. Being signed in is NOT enough — firestore.rules already enforces
+  // this claim server-side, but the UI needs to know it too so it doesn't
+  // render the panel shell (and fire off a dozen onSnapshot listeners that
+  // would just fail with permission-denied) for a non-admin account.
+  async function refreshAdminClaim(u, forceRefresh) {
+    if (!u) { setIsAdmin(false); return }
+    try {
+      const result = await u.getIdTokenResult(forceRefresh)
+      setIsAdmin(result.claims?.admin === true)
+    } catch {
+      setIsAdmin(false)
+    }
+  }
+
   useEffect(() => {
-    if (!isConfigured) { setUser(null); return }
+    if (!isConfigured) { setUser(null); setIsAdmin(false); return }
     import('firebase/auth').then(({ onAuthStateChanged }) => {
-      onAuthStateChanged(auth, (u) => setUser(u))
+      onAuthStateChanged(auth, (u) => {
+        setUser(u)
+        refreshAdminClaim(u, false)
+      })
     })
+  }, [])
+
+  // Custom claims don't auto-refresh on the client — if the admin claim gets
+  // revoked while this tab is open, the cached token can stay valid for up
+  // to ~1h. Forcing a refresh whenever the tab regains focus catches that
+  // sooner without polling constantly in the background.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible' && auth.currentUser) {
+        refreshAdminClaim(auth.currentUser, true)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   // Every quote that comes in from the public site automatically feeds the client database.
   useEffect(() => {
-    if (!user) return
+    if (!user || !isAdmin) return
     let unsub = null
     import('firebase/firestore').then(({ collection, onSnapshot, doc, getDoc, setDoc, serverTimestamp }) => {
       unsub = onSnapshot(collection(db, 'quotes'), (snap) => {
@@ -77,7 +108,7 @@ export default function Admin() {
       })
     })
     return () => unsub && unsub()
-  }, [user])
+  }, [user, isAdmin])
 
   async function login(e) {
     e.preventDefault()
@@ -95,7 +126,7 @@ export default function Admin() {
   }
 
   if (!isConfigured) return <Shell><p className="text-center">Firebase no está configurado. Copia <code>.env.example</code> a <code>.env</code> con las credenciales del proyecto.</p></Shell>
-  if (user === undefined) return <Shell><p className="text-center text-ink/60">Cargando…</p></Shell>
+  if (user === undefined || (user && isAdmin === undefined)) return <Shell><p className="text-center text-ink/60">Cargando…</p></Shell>
 
   if (!user) {
     return (
@@ -107,6 +138,17 @@ export default function Admin() {
           {err && <p className="text-sm text-red-700">{err}</p>}
           <button className="h-12 rounded-lg bg-ink text-gold font-bold">Entrar</button>
         </form>
+      </Shell>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <Shell right={<button onClick={logout} className="text-sm font-semibold hover:text-gold whitespace-nowrap">Salir</button>}>
+        <div className="mx-auto max-w-sm rounded-2xl bg-white p-8 grid gap-3 text-center shadow-sm border border-ink/10">
+          <h1 className="text-xl font-extrabold">Sin permisos</h1>
+          <p className="text-sm text-ink/60">Tu cuenta ({user.email}) no tiene permisos de administrador para este panel.</p>
+        </div>
       </Shell>
     )
   }
