@@ -40,14 +40,16 @@ service cloud.firestore {
       allow update: if isStaff() && unchanged('createdAt');
     }
     match /feedback/{id} {
-      // Dev-stage widget: anyone with the site link can submit a change request (write-only,
-      // free-text notes, no sensitive data). Reading/checking off/removing entries is staff-only —
-      // previously this was world-readable and world-deletable, which let anyone on the internet
-      // see or wipe the whole feedback list.
-      allow create: if request.resource.data.keys().hasOnly(['text','status','createdAt'])
-                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 2000
-                    && request.resource.data.status == 'pending';
-      allow read, delete: if isStaff();
+      // Dev-stage widget for Kervin's own change-request notes — currently
+      // unmounted from the public site (see Landing.jsx), so there's no UI
+      // that calls the old public "create" path anymore. It's closed off
+      // entirely rather than kept open-but-unused: an open public write
+      // path with no rate limit of its own was reachable directly via the
+      // SDK/REST API even with nothing on the page linking to it. If the
+      // widget comes back for real customers, route submissions through a
+      // Cloud Function (same pattern as submitQuote: rate limit, honeypot,
+      // payload cap) instead of reopening this rule.
+      allow read, create, delete: if isStaff();
       // Staff can only flip status — text/createdAt can never be edited this way, so the
       // hasOnly(['status']) check already makes createdAt/text immutable on update.
       allow update: if isStaff()
@@ -57,33 +59,49 @@ service cloud.firestore {
     match /clients/{id} {
       // Internal CRM data — only signed-in staff can read/write; updates can't rewrite createdAt.
       // Create/update must be honestly attributed to the account making them (stampedActor).
-      allow read, delete: if isStaff();
+      // Deletes are NOT allowed here — only the deleteRecord Cloud Function can
+      // delete these, so a delete is always attributed to the real staff uid
+      // that made it (see functions/index.js). See auditLog below.
+      allow read: if isStaff();
       allow create: if isStaff() && stampedActor();
       allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
     match /jobs/{id} {
       // Completed/scheduled service records — only signed-in staff; updates can't rewrite
       // createdAt or origin (whether the job came from a quote, a plan, or manual entry).
-      allow read, delete: if isStaff();
+      // Deletes are NOT allowed here — only the deleteRecord Cloud Function can
+      // delete these, so a delete is always attributed to the real staff uid
+      // that made it (see functions/index.js). See auditLog below.
+      allow read: if isStaff();
       allow create: if isStaff() && stampedActor();
       allow update: if isStaff() && unchanged('createdAt') && unchanged('origin') && stampedActor();
     }
     match /finance/{id} {
       // Income/expense ledger — only signed-in staff; updates can't rewrite createdAt.
-      allow read, delete: if isStaff();
+      // Deletes are NOT allowed here — only the deleteRecord Cloud Function can
+      // delete these, so a delete is always attributed to the real staff uid
+      // that made it (see functions/index.js). See auditLog below.
+      allow read: if isStaff();
       allow create: if isStaff() && stampedActor();
       allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
     match /plans/{id} {
       // Recurring maintenance plans — only signed-in staff; updates can't rewrite createdAt.
-      allow read, delete: if isStaff();
+      // Deletes are NOT allowed here — only the deleteRecord Cloud Function can
+      // delete these, so a delete is always attributed to the real staff uid
+      // that made it (see functions/index.js). See auditLog below.
+      allow read: if isStaff();
       allow create: if isStaff() && stampedActor();
       allow update: if isStaff() && unchanged('createdAt') && stampedActor();
     }
     match /auditLog/{id} {
-      // Written only by the Cloud Functions triggers below, via the Admin SDK
-      // (which bypasses these rules entirely) — never directly by a client,
-      // so a compromised admin session can't edit or erase its own trail.
+      // Written only by Cloud Functions (audit_* triggers + deleteRecord),
+      // via the Admin SDK (which bypasses these rules entirely) — never
+      // directly by a client, so a compromised admin session can't edit or
+      // erase its own trail. Entries carry an expiresAt (2 years) backing a
+      // Firestore TTL policy configured in the console, so old entries
+      // (which can include past client contact info in before/after) don't
+      // accumulate forever.
       allow read: if isStaff();
     }
     // rateLimits is intentionally left with no match block above (default

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { auth, db } from '../../firebase'
+import { auth, db, functions } from '../../firebase'
 import Icon from '../Icon'
 import { Field, inputCls, Loading, EmptyState } from './shared'
-import { sanitizePhone, money, fmtDate, todayStr, withAudit } from './util'
+import { sanitizePhone, money, fmtDate, todayStr, withAudit, deleteRecord } from './util'
 
 const emptyForm = { name: '', phone: '', email: '', zip: '', notes: '' }
 const emptyVehicle = { make: '', model: '', year: '', color: '', plate: '', notes: '' }
@@ -79,8 +79,7 @@ export default function AdminClients({ goTo, focus, onFocusHandled }) {
 
   async function remove(id) {
     if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer y no borra sus servicios ni cotizaciones registrados.')) return
-    const { doc, deleteDoc } = await import('firebase/firestore')
-    await deleteDoc(doc(db, 'clients', id))
+    await deleteRecord(functions, 'clients', id)
   }
 
   async function saveList(client, key, list) {

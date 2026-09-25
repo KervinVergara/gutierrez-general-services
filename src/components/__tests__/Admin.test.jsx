@@ -5,6 +5,7 @@ import Admin from '../Admin'
 vi.mock('../../firebase', () => ({
   auth: { currentUser: null },
   db: {},
+  functions: {},
   isConfigured: true,
 }))
 
@@ -16,6 +17,9 @@ vi.mock('firebase/auth', () => ({
   signInWithPopup: vi.fn(),
   linkWithPopup: vi.fn(),
   unlink: vi.fn(),
+  reauthenticateWithPopup: vi.fn(),
+  reauthenticateWithCredential: vi.fn(),
+  EmailAuthProvider: { credential: vi.fn() },
   GoogleAuthProvider: vi.fn(),
   signOut: vi.fn(),
 }))

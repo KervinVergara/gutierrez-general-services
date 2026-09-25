@@ -18,6 +18,8 @@ export default defineConfig({
     css: true,
     // Playwright's E2E specs live under tests/e2e and run via `npm run test:e2e`,
     // never through Vitest — keep the two runners from tripping over each other's files.
-    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**', 'tests/rules/**'],
+    // functions/test/** runs on Node's own built-in test runner (node --test),
+    // not Vitest — see functions/package.json.
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**', 'tests/rules/**', 'functions/**'],
   },
 })

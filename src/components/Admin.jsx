@@ -139,6 +139,25 @@ export default function Admin() {
     }
   }
 
+  // Firebase requires a "recent" login (roughly the last few minutes) for
+  // sensitive account changes like linking a provider or removing the
+  // password — an old, still-valid session isn't enough. When linkGoogle or
+  // unlinkPassword below hit that wall (auth/requires-recent-login), this
+  // re-proves the user's identity (via whichever method the account already
+  // has) and the caller retries the original action once it succeeds.
+  async function reauthenticate() {
+    const hasGoogleNow = auth.currentUser.providerData.some((p) => p.providerId === 'google.com')
+    if (hasGoogleNow) {
+      const { GoogleAuthProvider, reauthenticateWithPopup } = await import('firebase/auth')
+      await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider())
+      return
+    }
+    const password = window.prompt('Por seguridad, confirma tu contraseña actual para continuar:')
+    if (!password) throw { code: 'auth/popup-closed-by-user' }
+    const { EmailAuthProvider, reauthenticateWithCredential } = await import('firebase/auth')
+    await reauthenticateWithCredential(auth.currentUser, EmailAuthProvider.credential(auth.currentUser.email, password))
+  }
+
   // Lets an already-logged-in admin (via password) attach Google Sign-In to
   // the SAME account, as a step toward dropping the password entirely (see
   // unlinkPassword below). Must be signed in first — Firebase links to
@@ -150,7 +169,16 @@ export default function Admin() {
       await linkWithPopup(auth.currentUser, new GoogleAuthProvider())
       setUser({ ...auth.currentUser })
     } catch (e) {
-      if (e?.code === 'auth/credential-already-in-use') {
+      if (e?.code === 'auth/requires-recent-login') {
+        try {
+          await reauthenticate()
+          const { GoogleAuthProvider, linkWithPopup } = await import('firebase/auth')
+          await linkWithPopup(auth.currentUser, new GoogleAuthProvider())
+          setUser({ ...auth.currentUser })
+        } catch {
+          setErr('No se pudo confirmar tu identidad. Intenta de nuevo.')
+        }
+      } else if (e?.code === 'auth/credential-already-in-use') {
         setErr('Esa cuenta de Google ya está vinculada a otra cuenta.')
       } else if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
         setErr('No se pudo vincular la cuenta de Google.')
@@ -160,7 +188,11 @@ export default function Admin() {
 
   // Once Google is linked, this removes the password as a way in — from
   // then on the only way to reach this account is Google Sign-In, which
-  // carries whatever 2FA is already active on that Google account.
+  // carries whatever 2FA is already active on that Google account. The
+  // "Quitar contraseña" button is only ever shown once Google is already
+  // linked (see hasPassword/hasGoogle below), so Google always remains as
+  // a working recovery method — this can never leave the account with no
+  // way in at all.
   async function unlinkPassword() {
     if (!confirm('Esto quita la contraseña por completo. Solo podrás entrar con "Iniciar sesión con Google" de ahora en adelante. ¿Continuar?')) return
     setErr('')
@@ -169,7 +201,18 @@ export default function Admin() {
       await unlink(auth.currentUser, 'password')
       setUser({ ...auth.currentUser })
     } catch (e) {
-      setErr('No se pudo quitar la contraseña.')
+      if (e?.code === 'auth/requires-recent-login') {
+        try {
+          await reauthenticate()
+          const { unlink } = await import('firebase/auth')
+          await unlink(auth.currentUser, 'password')
+          setUser({ ...auth.currentUser })
+        } catch {
+          setErr('No se pudo confirmar tu identidad. Intenta de nuevo.')
+        }
+      } else {
+        setErr('No se pudo quitar la contraseña.')
+      }
     }
   }
 

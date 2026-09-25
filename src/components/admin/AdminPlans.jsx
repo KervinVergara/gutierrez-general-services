@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { auth, db } from '../../firebase'
+import { auth, db, functions } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, nextVisitFrom, withAudit } from './util'
+import { money, fmtDate, todayStr, nextVisitFrom, withAudit, deleteRecord } from './util'
 
 const FREQUENCIES = [
   { id: 'weekly', label: 'Semanal' }, { id: 'biweekly', label: 'Quincenal' }, { id: 'monthly', label: 'Mensual' },
@@ -81,8 +81,7 @@ export default function AdminPlans({ goTo, focus, onFocusHandled }) {
 
   async function remove(id) {
     if (!confirm('¿Eliminar este plan? Esta acción no se puede deshacer.')) return
-    const { doc, deleteDoc } = await import('firebase/firestore')
-    await deleteDoc(doc(db, 'plans', id))
+    await deleteRecord(functions, 'plans', id)
   }
 
   async function generateNext(plan) {

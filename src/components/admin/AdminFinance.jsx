@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { auth, db } from '../../firebase'
+import { auth, db, functions } from '../../firebase'
 import Icon from '../Icon'
 import { Field, inputCls, StatCard, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, addMonthsStr, monthKey, monthLabel, last6Months, withAudit } from './util'
+import { money, fmtDate, todayStr, addMonthsStr, monthKey, monthLabel, last6Months, withAudit, deleteRecord } from './util'
 
 const CATEGORIES = ['Supplies', 'Fuel', 'Equipment', 'Advertising', 'Maintenance', 'Other']
 const emptyForm = { description: '', amount: '', date: todayStr(), category: CATEGORIES[0] }
@@ -84,8 +84,7 @@ export default function AdminFinance() {
 
   async function remove(id) {
     if (!confirm('¿Eliminar este movimiento? Esta acción no se puede deshacer.')) return
-    const { doc, deleteDoc } = await import('firebase/firestore')
-    await deleteDoc(doc(db, 'finance', id))
+    await deleteRecord(functions, 'finance', id)
   }
 
   return (

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { auth, db } from '../../firebase'
+import { auth, db, functions } from '../../firebase'
 import { content } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls, FilterBtn, Loading, EmptyState } from './shared'
-import { money, fmtDate, todayStr, addDaysStr, addMonthsStr, withAudit } from './util'
+import { money, fmtDate, todayStr, addDaysStr, addMonthsStr, withAudit, deleteRecord } from './util'
 
 const SERVICE_TITLES = content.es.services.map((s) => s.title)
 const STATUSES = ['scheduled', 'in_progress', 'done', 'cancelled']
@@ -75,7 +75,7 @@ export default function AdminJobs({ focus, onFocusHandled }) {
   const client = clients.find((c) => c.id === form.clientId)
 
   async function syncFinance(job) {
-    const { doc, setDoc, deleteDoc } = await import('firebase/firestore')
+    const { doc, setDoc } = await import('firebase/firestore')
     const ref = doc(db, 'finance', `job_${job.id}`)
     const paidAmount = job.paymentStatus === 'paid' ? Number(job.amountCharged) : job.paymentStatus === 'partial' ? Number(job.amountPaid) : 0
     if (paidAmount > 0) {
@@ -83,7 +83,7 @@ export default function AdminJobs({ focus, onFocusHandled }) {
         type: 'income', amount: paidAmount, description: `${job.service} — ${job.clientName}`, jobId: job.id, date: job.date,
       }, auth))
     } else {
-      await deleteDoc(ref).catch(() => {})
+      await deleteRecord(functions, 'finance', `job_${job.id}`).catch(() => {})
     }
   }
 
@@ -125,9 +125,9 @@ export default function AdminJobs({ focus, onFocusHandled }) {
 
   async function remove(job) {
     if (!confirm(`¿Eliminar el servicio de ${job.clientName}? Esta acción no se puede deshacer.`)) return
-    const { doc, deleteDoc, updateDoc } = await import('firebase/firestore')
-    await deleteDoc(doc(db, 'jobs', job.id))
-    await deleteDoc(doc(db, 'finance', `job_${job.id}`)).catch(() => {})
+    const { doc, updateDoc } = await import('firebase/firestore')
+    await deleteRecord(functions, 'jobs', job.id)
+    await deleteRecord(functions, 'finance', `job_${job.id}`).catch(() => {})
     // Un-link the originating quote so it doesn't stay locked pointing at a deleted service.
     if (job.quoteId) {
       await updateDoc(doc(db, 'quotes', job.quoteId), { jobId: null, status: 'accepted' }).catch(() => {})

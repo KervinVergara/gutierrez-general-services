@@ -75,10 +75,24 @@ describe('quotes collection', () => {
 })
 
 describe('feedback collection', () => {
+  // Dev-stage widget for Kervin's own change-request notes — currently
+  // unmounted from the public site, so the collection is now staff-only
+  // end to end (it used to accept a public, schema-validated create; that
+  // path was closed rather than kept open-but-unused — see firestore.rules).
   const validFeedback = { text: 'Please add a dark mode toggle.', status: 'pending', createdAt: Date.now() }
 
-  it('lets anyone submit feedback', async () => {
-    await assertSucceeds(addDoc(collection(anonDb(), 'feedback'), validFeedback))
+  it('blocks anonymous create of feedback (public write path removed — widget is staff-only now)', async () => {
+    await assertFails(addDoc(collection(anonDb(), 'feedback'), validFeedback))
+  })
+
+  it('blocks a signed-in account without the admin claim from creating feedback', async () => {
+    await assertFails(addDoc(collection(otherUserDb(), 'feedback'), validFeedback))
+  })
+
+  it('lets staff create, read and delete feedback directly', async () => {
+    const ref = await addDoc(collection(staffDb(), 'feedback'), validFeedback)
+    await assertSucceeds(getDoc(doc(staffDb(), 'feedback', ref.id)))
+    await assertSucceeds(deleteDoc(doc(staffDb(), 'feedback', ref.id)))
   })
 
   it('blocks anonymous read and delete of feedback (previously world-readable/deletable)', async () => {
@@ -121,6 +135,20 @@ describe('internal-only collections (clients, jobs, finance, plans)', () => {
   it('lets staff (admin claim) read and write', async () => {
     await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c1'), { name: 'Jane Doe', updatedBy: 'staff-1' }))
     await assertSucceeds(getDoc(doc(staffDb(), 'clients', 'c1')))
+  })
+
+  it('blocks delete from the client SDK entirely, even for staff (only the deleteRecord Cloud Function can delete these)', async () => {
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-nodel'), { name: 'Jane Doe', updatedBy: 'staff-1' }))
+    await assertFails(deleteDoc(doc(staffDb(), 'clients', 'c-nodel')))
+
+    await assertSucceeds(setDoc(doc(staffDb(), 'jobs', 'j-nodel'), { clientId: 'c1', service: 'detailing', updatedBy: 'staff-1' }))
+    await assertFails(deleteDoc(doc(staffDb(), 'jobs', 'j-nodel')))
+
+    await assertSucceeds(setDoc(doc(staffDb(), 'finance', 'f-nodel'), { type: 'expense', amount: 10, updatedBy: 'staff-1' }))
+    await assertFails(deleteDoc(doc(staffDb(), 'finance', 'f-nodel')))
+
+    await assertSucceeds(setDoc(doc(staffDb(), 'plans', 'p-nodel'), { clientId: 'c1', name: 'Monthly wash', updatedBy: 'staff-1' }))
+    await assertFails(deleteDoc(doc(staffDb(), 'plans', 'p-nodel')))
   })
 })
 
@@ -197,16 +225,6 @@ describe('field immutability on update (createdAt / origin cannot be rewritten b
 
     await assertFails(updateDoc(doc(staffDb(), 'plans', ref.id), { createdAt: 2000, updatedBy: 'staff-1' }))
     await assertSucceeds(updateDoc(doc(staffDb(), 'plans', ref.id), { status: 'paused', updatedBy: 'staff-1' }))
-  })
-})
-
-describe('extra-field injection is rejected on the public feedback create path', () => {
-  // quotes no longer has a public create path in these rules at all (see the
-  // 'quotes collection' describe above) — field-level validation for public
-  // submissions now lives in functions/index.js instead. feedback is the
-  // only collection that still takes a public, rules-validated write.
-  it('rejects a feedback create with an unexpected extra field', async () => {
-    await assertFails(addDoc(collection(anonDb(), 'feedback'), { text: 'hi', status: 'pending', createdAt: Date.now(), admin: true }))
   })
 })
 

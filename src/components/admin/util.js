@@ -83,3 +83,13 @@ export function last6Months() {
 export function withAudit(data, auth) {
   return { ...data, updatedBy: auth.currentUser?.uid || '', updatedByEmail: auth.currentUser?.email || '' }
 }
+
+// Deletes a record from one of the audited CRM collections through the
+// staff-only deleteRecord Cloud Function — firestore.rules denies `delete`
+// on these collections directly from the client, specifically so a delete
+// is always attributed to the real uid that made it (see functions/index.js).
+export async function deleteRecord(functionsInstance, collection, id) {
+  const { httpsCallable } = await import('firebase/functions')
+  const call = httpsCallable(functionsInstance, 'deleteRecord')
+  await call({ collection, id })
+}

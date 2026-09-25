@@ -8,7 +8,8 @@
     "node": "22"
   },
   "scripts": {
-    "lint": "true"
+    "lint": "true",
+    "test": "node --test test/validation.test.js"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
