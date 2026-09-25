@@ -18,3 +18,17 @@ export const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.proj
 const app = isConfigured ? initializeApp(firebaseConfig) : null
 export const db = app ? getFirestore(app) : null
 export const auth = app ? getAuth(app) : null
+
+// App Check (anti-bot / anti-abuse on Firestore writes from the public form).
+// Inert until VITE_RECAPTCHA_SITE_KEY is set — see README "App Check" section
+// for how to get that key and turn on enforcement in the Firebase console.
+// Safe to leave the env var empty: the app just runs without it, same as today.
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+if (app && recaptchaSiteKey) {
+  import('firebase/app-check').then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    })
+  })
+}

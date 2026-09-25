@@ -2,18 +2,17 @@ import { useEffect, useState } from 'react'
 import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../content'
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
-import FeedbackWidget from './FeedbackWidget'
-import logo from '../assets/photos/logo-new.png'
-import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.jpeg'
-import svcAuto from '../assets/photos/curated/02_brillo_pintura.jpeg'
-import svcProperty from '../assets/photos/stock-exterior-gutter.jpeg'
-import svcSeasonal from '../assets/photos/stock-leaves.jpeg'
-import galTruck from '../assets/photos/curated/03_camioneta_negra.jpeg'
-import galInterior from '../assets/photos/curated/04_interior_cuero.jpeg'
-import galJeep from '../assets/photos/curated/06_jeep_blanco.jpeg'
-import galBoat from '../assets/photos/curated/07_bote.jpeg'
-import galFoam from '../assets/photos/curated/08_lavado_espuma.jpeg'
-import galPolish from '../assets/photos/curated/09_pulido_en_accion.jpeg'
+import logo from '../assets/photos/logo-new.webp'
+import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.webp'
+import svcAuto from '../assets/photos/curated/02_brillo_pintura.webp'
+import svcProperty from '../assets/photos/stock-exterior-gutter.webp'
+import svcSeasonal from '../assets/photos/stock-leaves.webp'
+import galTruck from '../assets/photos/curated/03_camioneta_negra.webp'
+import galInterior from '../assets/photos/curated/04_interior_cuero.webp'
+import galJeep from '../assets/photos/curated/06_jeep_blanco.webp'
+import galBoat from '../assets/photos/curated/07_bote.webp'
+import galFoam from '../assets/photos/curated/08_lavado_espuma.webp'
+import galPolish from '../assets/photos/curated/09_pulido_en_accion.webp'
 
 const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
 const navLinkCls = "relative py-2 text-ink/75 hover:text-ink transition-colors after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-gold after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
@@ -35,6 +34,7 @@ export default function Landing({ lang, setLang }) {
   const [presetType, setPresetType] = useState('')
   const [lightbox, setLightbox] = useState(null)
   const [scrolled, setScrolled] = useState(false)
+  const [showTop, setShowTop] = useState(false)
 
   useEffect(() => {
     if (!lightbox) return
@@ -44,7 +44,10 @@ export default function Landing({ lang, setLang }) {
   }, [lightbox])
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8)
+      setShowTop(window.scrollY > 700)
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -295,9 +298,16 @@ export default function Landing({ lang, setLang }) {
           <p>© {new Date().getFullYear()} {BUSINESS}. {t.footer.rights}</p>
           <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
         </div>
+        <div className="mx-auto max-w-6xl px-4 pb-6 flex gap-4 text-xs text-steel/80">
+          <a href="/privacy" className="hover:underline">{lang === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}</a>
+          <a href="/terms" className="hover:underline">{lang === 'es' ? 'Términos de Servicio' : 'Terms of Service'}</a>
+        </div>
       </footer>
 
-      <FeedbackWidget t={t.feedback} />
+      {/* FeedbackWidget removed from the public site now that it's live for real customers —
+          it was a dev-only tool for internal notes during the build. Still available at
+          src/components/FeedbackWidget.jsx if a future dev round wants it back (mount it in
+          the admin panel instead, behind login, rather than here). */}
 
       {lightbox && (
         <div className="fixed inset-0 z-50 bg-ink/90 grid place-items-center p-4" onClick={() => setLightbox(null)}>
@@ -312,6 +322,18 @@ export default function Landing({ lang, setLang }) {
           <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} className="max-w-full max-h-full rounded-lg object-contain" />
           <img src={logo} alt="" className="absolute bottom-6 right-6 h-8 sm:h-10 w-auto object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none" />
         </div>
+      )}
+
+      {/* BACK TO TOP */}
+      {showTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label={lang === 'en' ? 'Back to top' : 'Volver arriba'}
+          className="fixed bottom-5 right-5 z-30 grid place-items-center w-11 h-11 rounded-full bg-ink text-white shadow-lg hover:bg-ink/90 transition-opacity"
+        >
+          <Icon name="arrowRight" size={18} className="-rotate-90" />
+        </button>
       )}
     </div>
   )

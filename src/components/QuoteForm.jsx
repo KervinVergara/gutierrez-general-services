@@ -147,7 +147,7 @@ export default function QuoteForm({ t, services, lang, presetService, presetType
             <textarea rows="3" className="w-full rounded-xl bg-white text-ink text-base px-4 py-2.5 border border-ink/15 placeholder:text-steel/70 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold" value={form.message} onChange={set('message')} />
           </label>
 
-          <label className="flex items-start gap-2.5 text-xs text-ink/60">
+          <label className="flex items-start gap-2.5 text-xs text-ink/70">
             <input required type="checkbox" className="mt-0.5 w-4 h-4 accent-[var(--color-gold)]" checked={form.consent} onChange={set('consent')} />
             {t.consent}
           </label>

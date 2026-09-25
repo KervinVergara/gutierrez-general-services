@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Landing from './components/Landing'
 import Admin from './components/Admin'
+import Privacy from './components/Privacy'
+import Terms from './components/Terms'
+import NotFound from './components/NotFound'
 
 function detectLang() {
   const saved = localStorage.getItem('lang')
@@ -19,6 +22,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing lang={lang} setLang={setLang} />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

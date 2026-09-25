@@ -3,3 +3,6 @@ dist
 .env
 .firebase
 *.log
+test-results
+playwright-report
+blob-report
