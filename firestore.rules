@@ -1,12 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Only accounts explicitly granted the "admin" custom claim count as staff.
-    // Being signed in is NOT enough on its own — see scripts/set-admin-claim.mjs
-    // for how that claim gets assigned. This is what actually separates a
-    // regular Firebase Auth account from someone who can touch the CRM.
+    // Real authorization boundary: signed in AND carrying the "admin" custom claim
+    // (see scripts/set-admin-claim.mjs). A signed-in account without the claim must
+    // be treated the same as anonymous for every internal collection.
     function isStaff() {
       return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // True when `field` either wasn't present before, or is present in the new
+    // document with the exact same value it had before. Used to stop a staff
+    // account from rewriting history fields (createdAt, origin) on `update`,
+    // even though staff can freely edit the rest of the document.
+    function unchanged(field) {
+      return !(field in resource.data)
+             || (field in request.resource.data && request.resource.data[field] == resource.data[field]);
     }
 
     match /quotes/{id} {
@@ -18,8 +26,9 @@ service cloud.firestore {
                     && request.resource.data.status == 'new';
       // Signed-in staff can also create a quote manually (e.g. a phone-in lead), with extra fields.
       allow create: if isStaff();
-      // Only staff (admin custom claim) can read/update/delete.
-      allow read, update, delete: if isStaff();
+      // Only signed-in staff can read/delete; updates additionally can't rewrite createdAt.
+      allow read, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt');
     }
     match /feedback/{id} {
       // Dev-stage widget: anyone with the site link can submit a change request (write-only,
@@ -30,25 +39,32 @@ service cloud.firestore {
                     && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 2000
                     && request.resource.data.status == 'pending';
       allow read, delete: if isStaff();
+      // Staff can only flip status — text/createdAt can never be edited this way, so the
+      // hasOnly(['status']) check already makes createdAt/text immutable on update.
       allow update: if isStaff()
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                     && request.resource.data.status in ['pending', 'done'];
     }
     match /clients/{id} {
-      // Internal CRM data — staff only.
-      allow read, create, update, delete: if isStaff();
+      // Internal CRM data — only signed-in staff can read/write; updates can't rewrite createdAt.
+      allow read, create, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt');
     }
     match /jobs/{id} {
-      // Completed/scheduled service records — staff only.
-      allow read, create, update, delete: if isStaff();
+      // Completed/scheduled service records — only signed-in staff; updates can't rewrite
+      // createdAt or origin (whether the job came from a quote, a plan, or manual entry).
+      allow read, create, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt') && unchanged('origin');
     }
     match /finance/{id} {
-      // Income/expense ledger — staff only.
-      allow read, create, update, delete: if isStaff();
+      // Income/expense ledger — only signed-in staff; updates can't rewrite createdAt.
+      allow read, create, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt');
     }
     match /plans/{id} {
-      // Recurring maintenance plans — staff only.
-      allow read, create, update, delete: if isStaff();
+      // Recurring maintenance plans — only signed-in staff; updates can't rewrite createdAt.
+      allow read, create, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt');
     }
   }
 }

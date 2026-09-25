@@ -129,3 +129,76 @@ describe('internal-only collections (clients, jobs, finance, plans)', () => {
     await assertSucceeds(getDoc(doc(staffDb(), 'clients', 'c1')))
   })
 })
+
+describe('field immutability on update (createdAt / origin cannot be rewritten by staff)', () => {
+  it('blocks staff from changing createdAt on a quote, but allows other edits', async () => {
+    const ref = await addDoc(collection(staffDb(), 'quotes'), { ...validQuote, createdAt: 1000 })
+
+    await assertFails(updateDoc(doc(staffDb(), 'quotes', ref.id), { createdAt: 2000 }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'quotes', ref.id), { status: 'contacted' }))
+
+    const after = (await getDoc(doc(staffDb(), 'quotes', ref.id))).data()
+    expect(after.createdAt).toBe(1000)
+  })
+
+  it('blocks staff from changing createdAt on a client record', async () => {
+    await assertSucceeds(setDoc(doc(staffDb(), 'clients', 'c-immutable'), { name: 'Jane Doe', createdAt: 1000 }))
+
+    await assertFails(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { createdAt: 2000 }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'clients', 'c-immutable'), { notes: 'called back' }))
+  })
+
+  it('blocks staff from changing createdAt or origin on a job, but allows other edits (e.g. correcting the charged amount)', async () => {
+    const ref = await addDoc(collection(staffDb(), 'jobs'), {
+      clientId: 'c1', clientName: 'Jane Doe', service: 'detailing', date: '2026-01-01',
+      amountCharged: 100, status: 'scheduled', paymentStatus: 'pending',
+      origin: 'manual', createdAt: 1000,
+    })
+
+    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { createdAt: 2000 }))
+    await assertFails(updateDoc(doc(staffDb(), 'jobs', ref.id), { origin: 'plan' }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'jobs', ref.id), { amountCharged: 120 }))
+  })
+
+  it('blocks staff from changing createdAt on a finance entry, but allows editing the amount', async () => {
+    const ref = await addDoc(collection(staffDb(), 'finance'), {
+      type: 'expense', description: 'Supplies', amount: 50, date: '2026-01-01', category: 'Supplies', createdAt: 1000,
+    })
+
+    await assertFails(updateDoc(doc(staffDb(), 'finance', ref.id), { createdAt: 2000 }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'finance', ref.id), { amount: 75 }))
+  })
+
+  it('blocks staff from changing createdAt on a plan', async () => {
+    const ref = await addDoc(collection(staffDb(), 'plans'), {
+      clientId: 'c1', clientName: 'Jane Doe', name: 'Monthly wash', price: 60,
+      frequency: 'monthly', startDate: '2026-01-01', nextVisit: '2026-01-01', status: 'active', items: [], createdAt: 1000,
+    })
+
+    await assertFails(updateDoc(doc(staffDb(), 'plans', ref.id), { createdAt: 2000 }))
+    await assertSucceeds(updateDoc(doc(staffDb(), 'plans', ref.id), { status: 'paused' }))
+  })
+})
+
+describe('extra-field injection is rejected on public create paths', () => {
+  it('rejects a quote create with an unexpected extra field (e.g. trying to smuggle in a role/admin flag)', async () => {
+    await assertFails(addDoc(collection(anonDb(), 'quotes'), { ...validQuote, role: 'admin' }))
+  })
+
+  it('rejects a feedback create with an unexpected extra field', async () => {
+    await assertFails(addDoc(collection(anonDb(), 'feedback'), { text: 'hi', status: 'pending', createdAt: Date.now(), admin: true }))
+  })
+})
+
+describe('list queries are blocked for non-staff the same as get (not just reachable by direct doc id)', () => {
+  it('blocks anonymous and non-admin list queries on quotes', async () => {
+    await addDoc(collection(staffDb(), 'quotes'), validQuote)
+    await assertFails(getDocs(collection(anonDb(), 'quotes')))
+    await assertFails(getDocs(collection(otherUserDb(), 'quotes')))
+  })
+
+  it('blocks a signed-in account without the admin claim from listing feedback', async () => {
+    await addDoc(collection(staffDb(), 'feedback'), { text: 'hi', status: 'pending', createdAt: Date.now() })
+    await assertFails(getDocs(collection(otherUserDb(), 'feedback')))
+  })
+})
