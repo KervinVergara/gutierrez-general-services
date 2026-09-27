@@ -135,7 +135,9 @@ export default function Admin() {
       if (e?.code === 'auth/account-exists-with-different-credential') {
         setErr('Ya existe una cuenta con ese correo usando contraseña. Inicia sesión con la contraseña y usa "Vincular cuenta de Google" abajo.')
       } else if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
-        setErr('No se pudo iniciar sesión con Google.')
+        setErr(e?.code === 'auth/admin-restricted-operation'
+          ? 'Esta cuenta de Google no está registrada en el panel. Pide acceso al administrador.'
+          : `No se pudo iniciar sesión con Google${e?.code ? ` (${e.code})` : ''}.`)
       }
     }
   }
