@@ -36,6 +36,9 @@ export default function Admin() {
   const [nav, setNav] = useState(null)
   const [adminLang, setAdminLang] = useState(() => localStorage.getItem('adminLang') || 'es')
   const [err, setErr] = useState('')
+  const [showAccount, setShowAccount] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+  const [pwBusy, setPwBusy] = useState(false)
 
   function toggleAdminLang() {
     const next = adminLang === 'es' ? 'en' : 'es'
@@ -219,6 +222,52 @@ export default function Admin() {
     }
   }
 
+  // Lets the signed-in admin set a new password from the panel. With a
+  // password already on the account it re-proves identity with the current
+  // one (Firebase demands a recent login for this); with a Google-only
+  // account it *creates* a password by linking the email/password provider,
+  // so the client can also sign in without Google if they ever want to.
+  async function changePassword(e) {
+    e.preventDefault()
+    const f = new FormData(e.currentTarget)
+    const current = f.get('current') || ''
+    const next = f.get('next') || ''
+    const confirmPw = f.get('confirm') || ''
+    setPwMsg('')
+    if (next.length < 8) { setPwMsg('La contraseña nueva debe tener al menos 8 caracteres.'); return }
+    if (next !== confirmPw) { setPwMsg('Las contraseñas nuevas no coinciden.'); return }
+    setPwBusy(true)
+    try {
+      const { EmailAuthProvider, reauthenticateWithCredential, updatePassword, linkWithCredential } = await import('firebase/auth')
+      const u = auth.currentUser
+      const hasPw = u.providerData.some((p) => p.providerId === 'password')
+      if (hasPw) {
+        await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, current))
+        await updatePassword(u, next)
+      } else {
+        try {
+          await linkWithCredential(u, EmailAuthProvider.credential(u.email, next))
+        } catch (e2) {
+          if (e2?.code !== 'auth/requires-recent-login') throw e2
+          await reauthenticate()
+          await linkWithCredential(u, EmailAuthProvider.credential(u.email, next))
+        }
+      }
+      setUser({ ...auth.currentUser })
+      e.target.reset()
+      setPwMsg(hasPw ? 'Contraseña actualizada.' : 'Contraseña creada. Ya puedes entrar con correo y contraseña.')
+    } catch (e2) {
+      const code = e2?.code || ''
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') setPwMsg('La contraseña actual no es correcta.')
+      else if (code === 'auth/weak-password') setPwMsg('La contraseña nueva es demasiado débil.')
+      else if (code === 'auth/too-many-requests') setPwMsg('Demasiados intentos. Espera unos minutos.')
+      else if (code === 'auth/popup-closed-by-user') setPwMsg('No se confirmó la identidad.')
+      else setPwMsg(`No se pudo cambiar la contraseña${code ? ` (${code})` : ''}.`)
+    } finally {
+      setPwBusy(false)
+    }
+  }
+
   async function logout() {
     const { signOut } = await import('firebase/auth')
     await signOut(auth)
@@ -263,6 +312,7 @@ export default function Admin() {
       <div className="flex items-center gap-3">
         <AdminSearch goTo={goToTab} />
         <button onClick={toggleAdminLang} title="Selector de idioma (próximamente disponible para todo el panel)" className="text-sm font-semibold hover:text-gold whitespace-nowrap">{adminLang.toUpperCase()} / {adminLang === 'es' ? 'EN' : 'ES'}</button>
+        <button onClick={() => { setShowAccount((v) => !v); setPwMsg('') }} className={`text-sm font-semibold hover:text-gold whitespace-nowrap ${showAccount ? 'text-gold' : ''}`}>Mi cuenta</button>
         <button onClick={logout} className="text-sm font-semibold hover:text-gold whitespace-nowrap">Salir</button>
       </div>
     }>
@@ -270,6 +320,40 @@ export default function Admin() {
           pasar a un inicio de sesión sin contraseña (Google, con el 2FA que
           ya tenga esa cuenta de Google). Desaparece sola una vez que se
           quita la contraseña. */}
+      {showAccount && (
+        <section className="mb-6 rounded-2xl bg-white border border-ink/10 p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="font-extrabold text-ink text-lg">Mi cuenta</h2>
+              <p className="text-sm text-ink/70 mt-1">{user.email}</p>
+              <p className="text-xs text-ink/50 mt-1">
+                Formas de entrar: {[hasGoogle && 'Google', hasPassword && 'correo y contraseña'].filter(Boolean).join(' · ') || '—'}
+              </p>
+            </div>
+            <button onClick={() => setShowAccount(false)} className="text-sm text-ink/60 hover:text-ink">Cerrar</button>
+          </div>
+          <form onSubmit={changePassword} className="mt-4 grid gap-3 sm:grid-cols-3 max-w-2xl">
+            {hasPassword && (
+              <label className="text-xs font-semibold text-ink/70 grid gap-1">Contraseña actual
+                <input name="current" type="password" autoComplete="current-password" required className="h-10 rounded-lg border border-ink/15 px-3 text-sm font-normal" />
+              </label>
+            )}
+            <label className="text-xs font-semibold text-ink/70 grid gap-1">{hasPassword ? 'Contraseña nueva' : 'Nueva contraseña'}
+              <input name="next" type="password" autoComplete="new-password" minLength={8} required className="h-10 rounded-lg border border-ink/15 px-3 text-sm font-normal" />
+            </label>
+            <label className="text-xs font-semibold text-ink/70 grid gap-1">Repetir contraseña
+              <input name="confirm" type="password" autoComplete="new-password" minLength={8} required className="h-10 rounded-lg border border-ink/15 px-3 text-sm font-normal" />
+            </label>
+            <div className="sm:col-span-3 flex flex-wrap items-center gap-3">
+              <button type="submit" disabled={pwBusy} className="h-10 px-4 rounded-lg bg-ink text-gold text-sm font-bold disabled:opacity-50">
+                {pwBusy ? 'Guardando…' : hasPassword ? 'Cambiar contraseña' : 'Crear contraseña'}
+              </button>
+              {pwMsg && <p className={`text-sm ${pwMsg.startsWith('Contraseña ') ? 'text-green-700' : 'text-red-700'}`}>{pwMsg}</p>}
+            </div>
+            <p className="sm:col-span-3 text-xs text-ink/50">Mínimo 8 caracteres. {hasGoogle ? 'Entrar con Google seguirá funcionando igual.' : 'Recomendado: vincula también tu cuenta de Google para entrar sin contraseña.'}</p>
+          </form>
+        </section>
+      )}
       {hasPassword && (
         <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm flex flex-wrap items-center gap-3 justify-between">
           <p className="text-ink/80">{hasGoogle
