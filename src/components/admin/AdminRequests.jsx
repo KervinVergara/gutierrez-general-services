@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import Icon from '../Icon'
-import { fmtDate } from './util'
+import { fmtDate, withAudit } from './util'
 
 export default function AdminRequests() {
   const [items, setItems] = useState([])
   const [err, setErr] = useState('')
+  const [text, setText] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     let unsub = null
@@ -16,6 +18,23 @@ export default function AdminRequests() {
     })
     return () => unsub && unsub()
   }, [])
+
+  async function add(e) {
+    e.preventDefault()
+    const t = text.trim()
+    if (!t || saving) return
+    setSaving(true)
+    setErr('')
+    try {
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
+      await addDoc(collection(db, 'feedback'), withAudit({ text: t.slice(0, 1000), status: 'pending', createdAt: serverTimestamp() }, auth))
+      setText('')
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   async function toggle(item) {
     const { doc, updateDoc } = await import('firebase/firestore')
@@ -32,9 +51,19 @@ export default function AdminRequests() {
 
   return (
     <div>
-      <p className="text-ink/60 text-sm mb-6">Cambios que el cliente pide desde el botón flotante de la web. Los marcas hechos cuando los publiques.</p>
+      <p className="text-ink/60 text-sm mb-4">Lista de cambios y mejoras pendientes para el sitio web. Anota aquí lo que el cliente pida y márcalo hecho cuando se publique.</p>
+      <form onSubmit={add} className="mb-6 flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          maxLength={1000}
+          placeholder="Ej: cambiar el precio del detallado de SUV a $195"
+          className="flex-1 h-11 rounded-xl border border-ink/15 bg-white px-4 text-sm focus:outline-none focus:border-ink/40"
+        />
+        <button type="submit" disabled={!text.trim() || saving} className="h-11 px-4 rounded-xl bg-ink text-gold text-sm font-bold disabled:opacity-40">Agregar</button>
+      </form>
       {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
-      {items.length === 0 && <p className="text-ink/60">No hay solicitudes todavía.</p>}
+      {items.length === 0 && <p className="text-ink/60">No hay cambios pendientes. Agrega el primero arriba.</p>}
       <div className="grid gap-3">
         {[...pending, ...done].map((i) => (
           <article key={i.id} className={`rounded-xl bg-white border border-ink/10 p-4 flex items-start gap-3 ${i.status === 'done' ? 'opacity-50' : ''}`}>

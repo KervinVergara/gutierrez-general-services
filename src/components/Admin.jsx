@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { auth, db, isConfigured } from '../firebase'
 import Icon from './Icon'
+import logo from '../assets/photos/logo-new.webp'
 import { TabBtn } from './admin/shared'
 import { sanitizePhone, withAudit } from './admin/util'
 import AdminSearch from './admin/AdminSearch'
@@ -292,7 +293,13 @@ function Shell({ children, right }) {
     <div className="min-h-screen bg-sand">
       <header className="bg-ink text-white h-16 flex items-center">
         <div className="mx-auto max-w-5xl w-full px-4 flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-2.5 shrink-0"><span className="grid place-items-center w-9 h-9 rounded-lg bg-gold text-ink"><Icon name="car" size={22} /></span><span className="display font-bold text-lg tracking-wide hidden sm:inline">GUTIERREZ<span className="text-gold"> GS</span> · Admin</span></a>
+          <div className="flex items-center gap-4 min-w-0">
+            <a href="/admin" className="flex items-center gap-2.5 shrink-0" aria-label="Panel de administración">
+              <span className="grid place-items-center h-10 px-2 rounded-lg bg-white"><img src={logo} alt="Gutierrez General Services" className="h-7 w-auto" /></span>
+              <span className="display font-bold text-lg tracking-wide hidden sm:inline">Admin</span>
+            </a>
+            <a href="/" className="text-xs font-semibold text-white/70 hover:text-gold whitespace-nowrap flex items-center gap-1"><Icon name="arrowRight" size={14} className="rotate-180" /> Volver al sitio</a>
+          </div>
           {right}
         </div>
       </header>
