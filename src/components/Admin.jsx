@@ -15,6 +15,8 @@ import AdminRequests from './admin/AdminRequests'
 import AdminDocs from './admin/AdminDocs'
 import AdminAudit from './admin/AdminAudit'
 
+const HDR_BTN = 'h-9 px-3.5 rounded-full border border-white/25 text-sm font-semibold text-white/90 hover:bg-white/10 hover:border-white/50 whitespace-nowrap transition-colors'
+
 const TABS = [
   { id: 'dashboard', label: 'Inicio', Component: AdminDashboard },
   { id: 'quotes', label: 'Cotizaciones', Component: AdminQuotes },
@@ -312,9 +314,9 @@ export default function Admin() {
     <Shell right={
       <div className="flex items-center gap-3">
         <AdminSearch goTo={goToTab} />
-        <button onClick={toggleAdminLang} title="Selector de idioma (próximamente disponible para todo el panel)" className="text-sm font-semibold hover:text-gold whitespace-nowrap">{adminLang.toUpperCase()} / {adminLang === 'es' ? 'EN' : 'ES'}</button>
-        <button onClick={() => { setShowAccount((v) => !v); setPwMsg('') }} className={`text-sm font-semibold hover:text-gold whitespace-nowrap ${showAccount ? 'text-gold' : ''}`}>Mi cuenta</button>
-        <button onClick={logout} className="text-sm font-semibold hover:text-gold whitespace-nowrap">Salir</button>
+        <button onClick={toggleAdminLang} title="Selector de idioma (próximamente disponible para todo el panel)" className={HDR_BTN}>{adminLang.toUpperCase()} / {adminLang === 'es' ? 'EN' : 'ES'}</button>
+        <button onClick={() => { setShowAccount((v) => !v); setPwMsg('') }} className={`${HDR_BTN} ${showAccount ? 'bg-gold text-ink border-gold hover:bg-gold' : ''}`}>Mi cuenta</button>
+        <button onClick={logout} className={HDR_BTN}>Salir</button>
       </div>
     }>
       {/* Aparece solo mientras la cuenta todavía tiene contraseña — guía para
@@ -358,17 +360,24 @@ export default function Admin() {
             <p className="sm:col-span-3 text-xs text-ink/50">Mínimo 8 caracteres. {hasGoogle ? 'Entrar con Google seguirá funcionando igual.' : 'Recomendado: vincula también tu cuenta de Google para entrar sin contraseña.'}</p>
           </form>
           )}
+          {hasPassword && hasGoogle && (
+            <div className="mt-5 pt-4 border-t border-ink/10 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-ink/60 max-w-xl">Opcional: si prefieres entrar solo con Google (con su verificación en dos pasos), puedes quitar la contraseña. Después solo SistemasKV podría volver a crearla.</p>
+              <button onClick={unlinkPassword} className="h-9 px-3 rounded-lg border border-red-700 text-red-700 text-xs font-bold shrink-0">Quitar contraseña</button>
+            </div>
+          )}
+          {hasPassword && !hasGoogle && (
+            <div className="mt-5 pt-4 border-t border-ink/10 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-ink/60 max-w-xl">Vincula tu cuenta de Google para poder entrar también sin contraseña.</p>
+              <button onClick={linkGoogle} className="h-9 px-3 rounded-lg bg-ink text-gold text-xs font-bold shrink-0">Vincular Google</button>
+            </div>
+          )}
         </section>
       )}
-      {hasPassword && (
+      {hasPassword && !hasGoogle && (
         <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm flex flex-wrap items-center gap-3 justify-between">
-          <p className="text-ink/80">{hasGoogle
-            ? 'Tu cuenta de Google ya está vinculada. Por seguridad, considera quitar la contraseña.'
-            : 'Recomendado: vincula tu cuenta de Google para iniciar sesión sin contraseña.'}</p>
-          <div className="flex gap-2 shrink-0">
-            {!hasGoogle && <button onClick={linkGoogle} className="h-9 px-3 rounded-lg bg-ink text-gold text-xs font-bold">Vincular Google</button>}
-            {hasGoogle && <button onClick={unlinkPassword} className="h-9 px-3 rounded-lg border border-red-700 text-red-700 text-xs font-bold">Quitar contraseña</button>}
-          </div>
+          <p className="text-ink/80">Recomendado: vincula tu cuenta de Google para iniciar sesión sin contraseña.</p>
+          <button onClick={linkGoogle} className="h-9 px-3 rounded-lg bg-ink text-gold text-xs font-bold shrink-0">Vincular Google</button>
         </div>
       )}
       {err && <p className="mb-4 text-sm text-red-700">{err}</p>}
