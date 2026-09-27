@@ -262,6 +262,7 @@ export default function Admin() {
       else if (code === 'auth/weak-password') setPwMsg('La contraseña nueva es demasiado débil.')
       else if (code === 'auth/too-many-requests') setPwMsg('Demasiados intentos. Espera unos minutos.')
       else if (code === 'auth/popup-closed-by-user') setPwMsg('No se confirmó la identidad.')
+      else if (code === 'auth/admin-restricted-operation') setPwMsg('El panel no permite crear contraseñas nuevas; pídela a SistemasKV.')
       else setPwMsg(`No se pudo cambiar la contraseña${code ? ` (${code})` : ''}.`)
     } finally {
       setPwBusy(false)
@@ -332,6 +333,10 @@ export default function Admin() {
             </div>
             <button onClick={() => setShowAccount(false)} className="text-sm text-ink/60 hover:text-ink">Cerrar</button>
           </div>
+          {!hasPassword && (
+            <p className="mt-4 text-sm text-ink/70 max-w-2xl">Esta cuenta entra solo con Google (con la verificación en dos pasos de esa cuenta). Si quieres además una contraseña, pídela a SistemasKV: por seguridad, el panel no permite crear contraseñas nuevas desde el navegador.</p>
+          )}
+          {hasPassword && (
           <form onSubmit={changePassword} className="mt-4 grid gap-3 sm:grid-cols-3 max-w-2xl">
             {hasPassword && (
               <label className="text-xs font-semibold text-ink/70 grid gap-1">Contraseña actual
@@ -352,6 +357,7 @@ export default function Admin() {
             </div>
             <p className="sm:col-span-3 text-xs text-ink/50">Mínimo 8 caracteres. {hasGoogle ? 'Entrar con Google seguirá funcionando igual.' : 'Recomendado: vincula también tu cuenta de Google para entrar sin contraseña.'}</p>
           </form>
+          )}
         </section>
       )}
       {hasPassword && (
