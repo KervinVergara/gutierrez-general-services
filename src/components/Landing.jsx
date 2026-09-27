@@ -13,6 +13,10 @@ import galJeep from '../assets/photos/curated/06_jeep_blanco.webp'
 import galBoat from '../assets/photos/curated/07_bote.webp'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.webp'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.webp'
+import videoJeepPoster from '../assets/photos/curated/video-jeep-poster.webp'
+import videoWaxPoster from '../assets/photos/curated/video-wax-poster.webp'
+import videoPickupsPoster from '../assets/photos/curated/video-pickups-poster.webp'
+import videoFordPoster from '../assets/photos/curated/video-ford-poster.webp'
 
 const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
 const navLinkCls = "relative py-2 text-ink/75 hover:text-ink transition-colors after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-gold after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
@@ -33,6 +37,7 @@ export default function Landing({ lang, setLang }) {
   const [presetService, setPresetService] = useState('')
   const [presetType, setPresetType] = useState('')
   const [lightbox, setLightbox] = useState(null)
+  const [playingVideo, setPlayingVideo] = useState(null)
   const [scrolled, setScrolled] = useState(false)
   const [showTop, setShowTop] = useState(false)
 
@@ -71,6 +76,13 @@ export default function Landing({ lang, setLang }) {
     { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
     { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso', caption: lang === 'en' ? 'Wash in progress' : 'Lavado en proceso' },
     { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura', caption: lang === 'en' ? 'Paint polishing' : 'Pulido de pintura' },
+  ]
+
+  const videoItems = [
+    { id: 'jeep', src: '/videos/jeep.mp4', poster: videoJeepPoster, caption: lang === 'en' ? 'Jeep exterior wash' : 'Lavado exterior de Jeep' },
+    { id: 'ford', src: '/videos/ford.mp4', poster: videoFordPoster, caption: lang === 'en' ? 'Ford interior detail' : 'Interior de Ford detallado' },
+    { id: 'wax', src: '/videos/wax.mp4', poster: videoWaxPoster, caption: lang === 'en' ? 'Exterior wax & shine' : 'Encerado exterior' },
+    { id: 'pickups', src: '/videos/pickups.mp4', poster: videoPickupsPoster, caption: lang === 'en' ? 'Work truck detail' : 'Camionetas de trabajo' },
   ]
 
   return (
@@ -245,6 +257,46 @@ export default function Landing({ lang, setLang }) {
               <span className="absolute bottom-2 left-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1">{g.caption}</span>
             </button>
           ))}
+        </div>
+
+        {/* VIDEO CLIPS */}
+        <div className="mt-12">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/70">{t.videos.eyebrow}</p>
+          <h3 className="mt-2 text-2xl md:text-3xl font-extrabold text-ink">{t.videos.title}</h3>
+          <p className="mt-2 text-steel max-w-2xl">{t.videos.sub}</p>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {videoItems.map((v) => (
+              <div key={v.id} className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-ink/5">
+                {playingVideo === v.id ? (
+                  <video
+                    src={v.src}
+                    poster={v.poster}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                    onEnded={() => setPlayingVideo(null)}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPlayingVideo(v.id)}
+                    className="group relative w-full h-full"
+                    aria-label={v.caption}
+                  >
+                    <img src={v.poster} alt={v.caption} className="w-full h-full object-cover" loading="lazy" />
+                    <span className="absolute inset-0 bg-ink/10 group-hover:bg-ink/20 transition-colors" />
+                    <span className="absolute inset-0 grid place-items-center">
+                      <span className="grid place-items-center w-14 h-14 rounded-full bg-white/90 text-ink shadow-lg group-hover:scale-105 transition-transform">
+                        <Icon name="play" size={26} />
+                      </span>
+                    </span>
+                    <span className="absolute bottom-2 left-2 right-2 rounded-full bg-ink/80 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 truncate">{v.caption}</span>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

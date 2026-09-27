@@ -26,6 +26,7 @@ const paths = {
   plus: <path d="M12 5v14M5 12h14" />,
   trash: <><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /></>,
   snow: <><path d="M12 2v20M4.5 6l15 12M19.5 6l-15 12" /><path d="M12 5l1.6 1.6M12 5l-1.6 1.6M12 19l1.6-1.6M12 19l-1.6-1.6M6.4 8.8l2.1.6M6.4 8.8l.6-2.1M17.6 8.8l-2.1.6M17.6 8.8l-.6-2.1M6.4 15.2l2.1-.6M6.4 15.2l.6 2.1M17.6 15.2l-2.1-.6M17.6 15.2l-.6 2.1" /></>,
+  play: <><circle cx="12" cy="12" r="9" /><path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" stroke="none" /></>,
 }
 
 export default function Icon({ name, size = 24, className = '' }) {

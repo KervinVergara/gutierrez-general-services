@@ -122,6 +122,11 @@ export const content = {
       before: 'Before', after: 'After',
       catExterior: 'Exterior', catSeasonal: 'Seasonal', catVehicle: 'Vehicle & equipment',
     },
+    videos: {
+      eyebrow: 'See it in action',
+      title: 'Watch a few recent jobs.',
+      sub: 'Short clips from real details — tap any one to play.',
+    },
     contact: {
       eyebrow: 'Get a free quote',
       title: 'Tell us what you need.',
@@ -256,6 +261,11 @@ export const content = {
       all: 'Todos',
       before: 'Antes', after: 'Después',
       catExterior: 'Exterior', catSeasonal: 'Temporada', catVehicle: 'Vehículos y equipos',
+    },
+    videos: {
+      eyebrow: 'Véalo en acción',
+      title: 'Mire algunos trabajos recientes.',
+      sub: 'Clips cortos de trabajos reales — toque uno para reproducir.',
     },
     contact: {
       eyebrow: 'Cotización gratis',
