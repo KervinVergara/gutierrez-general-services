@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
-const { onDocumentWritten } = require('firebase-functions/v2/firestore')
+const { onDocumentWritten, onDocumentCreated } = require('firebase-functions/v2/firestore')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const { defineSecret } = require('firebase-functions/params')
 const { initializeApp } = require('firebase-admin/app')
@@ -24,6 +24,10 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10, serviceAccount: RUNT
 // Salt for hashing IPs before they're stored in rateLimits (see below).
 // Set once via: firebase functions:secrets:set RATE_LIMIT_IP_SALT
 const RATE_LIMIT_IP_SALT = defineSecret('RATE_LIMIT_IP_SALT')
+
+// Resend API key for the new-quote email notification (see notifyQuote).
+// Set once via: firebase functions:secrets:set RESEND_API_KEY
+const RESEND_API_KEY = defineSecret('RESEND_API_KEY')
 
 // Explicit origin allowlist for the callable functions' CORS handling.
 // Defense in depth on top of App Check — CORS alone isn't a security
@@ -256,6 +260,81 @@ for (const col of AUDITED_COLLECTIONS) {
     }
   )
 }
+
+// --- New-quote email notification -----------------------------------------
+// Fires once per new document in /quotes (the only writer is submitQuote
+// above) and emails the business inbox so nobody has to watch the panel.
+// Delivery is "at least once", so a redelivery can send a duplicate email —
+// acceptable for a notification; the quote itself is never duplicated.
+// Outbound mail goes through Resend's HTTP API (no SDK; Node 22 fetch).
+// A failure here is logged and swallowed: the quote is already saved and
+// visible in /admin, an email hiccup must never turn into a retry storm.
+const NOTIFY_FROM = 'Gutierrez General Services <contact@gutierrezgeneralservices.com>'
+const NOTIFY_TO = ['contact@gutierrezgeneralservices.com']
+const ADMIN_URL = 'https://gutierrezgeneralservices.com/admin'
+
+const TYPE_LABELS = { vehicle: 'Vehicle', home: 'Home / property', both: 'Vehicle + home' }
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
+}
+
+function buildQuoteEmail(id, q) {
+  const rows = [
+    ['Name', q.name],
+    ['Phone', q.phone],
+    ['Email', q.email || '—'],
+    ['ZIP / Address', q.zip || '—'],
+    ['Type', TYPE_LABELS[q.type] || q.type || '—'],
+    ['Service', q.service || '—'],
+    ['Vehicle / equipment', q.vehicle || '—'],
+    ['Details', q.message || '—'],
+    ['Language', q.lang === 'es' ? 'Spanish' : 'English'],
+  ]
+  const phoneDigits = String(q.phone || '').replace(/[^\d+]/g, '')
+  const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n') + `\n\nOpen in panel: ${ADMIN_URL}\nQuote ID: ${id}`
+  const html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1b2a41;line-height:1.5">
+  <h2 style="margin:0 0 12px">New quote request</h2>
+  <table cellpadding="6" cellspacing="0" style="border-collapse:collapse">
+  ${rows.map(([k, v]) => `<tr><td style="color:#5b6b7f;vertical-align:top;white-space:nowrap"><b>${escapeHtml(k)}</b></td><td>${escapeHtml(v).replace(/\n/g, '<br>')}</td></tr>`).join('')}
+  </table>
+  <p style="margin:18px 0 6px">
+    <a href="tel:${escapeHtml(phoneDigits)}" style="display:inline-block;background:#1b2a41;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;margin-right:8px">Call ${escapeHtml(q.phone)}</a>
+    <a href="${ADMIN_URL}" style="display:inline-block;background:#f2b705;color:#1b2a41;text-decoration:none;padding:10px 16px;border-radius:999px">Open in panel</a>
+  </p>
+  <p style="color:#8a97a6;font-size:12px">Quote ID ${escapeHtml(id)} · sent automatically from gutierrezgeneralservices.com</p>
+  </body></html>`
+  return { text, html }
+}
+
+exports.notifyQuote = onDocumentCreated(
+  { document: 'quotes/{quoteId}', secrets: [RESEND_API_KEY], memory: '256MiB', timeoutSeconds: 30, maxInstances: 5, retry: false },
+  async (event) => {
+    const q = event.data?.data()
+    if (!q) return
+    const id = event.params.quoteId
+    const subject = `New quote: ${q.name} — ${q.service || TYPE_LABELS[q.type] || 'request'}`
+    const { text, html } = buildQuoteEmail(id, q)
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${RESEND_API_KEY.value()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: NOTIFY_FROM,
+          to: NOTIFY_TO,
+          reply_to: q.email || undefined,
+          subject,
+          text,
+          html,
+          headers: { 'X-Entity-Ref-ID': id }, // Resend de-dupes on this if the trigger is redelivered
+        }),
+      })
+      if (!res.ok) console.error('notifyQuote: Resend responded', res.status, await res.text())
+    } catch (err) {
+      console.error('notifyQuote: failed to send', err)
+    }
+  }
+)
 
 // Exported only for unit tests (functions/test/) — never used by the
 // deployed function logic above, which calls the same helpers directly.
