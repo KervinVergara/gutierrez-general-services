@@ -37,6 +37,7 @@ service cloud.firestore {
       // entered manually), and only staff can read/delete; updates
       // additionally can't rewrite createdAt.
       allow create, read, delete: if isStaff();
+      allow update: if isStaff() && unchanged('createdAt');
     }
     match /feedback/{id} {
       // Dev-stage widget for Kervin's own change-request notes — currently
