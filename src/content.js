@@ -1,5 +1,6 @@
 export const PHONE_DISPLAY = '(574) 564-9757'
 export const PHONE_TEL = '+15745649757'
+export const EMAIL = 'contact@gutierrezgeneralservices.com'
 export const PHONE_SMS = '5745649757'
 export const PHONE_WA = '15745649757'
 export const BUSINESS = 'Gutierrez General Services LLC'

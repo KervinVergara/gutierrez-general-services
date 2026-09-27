@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS } from '../content'
+import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS, EMAIL } from '../content'
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import logo from '../assets/photos/logo-new.webp'
@@ -348,7 +348,7 @@ export default function Landing({ lang, setLang }) {
       <footer className="bg-sand text-steel text-sm border-t border-ink/10">
         <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col md:flex-row justify-between gap-2">
           <p>© {new Date().getFullYear()} {BUSINESS}. {t.footer.rights}</p>
-          <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
+          <p><a href={`tel:${PHONE_TEL}`} className="hover:underline">{PHONE_DISPLAY}</a> · <a href={`mailto:${EMAIL}`} className="hover:underline">{EMAIL}</a> · <a href={waHref} target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a> · {t.footer.made} <a href="https://sistemaskv.com" className="hover:underline">SistemasKV</a></p>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 flex gap-4 text-xs text-steel/80">
           <a href="/privacy" className="hover:underline">{lang === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}</a>

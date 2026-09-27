@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LegalPage from './LegalPage'
-import { BUSINESS, PHONE_DISPLAY, PHONE_TEL } from '../content'
+import { BUSINESS, PHONE_DISPLAY, PHONE_TEL, EMAIL } from '../content'
 
 function detectLang() {
   const saved = localStorage.getItem('lang')
@@ -48,7 +48,8 @@ export default function Privacy() {
           <h2 className="text-xl font-bold text-ink mt-8">Contacto</h2>
           <p>Si tienes preguntas sobre esta política de privacidad, contáctanos:</p>
           <p>{BUSINESS} — Warsaw, Indiana<br />
-            Teléfono: <a href={`tel:${PHONE_TEL}`} className="underline">{PHONE_DISPLAY}</a></p>
+            Teléfono: <a href={`tel:${PHONE_TEL}`} className="underline">{PHONE_DISPLAY}</a><br />
+            Correo: <a href={`mailto:${EMAIL}`} className="underline">{EMAIL}</a></p>
         </>
       ) : (
         <>
@@ -82,7 +83,8 @@ export default function Privacy() {
           <h2 className="text-xl font-bold text-ink mt-8">Contact</h2>
           <p>If you have questions about this privacy policy, contact us:</p>
           <p>{BUSINESS} — Warsaw, Indiana<br />
-            Phone: <a href={`tel:${PHONE_TEL}`} className="underline">{PHONE_DISPLAY}</a></p>
+            Phone: <a href={`tel:${PHONE_TEL}`} className="underline">{PHONE_DISPLAY}</a><br />
+            Email: <a href={`mailto:${EMAIL}`} className="underline">{EMAIL}</a></p>
         </>
       )}
     </LegalPage>
