@@ -11,8 +11,6 @@ import svcSeasonal from '../assets/photos/stock-leaves.webp'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.webp'
 import galInterior from '../assets/photos/curated/04_interior_cuero.webp'
 import galJeep from '../assets/photos/curated/06_jeep_blanco.webp'
-import galBoat from '../assets/photos/curated/07_bote.webp'
-import galFoam from '../assets/photos/curated/08_lavado_espuma.webp'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.webp'
 import galLawn from '../assets/photos/curated/14_corte_cesped_podadora.webp'
 import videoJeepPoster from '../assets/photos/curated/video-jeep-poster.webp'
@@ -76,9 +74,8 @@ export default function Landing({ lang, setLang }) {
     { id: 'truck', photo: galTruck, pos: 'object-center', alt: lang === 'en' ? 'Detailed truck exterior' : 'Exterior de camioneta detallada', caption: lang === 'en' ? 'Detailed truck' : 'Camioneta detallada' },
     { id: 'interior', photo: galInterior, pos: 'object-center', alt: lang === 'en' ? 'Detailed leather interior' : 'Interior de cuero detallado', caption: lang === 'en' ? 'Leather interior' : 'Interior de cuero' },
     { id: 'jeep', photo: galJeep, pos: 'object-bottom', alt: lang === 'en' ? 'Clean SUV exterior' : 'Exterior de SUV limpio', caption: lang === 'en' ? 'Clean SUV' : 'SUV limpio' },
-    { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
-    { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso', caption: lang === 'en' ? 'Wash in progress' : 'Lavado en proceso' },
     { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura', caption: lang === 'en' ? 'Paint polishing' : 'Pulido de pintura' },
+    { id: 'lawnFront', photo: svcProperty, pos: 'object-center', alt: lang === 'en' ? 'Freshly mowed front yard' : 'Jardín frontal recién cortado', caption: lang === 'en' ? 'Lawn mowing' : 'Corte de césped' },
     { id: 'lawn', photo: galLawn, pos: 'object-center', alt: lang === 'en' ? 'Mowing a lawn' : 'Corte de césped en progreso', caption: lang === 'en' ? 'Lawn mowing' : 'Corte de césped' },
   ]
 
