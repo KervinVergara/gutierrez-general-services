@@ -372,8 +372,13 @@ export default function Landing({ lang, setLang }) {
           >
             <Icon name="x" size={20} />
           </button>
-          <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} className="max-w-full max-h-full rounded-lg object-contain" />
-          <img src={logo} alt="" className="absolute bottom-6 right-6 h-8 sm:h-10 w-auto object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none" />
+          <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+            {/* The photo sizes itself off the viewport (calc, not %) so this wrapper can shrink-wrap
+                exactly to its rendered box — that's what lets the watermark below track the photo's
+                own corner instead of the full-screen overlay's corner when the photo is letterboxed. */}
+            <img src={lightbox.src} alt={lightbox.alt} className="block max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] w-auto h-auto rounded-lg object-contain" />
+            <img src={logo} alt="" className="absolute bottom-3 right-3 h-8 sm:h-10 w-auto object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none" />
+          </div>
         </div>
       )}
 
