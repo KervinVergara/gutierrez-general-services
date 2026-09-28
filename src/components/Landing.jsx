@@ -92,7 +92,7 @@ export default function Landing({ lang, setLang }) {
       <header className={`sticky top-0 z-40 bg-ink transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
         <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-3 lg:gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logoWhite} alt={BUSINESS} className="h-9 md:h-10 w-auto object-contain" />
+            <img src={logoWhite} alt={BUSINESS} className="h-11 md:h-13 w-auto object-contain" />
           </a>
           <nav className="hidden lg:flex items-center gap-2">
             <a href="#services" className={navPillCls}>{t.nav.services}</a>
