@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS, EMAIL } from '../content'
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
-import logo from '../assets/photos/logo-new.webp'
 import logoWhite from '../assets/photos/logo-white.webp'
 import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.webp'
 import svcAuto from '../assets/photos/curated/02_brillo_pintura.webp'
@@ -377,7 +376,7 @@ export default function Landing({ lang, setLang }) {
                 exactly to its rendered box — that's what lets the watermark below track the photo's
                 own corner instead of the full-screen overlay's corner when the photo is letterboxed. */}
             <img src={lightbox.src} alt={lightbox.alt} className="block max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] w-auto h-auto rounded-lg object-contain" />
-            <img src={logo} alt="" className="absolute bottom-3 right-3 h-8 sm:h-10 w-auto object-contain opacity-80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none" />
+            <img src={logoWhite} alt="" className="absolute bottom-3 right-3 h-8 sm:h-10 w-auto object-contain opacity-90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] pointer-events-none" />
           </div>
         </div>
       )}
