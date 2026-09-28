@@ -3,6 +3,7 @@ import { content, PHONE_DISPLAY, PHONE_TEL, PHONE_WA, BUSINESS, EMAIL } from '..
 import Icon from './Icon'
 import QuoteForm from './QuoteForm'
 import logo from '../assets/photos/logo-new.webp'
+import logoWhite from '../assets/photos/logo-white.webp'
 import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.webp'
 import svcAuto from '../assets/photos/curated/02_brillo_pintura.webp'
 import svcProperty from '../assets/photos/stock-exterior-gutter.webp'
@@ -19,7 +20,8 @@ import videoPickupsPoster from '../assets/photos/curated/video-pickups-poster.we
 import videoFordPoster from '../assets/photos/curated/video-ford-poster.webp'
 
 const WA_GREETING = { en: "Hi! I'd like to get a quote.", es: '¡Hola! Quisiera una cotización.' }
-const navLinkCls = "relative py-2 text-ink/75 hover:text-ink transition-colors after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-gold after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
+const navPillCls = "h-9 px-4 rounded-full border border-white/25 text-sm font-semibold text-white/90 flex items-center whitespace-nowrap transition-colors hover:bg-white/10 hover:border-white/50 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:border-gold"
+const langPillCls = "h-9 px-3.5 rounded-full border border-white/25 text-xs font-bold tracking-wide text-white/75 transition-colors hover:bg-white/10 hover:border-white/50 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:border-gold"
 
 const groupImages = { auto: svcAuto, property: svcProperty, seasonal: svcSeasonal }
 const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
@@ -88,31 +90,32 @@ export default function Landing({ lang, setLang }) {
   return (
     <div className="min-h-screen bg-sand">
       {/* HEADER */}
-      <header className={`sticky top-0 z-40 transition-colors duration-200 ${scrolled ? 'bg-sand border-b border-ink/10' : 'bg-sand/95 backdrop-blur-sm border-b border-transparent'}`}>
-        <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-3 lg:gap-6">
+      <header className={`sticky top-0 z-40 bg-ink transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
+        <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between gap-3 lg:gap-4">
           <a href="#top" className="flex items-center shrink-0">
-            <img src={logo} alt={BUSINESS} className="h-10 md:h-13 lg:h-16 w-auto object-contain" />
+            <img src={logoWhite} alt={BUSINESS} className="h-9 md:h-10 w-auto object-contain" />
           </a>
-          <nav className="hidden lg:flex items-center gap-9 lg:gap-10 text-base font-semibold text-ink/80">
-            <a href="#services" className={navLinkCls}>{t.nav.services}</a>
-            <a href="#plans" className={navLinkCls}>{t.nav.plans}</a>
-            <a href="#work" className={navLinkCls}>{t.nav.ourWork}</a>
-            <a href="#contact" className={navLinkCls}>{t.nav.contact}</a>
-            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-ink/45 hover:text-ink/70 text-xs font-bold transition-colors" aria-label="Switch language">EN / ES</button>
+          <nav className="hidden lg:flex items-center gap-2">
+            <a href="#services" className={navPillCls}>{t.nav.services}</a>
+            <a href="#plans" className={navPillCls}>{t.nav.plans}</a>
+            <a href="#work" className={navPillCls}>{t.nav.ourWork}</a>
+            <a href="#contact" className={navPillCls}>{t.nav.contact}</a>
+            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className={langPillCls} aria-label="Switch language">EN / ES</button>
+            <a href="#contact" className="inline-flex items-center justify-center h-9 px-4 ml-1 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 transition-colors whitespace-nowrap">{t.nav.quoteShort}</a>
           </nav>
           <div className="flex items-center gap-3 shrink-0 lg:hidden">
             <a href="#contact" className="inline-flex items-center justify-center h-10 md:h-11 px-4 md:px-5 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
-            <button onClick={() => setOpen(!open)} className="grid place-items-center w-10 h-10 rounded-lg border border-ink/15 shrink-0" aria-label="Menu">
+            <button onClick={() => setOpen(!open)} className="grid place-items-center w-10 h-10 rounded-lg border border-white/25 text-white shrink-0" aria-label="Menu">
               <Icon name={open ? 'x' : 'menu'} size={20} />
             </button>
           </div>
         </div>
         {open && (
-          <nav className="lg:hidden border-t border-ink/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-sand">
+          <nav className="lg:hidden border-t border-white/10 px-4 py-3 flex flex-col gap-1 text-base font-medium bg-ink text-white/90">
             {[['#services', t.nav.services], ['#plans', t.nav.plans], ['#work', t.nav.ourWork], ['#contact', t.nav.contact]].map(([h, l]) => (
-              <a key={l} href={h} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg border-b border-ink/10 last:border-0 hover:bg-mist">{l}</a>
+              <a key={l} href={h} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg border-b border-white/10 last:border-0 hover:bg-white/10">{l}</a>
             ))}
-            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="px-3 py-3 rounded-lg text-left hover:bg-mist">EN / ES</button>
+            <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setOpen(false) }} className="px-3 py-3 rounded-lg text-left hover:bg-white/10">EN / ES</button>
           </nav>
         )}
       </header>
