@@ -30,6 +30,12 @@ export const content = {
         note: 'Free estimates. Final price depends on the size and condition of the area.',
       },
       {
+        id: 'lawn', group: 'property', icon: 'mower', title: 'Lawn mowing', price: null, priceType: 'quote',
+        lead: 'Regular mowing, edging and trimming to keep your lawn neat all season.',
+        items: ['Mowing', 'Edging & trimming', 'Grass clipping cleanup', 'Weekly or bi-weekly visits available'],
+        note: 'Custom quote based on lawn size and visit frequency.',
+      },
+      {
         id: 'seasonal', group: 'seasonal', icon: 'leaf', title: 'Seasonal care', price: null, priceType: 'quote',
         lead: 'Leaf cleanup in the fall and seasonal property upkeep. Reliable help to keep your property safe and looking great through every season.',
         items: ['Fall leaf cleanup & removal', 'Seasonal property upkeep'],
@@ -78,7 +84,7 @@ export const content = {
     ],
     groups: {
       auto: { title: 'Auto Care', lead: 'Interior and exterior detailing, polishing and protection for cars, trucks and equipment. A clean look that works as hard as you do.' },
-      property: { title: 'Property Care', lead: 'House facades, patios, driveways, gutters and more. Professional pressure washing to keep your property looking its best.' },
+      property: { title: 'Property Care', lead: 'Lawn mowing, house facades, patios, driveways, gutters and more — pressure washing and yard care to keep your property looking its best.' },
       seasonal: { title: 'Seasonal Care', lead: 'Leaf cleanup and seasonal upkeep. Reliable help to keep your property safe and looking great through every season.' },
     },
     plans: {
@@ -170,6 +176,12 @@ export const content = {
         note: 'Cotizaciones gratuitas. El precio final depende del tamaño y condición del área.',
       },
       {
+        id: 'lawn', group: 'property', icon: 'mower', title: 'Corte de césped', price: null, priceType: 'quote',
+        lead: 'Corte, bordeado y recorte regular para mantener su césped en orden toda la temporada.',
+        items: ['Corte de césped', 'Bordeado y recorte', 'Limpieza de recortes', 'Visitas semanales o quincenales disponibles'],
+        note: 'Cotización según el tamaño del césped y la frecuencia de las visitas.',
+      },
+      {
         id: 'seasonal', group: 'seasonal', icon: 'leaf', title: 'Cuidado de temporada', price: null, priceType: 'quote',
         lead: 'Recogida de hojas en otoño y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.',
         items: ['Recogida y retiro de hojas en otoño', 'Mantenimiento de temporada'],
@@ -218,7 +230,7 @@ export const content = {
     ],
     groups: {
       auto: { title: 'Cuidado automotriz', lead: 'Detallado interior y exterior, pulido y protección para autos, camiones y equipo. Una imagen limpia que trabaja tan duro como usted.' },
-      property: { title: 'Cuidado de propiedad', lead: 'Fachadas, patios, entradas, canaletas y más. Lavado a presión profesional para que su propiedad luzca lo mejor posible.' },
+      property: { title: 'Cuidado de propiedad', lead: 'Corte de césped, fachadas, patios, entradas, canaletas y más — lavado a presión y cuidado de jardín para que su propiedad luzca lo mejor posible.' },
       seasonal: { title: 'Cuidado de temporada', lead: 'Recogida de hojas y mantenimiento de temporada. Ayuda confiable para mantener su propiedad segura y en buen estado en cada temporada.' },
     },
     plans: {

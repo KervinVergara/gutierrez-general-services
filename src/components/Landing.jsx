@@ -6,7 +6,7 @@ import logo from '../assets/photos/logo-new.webp'
 import logoWhite from '../assets/photos/logo-white.webp'
 import heroPhoto from '../assets/photos/curated/01_lavado_en_accion.webp'
 import svcAuto from '../assets/photos/curated/02_brillo_pintura.webp'
-import svcProperty from '../assets/photos/stock-exterior-gutter.webp'
+import svcProperty from '../assets/photos/curated/13_corte_cesped_frontal.webp'
 import svcSeasonal from '../assets/photos/stock-leaves.webp'
 import galTruck from '../assets/photos/curated/03_camioneta_negra.webp'
 import galInterior from '../assets/photos/curated/04_interior_cuero.webp'
@@ -14,6 +14,7 @@ import galJeep from '../assets/photos/curated/06_jeep_blanco.webp'
 import galBoat from '../assets/photos/curated/07_bote.webp'
 import galFoam from '../assets/photos/curated/08_lavado_espuma.webp'
 import galPolish from '../assets/photos/curated/09_pulido_en_accion.webp'
+import galLawn from '../assets/photos/curated/14_corte_cesped_podadora.webp'
 import videoJeepPoster from '../assets/photos/curated/video-jeep-poster.webp'
 import videoWaxPoster from '../assets/photos/curated/video-wax-poster.webp'
 import videoPickupsPoster from '../assets/photos/curated/video-pickups-poster.webp'
@@ -28,7 +29,7 @@ const groupIcons = { auto: 'car', property: 'water', seasonal: 'leaf' }
 const groupOrder = ['auto', 'property', 'seasonal']
 const groupCaptions = {
   auto: { en: 'Vehicle detailing', es: 'Detallado de vehículos' },
-  property: { en: 'Gutter cleaning', es: 'Limpieza de canaletas' },
+  property: { en: 'Lawn mowing', es: 'Corte de césped' },
   seasonal: { en: 'Seasonal care', es: 'Cuidado de temporada' },
 }
 
@@ -78,6 +79,7 @@ export default function Landing({ lang, setLang }) {
     { id: 'boat', photo: galBoat, pos: 'object-center', alt: lang === 'en' ? 'Boat detailing' : 'Detallado de bote', caption: lang === 'en' ? 'Boat detailing' : 'Detallado de bote' },
     { id: 'foam', photo: galFoam, pos: 'object-center', alt: lang === 'en' ? 'Vehicle wash in progress' : 'Lavado de vehículo en proceso', caption: lang === 'en' ? 'Wash in progress' : 'Lavado en proceso' },
     { id: 'polish', photo: galPolish, pos: 'object-bottom', alt: lang === 'en' ? 'Paint polishing detail' : 'Detalle de pulido de pintura', caption: lang === 'en' ? 'Paint polishing' : 'Pulido de pintura' },
+    { id: 'lawn', photo: galLawn, pos: 'object-center', alt: lang === 'en' ? 'Mowing a lawn' : 'Corte de césped en progreso', caption: lang === 'en' ? 'Lawn mowing' : 'Corte de césped' },
   ]
 
   const videoItems = [

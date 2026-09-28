@@ -5,6 +5,7 @@ const paths = {
   truck: <><path d="M3 7h10v9H3z" /><path d="M13 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.8" /><circle cx="17" cy="18" r="1.8" /></>,
   rv: <><path d="M3 8h13l4 4v5H3z" /><path d="M3 12h17" /><path d="M7 8v4M12 8v4" /><circle cx="7" cy="19" r="1.7" /><circle cx="17" cy="19" r="1.7" /></>,
   tractor: <><path d="M4 14h3V9h5l2 5h5v3H4z" /><circle cx="7" cy="17" r="3" /><circle cx="18" cy="18" r="2" /><path d="M9 9V5h3" /></>,
+  mower: <><path d="M6 15h11l2 4H5z" /><circle cx="7.5" cy="19" r="1.8" /><circle cx="16.5" cy="19" r="1.8" /><path d="M12 15V6" /><path d="M12 6l6-3" /></>,
   water: <><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" /><path d="M9 14a3 3 0 0 0 3 3" /></>,
   phone: <><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></>,
   message: <><path d="M4 5h16v11H8l-4 4z" /></>,
