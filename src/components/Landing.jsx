@@ -100,7 +100,6 @@ export default function Landing({ lang, setLang }) {
             <a href="#work" className={navPillCls}>{t.nav.ourWork}</a>
             <a href="#contact" className={navPillCls}>{t.nav.contact}</a>
             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className={langPillCls} aria-label="Switch language">EN / ES</button>
-            <a href="#contact" className="inline-flex items-center justify-center h-9 px-4 ml-1 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 transition-colors whitespace-nowrap">{t.nav.quoteShort}</a>
           </nav>
           <div className="flex items-center gap-3 shrink-0 lg:hidden">
             <a href="#contact" className="inline-flex items-center justify-center h-10 md:h-11 px-4 md:px-5 rounded-full bg-gold text-ink font-bold text-sm hover:bg-gold-2 whitespace-nowrap">{t.nav.quoteShort}</a>
