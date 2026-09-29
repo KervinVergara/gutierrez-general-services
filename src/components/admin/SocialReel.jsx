@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { PHONE_DISPLAY } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls } from './shared'
@@ -93,6 +94,46 @@ function pickMimeType() {
     if (window.MediaRecorder?.isTypeSupported?.(type)) return type
   }
   return ''
+}
+
+// ChatGPT needs MP4 downstream, but this browser's native canvas→MP4 recording path is the
+// one that corrupts (see pickMimeType) — so we still record clean WebM, then transcode it
+// to MP4 in-browser with ffmpeg.wasm. The core files are self-hosted under public/ffmpeg/
+// (same-origin) rather than pulled from a CDN, so nothing leaves the browser and the CSP
+// doesn't need a third-party script source.
+let ffmpegPromise = null
+function loadFFmpeg() {
+  if (!ffmpegPromise) {
+    ffmpegPromise = (async () => {
+      const ffmpeg = new FFmpeg()
+      await ffmpeg.load({ coreURL: '/ffmpeg/ffmpeg-core.js', wasmURL: '/ffmpeg/ffmpeg-core.wasm' })
+      return ffmpeg
+    })()
+  }
+  return ffmpegPromise
+}
+
+async function webmToMp4(webmBlob, onProgress) {
+  const ffmpeg = await loadFFmpeg()
+  const onFfmpegProgress = ({ progress }) => onProgress(Math.max(0, Math.min(progress, 1)))
+  ffmpeg.on('progress', onFfmpegProgress)
+  try {
+    const inputData = new Uint8Array(await webmBlob.arrayBuffer())
+    await ffmpeg.writeFile('input.webm', inputData)
+    await ffmpeg.exec([
+      '-i', 'input.webm',
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac', '-b:a', '160k',
+      '-movflags', '+faststart',
+      'output.mp4',
+    ])
+    const data = await ffmpeg.readFile('output.mp4')
+    await ffmpeg.deleteFile('input.webm')
+    await ffmpeg.deleteFile('output.mp4')
+    return new Blob([data.buffer], { type: 'video/mp4' })
+  } finally {
+    ffmpeg.off('progress', onFfmpegProgress)
+  }
 }
 
 function naturalSize(source) {
@@ -227,22 +268,23 @@ function drawTitleCard(ctx, w, h, localT, logoImg, text, logoScale, textScale) {
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
 }
 
-// Every clip slide (the first one doubles as the intro — see buildSlides): same sand
-// background throughout, logo on top, reserved blank gaps for a title and a subtitle (left
-// for ChatGPT to fill in afterward), the photo/video delimited only by rounded corners (no
-// border/frame), and the city at the bottom.
-function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg, logoScale, textScale) {
-  ctx.fillStyle = SAND
-  ctx.fillRect(0, 0, w, h)
-
+// Position of the rounded photo/video card — shared by drawBodySlide and the transition
+// path in renderFrame so a clip-to-clip transition slides/fades exactly inside this rect.
+function bodyCardRect(w, h) {
   const topBandH = h * TOP_BAND_FRAC
   const bottomBandH = h * BOTTOM_BAND_FRAC
   const pad = w * 0.06
-  const cardX = pad
-  const cardY = topBandH
-  const cardW = w - pad * 2
-  const cardH = h - topBandH - bottomBandH
-  const radius = w * 0.035
+  return { x: pad, y: topBandH, w: w - pad * 2, h: h - topBandH - bottomBandH, radius: w * 0.035 }
+}
+
+// The sand background, logo, and footer — everything EXCEPT the photo/video itself. Drawn
+// once per frame and never translated/faded, so a transition only ever moves the media
+// inside the card, not the whole screen.
+function drawBodyFrame(ctx, w, h, logoImg, logoScale, textScale) {
+  ctx.fillStyle = SAND
+  ctx.fillRect(0, 0, w, h)
+  const topBandH = h * TOP_BAND_FRAC
+  const bottomBandH = h * BOTTOM_BAND_FRAC
 
   if (logoImg) {
     const lh = topBandH * 0.3 * logoScale
@@ -254,14 +296,6 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg, logoScale,
   // subtitle — both added later in ChatGPT, not drawn here. Subtitle lives below the photo
   // (flat sand background) rather than over it, so it never needs a scrim to stay legible.
 
-  ctx.save()
-  roundRectPath(ctx, cardX, cardY, cardW, cardH, radius)
-  ctx.clip()
-  if (clip.kind === 'video' && clip.videoEl && clip.videoEl.readyState >= 2) drawCoverZoomRect(ctx, clip.videoEl, { x: cardX, y: cardY, w: cardW, h: cardH }, 0)
-  else if (clip.kind === 'photo' && clip.img) drawCoverZoomRect(ctx, clip.img, { x: cardX, y: cardY, w: cardW, h: cardH }, zoomOn ? localT / dur : 0)
-  else { ctx.fillStyle = '#dfeef5'; ctx.fillRect(cardX, cardY, cardW, cardH) }
-  ctx.restore()
-
   ctx.textAlign = 'center'
   ctx.font = `700 ${Math.round(w * 0.026 * textScale)}px Manrope, sans-serif`
   ctx.fillStyle = STEEL
@@ -269,6 +303,26 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg, logoScale,
 
   ctx.fillStyle = GOLD
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
+}
+
+function drawClipMedia(ctx, clip, rect, zoomT) {
+  if (clip.kind === 'video' && clip.videoEl && clip.videoEl.readyState >= 2) drawCoverZoomRect(ctx, clip.videoEl, rect, 0)
+  else if (clip.kind === 'photo' && clip.img) drawCoverZoomRect(ctx, clip.img, rect, zoomT)
+  else { ctx.fillStyle = '#dfeef5'; ctx.fillRect(rect.x, rect.y, rect.w, rect.h) }
+}
+
+// Every clip slide (the first one doubles as the intro — see buildSlides): same sand
+// background throughout, logo on top, reserved blank gaps for a title and a subtitle (left
+// for ChatGPT to fill in afterward), the photo/video delimited only by rounded corners (no
+// border/frame), and the city at the bottom.
+function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg, logoScale, textScale) {
+  drawBodyFrame(ctx, w, h, logoImg, logoScale, textScale)
+  const rect = bodyCardRect(w, h)
+  ctx.save()
+  roundRectPath(ctx, rect.x, rect.y, rect.w, rect.h, rect.radius)
+  ctx.clip()
+  drawClipMedia(ctx, clip, rect, zoomOn ? localT / dur : 0)
+  ctx.restore()
 }
 
 function drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText, logoScale, textScale) {
@@ -309,7 +363,29 @@ function renderFrame(ctx, slides, time, w, h, logoImg, transitions, outroText, l
   if (hasNext && localT >= transitionStart) {
     const f = Math.min((localT - transitionStart) / TRANSITION_DUR, 1)
     const next = slides[idx + 1]
-    if (transitionStyle === 'slide') {
+
+    if (slide.kind === 'clip' && next.kind === 'clip') {
+      // Photo-to-photo (or video) cut: the frame (logo, footer, background) is drawn once
+      // and stays put — only the media inside the card slides/fades, never the whole screen.
+      drawBodyFrame(ctx, w, h, logoImg, logoScale, textScale)
+      const rect = bodyCardRect(w, h)
+      ctx.save()
+      roundRectPath(ctx, rect.x, rect.y, rect.w, rect.h, rect.radius)
+      ctx.clip()
+      if (transitionStyle === 'slide') {
+        ctx.save(); ctx.translate(-rect.w * f, 0); drawClipMedia(ctx, slide.clip, rect, 0); ctx.restore()
+        ctx.save(); ctx.translate(rect.w * (1 - f), 0); drawClipMedia(ctx, next.clip, rect, 0); ctx.restore()
+      } else {
+        drawClipMedia(ctx, slide.clip, rect, zoomOn ? localT / slide.dur : 0)
+        ctx.save()
+        ctx.globalAlpha = f
+        drawClipMedia(ctx, next.clip, rect, 0)
+        ctx.restore()
+      }
+      ctx.restore()
+    } else if (transitionStyle === 'slide') {
+      // Into/out of the outro is a real layout change (no media card there), so that one
+      // boundary still transitions as a full screen.
       ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, false, outroText, logoScale, textScale); ctx.restore()
       ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, next, 0, w, h, logoImg, false, outroText, logoScale, textScale); ctx.restore()
     } else {
@@ -372,6 +448,7 @@ export default function SocialReel() {
   const [textScale, setTextScale] = useState(1)
 
   const [isRendering, setIsRendering] = useState(false)
+  const [phase, setPhase] = useState('recording') // 'recording' | 'converting'
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState(null) // { url, ext }
 
@@ -460,6 +537,7 @@ export default function SocialReel() {
     if (clips.length === 0) return
     setResult(null)
     setIsRendering(true)
+    setPhase('recording')
     setProgress(0)
     const canvas = canvasRef.current
     canvas.width = FORMAT.w
@@ -498,11 +576,7 @@ export default function SocialReel() {
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
 
     const finished = new Promise((resolve) => {
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType || 'video/webm' })
-        const ext = (mimeType || '').includes('mp4') ? 'mp4' : 'webm'
-        resolve({ url: URL.createObjectURL(blob), ext })
-      }
+      recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType || 'video/webm' }))
     })
 
     recorder.start()
@@ -529,8 +603,20 @@ export default function SocialReel() {
     videoStateRef.current = {}
     if (audioEl) { audioEl.pause(); audioEl.remove() }
     if (audioCtx) audioCtx.close()
-    const out = await finished
-    setResult(out)
+    const webmBlob = await finished
+
+    // ChatGPT wants MP4, not the WebM we just recorded — transcode in-browser with
+    // ffmpeg.wasm. If that fails for any reason, fall back to the WebM rather than leaving
+    // the staff member with nothing.
+    setPhase('converting')
+    setProgress(0)
+    try {
+      const mp4Blob = await webmToMp4(webmBlob, setProgress)
+      setResult({ url: URL.createObjectURL(mp4Blob), ext: 'mp4' })
+    } catch (err) {
+      console.error('MP4 conversion failed:', err)
+      setResult({ url: URL.createObjectURL(webmBlob), ext: 'webm' })
+    }
     setIsRendering(false)
   }
 
@@ -637,9 +723,11 @@ export default function SocialReel() {
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Generar</p>
-          <p className="text-[11px] text-ink/50">La grabación toma el mismo tiempo que dura el video (no se puede acelerar) — se hace en tu navegador, sin subir nada a internet.</p>
+          <p className="text-[11px] text-ink/50">La grabación toma el mismo tiempo que dura el video (no se puede acelerar) y luego se convierte a MP4 — todo en tu navegador, sin subir nada a internet. La primera vez tarda un poco más porque descarga el conversor.</p>
           <button onClick={generate} disabled={clips.length === 0 || isRendering} className="inline-flex items-center justify-center gap-2 h-12 rounded-full bg-gold text-ink font-bold disabled:opacity-40">
-            {isRendering ? `Generando… ${Math.round(progress * 100)}%` : <><Icon name="arrowRight" size={16} /> Generar video</>}
+            {isRendering
+              ? (phase === 'converting' ? `Convirtiendo a MP4… ${Math.round(progress * 100)}%` : `Generando… ${Math.round(progress * 100)}%`)
+              : <><Icon name="arrowRight" size={16} /> Generar video</>}
           </button>
           {isRendering && (
             <div className="h-2 rounded-full bg-mist overflow-hidden"><div className="h-full bg-gold transition-[width]" style={{ width: `${progress * 100}%` }} /></div>
@@ -670,7 +758,11 @@ export default function SocialReel() {
             <a href={result.url} download={`reel-gutierrez-${Date.now()}.${result.ext}`} className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-gold text-ink font-bold text-sm">
               <Icon name="arrowRight" size={15} /> Descargar {result.ext.toUpperCase()}
             </a>
-            <p className="text-[11px] text-ink/40">Sale en WebM a propósito — el MP4 nativo del navegador dañaba el color en videos largos. ChatGPT y la mayoría de herramientas de edición aceptan WebM sin problema.</p>
+            <p className="text-[11px] text-ink/40">
+              {result.ext === 'mp4'
+                ? 'Listo para subir a ChatGPT u otra herramienta de edición.'
+                : 'La conversión a MP4 falló, así que este quedó en WebM — ChatGPT no lo acepta directo, pero la mayoría de editores sí. Intenta generar de nuevo.'}
+            </p>
           </div>
         </div>
       )}

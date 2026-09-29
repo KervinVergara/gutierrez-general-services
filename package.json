@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-ffmpeg-core.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/copy-ffmpeg-core.mjs",
     "build": "vite build",
     "deploy": "vite build && firebase deploy",
     "lint": "oxlint",
@@ -15,6 +17,8 @@
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.js\""
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
     "firebase": "^12.19.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
