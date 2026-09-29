@@ -6,6 +6,7 @@ import { Field, inputCls, TabBtn, FilterBtn } from './shared'
 import { money, fmtDate } from './util'
 import DocModal from './DocModal'
 import SocialDoc from './SocialDoc'
+import SocialReel from './SocialReel'
 import logo from '../../assets/photos/logo-new.png'
 
 const logoUrl = new URL(logo, window.location.origin).toString()
@@ -47,8 +48,9 @@ export default function AdminDocs() {
           <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Hoja de cotización</TabBtn>
           <TabBtn active={mode === 'catalog'} onClick={() => setMode('catalog')}>Catálogo</TabBtn>
           <TabBtn active={mode === 'social'} onClick={() => setMode('social')}>Publicidad</TabBtn>
+          <TabBtn active={mode === 'reel'} onClick={() => setMode('reel')}>Reels</TabBtn>
         </div>
-        {mode !== 'social' && (
+        {mode !== 'social' && mode !== 'reel' && (
           <div className="flex items-center gap-2 pb-2">
             <FilterBtn active={docLang === 'es'} onClick={() => setDocLang('es')}>ES</FilterBtn>
             <FilterBtn active={docLang === 'en'} onClick={() => setDocLang('en')}>EN</FilterBtn>
@@ -58,6 +60,7 @@ export default function AdminDocs() {
       {mode === 'quote' && <QuoteDoc docLang={docLang} />}
       {mode === 'catalog' && <CatalogDoc docLang={docLang} />}
       {mode === 'social' && <SocialDoc />}
+      {mode === 'reel' && <SocialReel />}
     </div>
   )
 }
