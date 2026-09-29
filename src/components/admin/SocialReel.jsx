@@ -22,7 +22,7 @@ const MAX_VIDEO_CLIP = 10 // seconds, safety cap on a single trimmed clip
 // Shared with the outro card so its logo and "Warsaw, Indiana" line land in the exact
 // same spot as every body slide — "para que todo se vea igual".
 const TOP_BAND_FRAC = 0.24
-const BOTTOM_BAND_FRAC = 0.07
+const BOTTOM_BAND_FRAC = 0.13
 
 const STYLES = [
   { id: 'fade', label: 'Fade' },
@@ -234,8 +234,10 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
     const lw = lh * (logoImg.width / logoImg.height)
     ctx.drawImage(logoImg, (w - lw) / 2, topBandH * 0.12, lw, lh)
   }
-  // The rest of topBandH (below the logo) and all of bottomBandH above the city line are
-  // left blank on purpose — that's the reserved space for a title/subtitle added later.
+  // Blank on purpose: the rest of topBandH (below the logo) reserves room for a title, and
+  // the gap in bottomBandH between the photo and the city line reserves room for a
+  // subtitle — both added later in ChatGPT, not drawn here. Subtitle lives below the photo
+  // (flat sand background) rather than over it, so it never needs a scrim to stay legible.
 
   ctx.save()
   roundRectPath(ctx, cardX, cardY, cardW, cardH, radius)
