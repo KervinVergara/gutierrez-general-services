@@ -163,19 +163,19 @@ function fitWrappedText(ctx, text, weight, baseSize, minSize, maxWidth, maxLines
 // Phone + website stacked above "Warsaw, Indiana" — the location line lands at the exact
 // same y as every body slide's, with the same font/color, so the outro's footer reads as
 // a taller version of the same footer rather than a different design.
-function drawOutroFooter(ctx, w, h) {
+function drawOutroFooter(ctx, w, h, textScale) {
   const bottomBandH = h * BOTTOM_BAND_FRAC
   const locationY = h - bottomBandH * 0.32
   const websiteY = locationY - w * 0.048
   const phoneY = websiteY - w * 0.048
   ctx.textAlign = 'center'
-  ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.font = `700 ${Math.round(w * 0.026 * textScale)}px Manrope, sans-serif`
   ctx.fillStyle = STEEL
   ctx.fillText(PHONE_DISPLAY, w / 2, phoneY)
-  ctx.font = `800 ${Math.round(w * 0.028)}px Manrope, sans-serif`
+  ctx.font = `800 ${Math.round(w * 0.028 * textScale)}px Manrope, sans-serif`
   ctx.fillStyle = NAVY
   ctx.fillText(WEBSITE, w / 2, websiteY)
-  ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.font = `700 ${Math.round(w * 0.026 * textScale)}px Manrope, sans-serif`
   ctx.fillStyle = STEEL
   ctx.fillText(LOCATION_FULL, w / 2, locationY)
 }
@@ -184,29 +184,44 @@ function drawOutroFooter(ctx, w, h) {
 // slide's, a reserved center area for text — left BLANK by default (empty string) so the
 // space stays clean for a CTA added afterward in ChatGPT — and phone/website/location at
 // the bottom, matching the body slides' footer position.
-function drawTitleCard(ctx, w, h, localT, logoImg, text) {
+function drawTitleCard(ctx, w, h, localT, logoImg, text, logoScale, textScale) {
   ctx.fillStyle = SAND
   ctx.fillRect(0, 0, w, h)
   const topBandH = h * TOP_BAND_FRAC
   const fadeIn = Math.min(localT / 0.35, 1)
   ctx.save()
   ctx.globalAlpha = fadeIn
+
+  // Faint watermark + a short gold rule under the logo: keeps the middle from reading as
+  // forgotten/empty when the CTA field is left blank on purpose for ChatGPT to fill in.
   if (logoImg) {
-    const lh = topBandH * 0.3
+    const wmH = h * 0.32
+    const wmW = wmH * (logoImg.width / logoImg.height)
+    ctx.save()
+    ctx.globalAlpha = fadeIn * 0.06
+    ctx.drawImage(logoImg, (w - wmW) / 2, h / 2 - wmH / 2, wmW, wmH)
+    ctx.restore()
+  }
+
+  if (logoImg) {
+    const lh = topBandH * 0.3 * logoScale
     const lw = lh * (logoImg.width / logoImg.height)
     ctx.drawImage(logoImg, (w - lw) / 2, topBandH * 0.12, lw, lh)
   }
+  ctx.fillStyle = GOLD
+  ctx.fillRect(w / 2 - w * 0.06, topBandH * 0.9, w * 0.12, Math.max(2, h * 0.0025))
+
   if (text) {
     const pad = w * 0.1
     ctx.textAlign = 'center'
-    const { size, lines } = fitWrappedText(ctx, text, 800, w * 0.06, w * 0.032, w - pad * 2, 4)
+    const { size, lines } = fitWrappedText(ctx, text, 800, w * 0.06 * textScale, w * 0.032 * textScale, w - pad * 2, 4)
     ctx.fillStyle = NAVY
     const lineH = size * 1.16
     const startY = h / 2 - ((lines.length - 1) * lineH) / 2
     ctx.font = `800 ${Math.round(size)}px Manrope, sans-serif`
     lines.forEach((l, i) => ctx.fillText(l, w / 2, startY + i * lineH))
   }
-  drawOutroFooter(ctx, w, h)
+  drawOutroFooter(ctx, w, h, textScale)
   ctx.restore()
   ctx.fillStyle = GOLD
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
@@ -216,7 +231,7 @@ function drawTitleCard(ctx, w, h, localT, logoImg, text) {
 // background throughout, logo on top, reserved blank gaps for a title and a subtitle (left
 // for ChatGPT to fill in afterward), the photo/video delimited only by rounded corners (no
 // border/frame), and the city at the bottom.
-function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
+function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg, logoScale, textScale) {
   ctx.fillStyle = SAND
   ctx.fillRect(0, 0, w, h)
 
@@ -230,7 +245,7 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
   const radius = w * 0.035
 
   if (logoImg) {
-    const lh = topBandH * 0.3
+    const lh = topBandH * 0.3 * logoScale
     const lw = lh * (logoImg.width / logoImg.height)
     ctx.drawImage(logoImg, (w - lw) / 2, topBandH * 0.12, lw, lh)
   }
@@ -248,7 +263,7 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
   ctx.restore()
 
   ctx.textAlign = 'center'
-  ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.font = `700 ${Math.round(w * 0.026 * textScale)}px Manrope, sans-serif`
   ctx.fillStyle = STEEL
   ctx.fillText(LOCATION_FULL, w / 2, h - bottomBandH * 0.32)
 
@@ -256,9 +271,9 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
 }
 
-function drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText) {
-  if (slide.kind === 'outro') return drawTitleCard(ctx, w, h, localT, logoImg, outroText)
-  return drawBodySlide(ctx, w, h, slide.clip, localT, slide.dur, zoomOn, logoImg)
+function drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText, logoScale, textScale) {
+  if (slide.kind === 'outro') return drawTitleCard(ctx, w, h, localT, logoImg, outroText, logoScale, textScale)
+  return drawBodySlide(ctx, w, h, slide.clip, localT, slide.dur, zoomOn, logoImg, logoScale, textScale)
 }
 
 // The first clip stays on screen INTRO_EXTRA seconds longer than a normal slide — that's
@@ -274,7 +289,9 @@ function buildSlides(clips, photoDuration) {
   return slides
 }
 
-function renderFrame(ctx, slides, time, w, h, logoImg, style, outroText) {
+// transitions[i] is the effect used when leaving slide i (the last clip's leads into the
+// outro) — chosen per-clip rather than one global style for the whole reel.
+function renderFrame(ctx, slides, time, w, h, logoImg, transitions, outroText, logoScale, textScale) {
   ctx.clearRect(0, 0, w, h)
   let acc = 0
   let idx = slides.length - 1
@@ -286,23 +303,24 @@ function renderFrame(ctx, slides, time, w, h, logoImg, style, outroText) {
   const localT = time - acc
   const hasNext = idx < slides.length - 1
   const transitionStart = slide.dur - TRANSITION_DUR
-  const zoomOn = style === 'zoom'
+  const transitionStyle = transitions[idx] || 'fade'
+  const zoomOn = transitionStyle === 'zoom'
 
   if (hasNext && localT >= transitionStart) {
     const f = Math.min((localT - transitionStart) / TRANSITION_DUR, 1)
     const next = slides[idx + 1]
-    if (style === 'slide') {
-      ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, false, outroText); ctx.restore()
-      ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, next, 0, w, h, logoImg, false, outroText); ctx.restore()
+    if (transitionStyle === 'slide') {
+      ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, false, outroText, logoScale, textScale); ctx.restore()
+      ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, next, 0, w, h, logoImg, false, outroText, logoScale, textScale); ctx.restore()
     } else {
-      drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText)
+      drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText, logoScale, textScale)
       ctx.save()
       ctx.globalAlpha = f
-      drawSlide(ctx, next, 0, w, h, logoImg, zoomOn, outroText)
+      drawSlide(ctx, next, 0, w, h, logoImg, zoomOn, outroText, logoScale, textScale)
       ctx.restore()
     }
   } else {
-    drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText)
+    drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText, logoScale, textScale)
   }
 }
 
@@ -344,18 +362,33 @@ export default function SocialReel() {
 
   const [clips, setClips] = useState([])
   const [duration, setDuration] = useState(2.5)
-  const [style, setStyle] = useState('fade')
+  const [transitions, setTransitions] = useState([]) // per-clip: effect leaving that clip
   const [outroText, setOutroText] = useState('')
   const [logoImg, setLogoImg] = useState(null)
   const [scrub, setScrub] = useState(0.5)
   const [music, setMusic] = useState(null) // { name, url }
   const [musicVolume, setMusicVolume] = useState(0.6)
+  const [logoScale, setLogoScale] = useState(1)
+  const [textScale, setTextScale] = useState(1)
 
   const [isRendering, setIsRendering] = useState(false)
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState(null) // { url, ext }
 
   useEffect(() => { loadLogo().then(setLogoImg) }, [])
+
+  // Keeps one transition slot per clip (the last one leads into the outro), padding new
+  // slots with 'fade' and trimming extras as clips are added/removed — by position, not id,
+  // so reordering clips doesn't try to drag a transition along with them.
+  useEffect(() => {
+    setTransitions((ts) => {
+      const needed = clips.length
+      if (ts.length === needed) return ts
+      const next = ts.slice(0, needed)
+      while (next.length < needed) next.push('fade')
+      return next
+    })
+  }, [clips.length])
 
   const slides = buildSlides(clips, duration)
   const totalDuration = slides.reduce((sum, s) => sum + s.dur, 0)
@@ -367,9 +400,9 @@ export default function SocialReel() {
     canvas.height = FORMAT.h
     const ctx = canvas.getContext('2d')
     const t = Math.min(scrub, Math.max(totalDuration - 0.001, 0))
-    renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, style, outroText)
+    renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, transitions, outroText, logoScale, textScale)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips, duration, style, outroText, logoImg, scrub, isRendering, totalDuration, slides])
+  }, [clips, duration, transitions, outroText, logoImg, scrub, isRendering, totalDuration, slides, logoScale, textScale])
 
   async function onUpload(e) {
     const files = Array.from(e.target.files || [])
@@ -389,6 +422,12 @@ export default function SocialReel() {
   function removeMusic() {
     if (music) URL.revokeObjectURL(music.url)
     setMusic(null)
+  }
+  function updateTransition(i, value) {
+    setTransitions((ts) => ts.map((t, idx) => (idx === i ? value : t)))
+  }
+  function applyTransitionToAll(value) {
+    setTransitions((ts) => ts.map(() => value))
   }
   function moveClip(id, dir) {
     setClips((cs) => {
@@ -474,7 +513,7 @@ export default function SocialReel() {
       // tabs mid-render. setTimeout keeps firing (just throttled) so it still finishes.
       function tick() {
         const elapsed = (performance.now() - startedAt) / 1000
-        renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, style, outroText)
+        renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, transitions, outroText, logoScale, textScale)
         let acc = 0
         let activeClip = null
         for (const s of slides) { if (elapsed < acc + s.dur) { activeClip = s.kind === 'clip' ? s.clip : null; break } acc += s.dur }
@@ -526,6 +565,12 @@ export default function SocialReel() {
                       <span>de {c.srcDuration.toFixed(1)}s</span>
                     </div>
                   )}
+                  <div className="flex items-center gap-1.5 text-[11px] text-ink/60">
+                    <span className="shrink-0">Transición → {i === clips.length - 1 ? 'outro' : 'siguiente'}:</span>
+                    <select value={transitions[i] || 'fade'} onChange={(e) => updateTransition(i, e.target.value)} className="h-7 flex-1 rounded border border-ink/15 px-1.5 min-w-0">
+                      {STYLES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
+                  </div>
                   <div className="flex items-center justify-end gap-1.5">
                     <button type="button" onClick={() => moveClip(c.id, -1)} disabled={i === 0} aria-label="Subir" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="-rotate-90" /></button>
                     <button type="button" onClick={() => moveClip(c.id, 1)} disabled={i === clips.length - 1} aria-label="Bajar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="rotate-90" /></button>
@@ -569,14 +614,25 @@ export default function SocialReel() {
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Logo y texto</p>
+          <Field label={`Tamaño del logo — ${Math.round(logoScale * 100)}%`}>
+            <input type="range" min="0.6" max="1.6" step="0.05" value={logoScale} onChange={(e) => setLogoScale(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
+          </Field>
+          <Field label={`Tamaño del texto — ${Math.round(textScale * 100)}%`}>
+            <input type="range" min="0.7" max="1.5" step="0.05" value={textScale} onChange={(e) => setTextScale(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
+          </Field>
+          <p className="text-[11px] text-ink/40">Afecta el logo y el texto de contacto/ciudad en todas las pantallas, incluido el outro.</p>
+        </div>
+
+        <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Formato del reel</p>
           <Field label={`Duración por foto — ${duration.toFixed(1)}s (la primera se queda ${(duration + INTRO_EXTRA).toFixed(1)}s como intro · no aplica a videos)`}>
             <input type="range" min="1.5" max="5" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
           </Field>
-          <Field label="Estilo de transición">
-            <OptionRow options={STYLES.map((s) => s.id)} value={style} onChange={setStyle} labels={Object.fromEntries(STYLES.map((s) => [s.id, s.label]))} />
+          <Field label="Aplicar un efecto a todas las transiciones">
+            <OptionRow options={STYLES.map((s) => s.id)} value={null} onChange={applyTransitionToAll} labels={Object.fromEntries(STYLES.map((s) => [s.id, s.label]))} />
           </Field>
-          <p className="text-[11px] text-ink/40">1080×1920 vertical, siempre el mismo fondo y formato · duración total: {totalDuration.toFixed(1)}s</p>
+          <p className="text-[11px] text-ink/40">También puedes elegir el efecto foto por foto arriba, en cada clip · duración total: {totalDuration.toFixed(1)}s</p>
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
