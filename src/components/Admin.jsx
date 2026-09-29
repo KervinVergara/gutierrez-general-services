@@ -384,7 +384,7 @@ export default function Admin() {
       <div className="flex items-center gap-1 mb-8 border-b border-ink/10 overflow-x-auto overflow-y-hidden flex-nowrap">
         {TABS.map((t) => <TabBtn key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</TabBtn>)}
       </div>
-      <Active goTo={goToTab} focus={nav} onFocusHandled={clearNav} />
+      <Active goTo={goToTab} focus={nav} onFocusHandled={clearNav} userEmail={user.email} />
     </Shell>
   )
 }

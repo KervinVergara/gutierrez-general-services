@@ -37,9 +37,15 @@ function headerHtml(subtitle) {
   return `<div class="header"><img src="${logoUrl}" /><div><h1>${BUSINESS}</h1><p>${subtitle} · Warsaw, Indiana · ${PHONE_DISPLAY}</p></div></div>`
 }
 
-export default function AdminDocs() {
+// Publicidad and Reels are content-production tools for whoever runs the monthly content
+// service, not something the business owner's own account needs — kept out of their view
+// rather than a Firestore-rules-level restriction, since neither tool reads/writes any data.
+const CONTENT_TOOLS_EMAIL = 'kervinvergara@gmail.com'
+
+export default function AdminDocs({ userEmail }) {
   const [mode, setMode] = useState('quote')
   const [docLang, setDocLang] = useState('es')
+  const canSeeContentTools = userEmail === CONTENT_TOOLS_EMAIL
 
   return (
     <div>
@@ -47,8 +53,8 @@ export default function AdminDocs() {
         <div className="flex items-center gap-1">
           <TabBtn active={mode === 'quote'} onClick={() => setMode('quote')}>Hoja de cotización</TabBtn>
           <TabBtn active={mode === 'catalog'} onClick={() => setMode('catalog')}>Catálogo</TabBtn>
-          <TabBtn active={mode === 'social'} onClick={() => setMode('social')}>Publicidad</TabBtn>
-          <TabBtn active={mode === 'reel'} onClick={() => setMode('reel')}>Reels</TabBtn>
+          {canSeeContentTools && <TabBtn active={mode === 'social'} onClick={() => setMode('social')}>Publicidad</TabBtn>}
+          {canSeeContentTools && <TabBtn active={mode === 'reel'} onClick={() => setMode('reel')}>Reels</TabBtn>}
         </div>
         {mode !== 'social' && mode !== 'reel' && (
           <div className="flex items-center gap-2 pb-2">
@@ -59,8 +65,8 @@ export default function AdminDocs() {
       </div>
       {mode === 'quote' && <QuoteDoc docLang={docLang} />}
       {mode === 'catalog' && <CatalogDoc docLang={docLang} />}
-      {mode === 'social' && <SocialDoc />}
-      {mode === 'reel' && <SocialReel />}
+      {mode === 'social' && canSeeContentTools && <SocialDoc />}
+      {mode === 'reel' && canSeeContentTools && <SocialReel />}
     </div>
   )
 }
