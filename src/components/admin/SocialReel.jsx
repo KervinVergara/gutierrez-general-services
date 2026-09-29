@@ -13,7 +13,7 @@ const STEEL = '#52616b'
 
 // Fixed on purpose — the whole point is "always the same format", not a picker.
 const FORMAT = { w: 1080, h: 1920 }
-const INTRO_DUR = 1.6
+const INTRO_EXTRA = 2 // the first clip holds this many extra seconds, acting as the intro
 const OUTRO_DUR = 2
 const TRANSITION_DUR = 0.5
 const FPS = 30
@@ -195,18 +195,30 @@ function drawTitleCard(ctx, w, h, localT, logoImg, text) {
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
 }
 
-// Middle slides: the same sand background throughout the reel, with the photo/video
-// delimited inside a bordered card instead of full-bleed — this is the only thing that
-// changes from clip to clip.
-function drawPhotoCard(ctx, w, h, clip, localT, dur, zoomOn) {
+// Every clip slide (the first one doubles as the intro — see buildSlides): same sand
+// background throughout, logo on top, reserved blank gaps for a title and a subtitle (left
+// for ChatGPT to fill in afterward), the photo/video delimited only by rounded corners (no
+// border/frame), and the city at the bottom.
+function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
   ctx.fillStyle = SAND
   ctx.fillRect(0, 0, w, h)
 
-  const cardX = w * 0.07
-  const cardY = h * 0.14
-  const cardW = w * 0.86
-  const cardH = h * 0.72
-  const radius = w * 0.02
+  const topBandH = h * 0.24
+  const bottomBandH = h * 0.07
+  const pad = w * 0.06
+  const cardX = pad
+  const cardY = topBandH
+  const cardW = w - pad * 2
+  const cardH = h - topBandH - bottomBandH
+  const radius = w * 0.035
+
+  if (logoImg) {
+    const lh = topBandH * 0.3
+    const lw = lh * (logoImg.width / logoImg.height)
+    ctx.drawImage(logoImg, (w - lw) / 2, topBandH * 0.12, lw, lh)
+  }
+  // The rest of topBandH (below the logo) and all of bottomBandH above the city line are
+  // left blank on purpose — that's the reserved space for a title/subtitle added later.
 
   ctx.save()
   roundRectPath(ctx, cardX, cardY, cardW, cardH, radius)
@@ -216,31 +228,34 @@ function drawPhotoCard(ctx, w, h, clip, localT, dur, zoomOn) {
   else { ctx.fillStyle = '#dfeef5'; ctx.fillRect(cardX, cardY, cardW, cardH) }
   ctx.restore()
 
-  ctx.save()
-  ctx.strokeStyle = NAVY
-  ctx.lineWidth = Math.max(2, w * 0.004)
-  roundRectPath(ctx, cardX, cardY, cardW, cardH, radius)
-  ctx.stroke()
-  ctx.restore()
+  ctx.textAlign = 'center'
+  ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.fillStyle = STEEL
+  ctx.fillText(LOCATION_FULL, w / 2, h - bottomBandH * 0.32)
 
   ctx.fillStyle = GOLD
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
 }
 
-function drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, introText, outroText) {
-  if (slide.kind === 'intro') return drawTitleCard(ctx, w, h, localT, logoImg, introText)
+function drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText) {
   if (slide.kind === 'outro') return drawTitleCard(ctx, w, h, localT, logoImg, outroText)
-  return drawPhotoCard(ctx, w, h, slide.clip, localT, slide.dur, zoomOn)
+  return drawBodySlide(ctx, w, h, slide.clip, localT, slide.dur, zoomOn, logoImg)
 }
 
+// The first clip stays on screen INTRO_EXTRA seconds longer than a normal slide — that's
+// the "intro": the first photo/video itself, held a bit longer, not a separate blank card.
 function buildSlides(clips, photoDuration) {
-  const slides = [{ kind: 'intro', dur: INTRO_DUR }]
-  clips.forEach((c) => slides.push({ kind: 'clip', dur: c.kind === 'video' ? Math.max(0.2, c.trimEnd - c.trimStart) : photoDuration, clip: c }))
+  const slides = []
+  clips.forEach((c, i) => {
+    const baseDur = c.kind === 'video' ? Math.max(0.2, c.trimEnd - c.trimStart) : photoDuration
+    const dur = i === 0 ? baseDur + INTRO_EXTRA : baseDur
+    slides.push({ kind: 'clip', dur, clip: c })
+  })
   slides.push({ kind: 'outro', dur: OUTRO_DUR })
   return slides
 }
 
-function renderFrame(ctx, slides, time, w, h, logoImg, style, introText, outroText) {
+function renderFrame(ctx, slides, time, w, h, logoImg, style, outroText) {
   ctx.clearRect(0, 0, w, h)
   let acc = 0
   let idx = slides.length - 1
@@ -258,17 +273,17 @@ function renderFrame(ctx, slides, time, w, h, logoImg, style, introText, outroTe
     const f = Math.min((localT - transitionStart) / TRANSITION_DUR, 1)
     const next = slides[idx + 1]
     if (style === 'slide') {
-      ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, false, introText, outroText); ctx.restore()
-      ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, next, 0, w, h, logoImg, false, introText, outroText); ctx.restore()
+      ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, false, outroText); ctx.restore()
+      ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, next, 0, w, h, logoImg, false, outroText); ctx.restore()
     } else {
-      drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, introText, outroText)
+      drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText)
       ctx.save()
       ctx.globalAlpha = f
-      drawSlide(ctx, next, 0, w, h, logoImg, zoomOn, introText, outroText)
+      drawSlide(ctx, next, 0, w, h, logoImg, zoomOn, outroText)
       ctx.restore()
     }
   } else {
-    drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, introText, outroText)
+    drawSlide(ctx, slide, localT, w, h, logoImg, zoomOn, outroText)
   }
 }
 
@@ -311,7 +326,6 @@ export default function SocialReel() {
   const [clips, setClips] = useState([])
   const [duration, setDuration] = useState(2.5)
   const [style, setStyle] = useState('fade')
-  const [introText, setIntroText] = useState('')
   const [outroText, setOutroText] = useState('')
   const [logoImg, setLogoImg] = useState(null)
   const [scrub, setScrub] = useState(0.5)
@@ -332,9 +346,9 @@ export default function SocialReel() {
     canvas.height = FORMAT.h
     const ctx = canvas.getContext('2d')
     const t = Math.min(scrub, Math.max(totalDuration - 0.001, 0))
-    renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, style, introText, outroText)
+    renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, style, outroText)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips, duration, style, introText, outroText, logoImg, scrub, isRendering, totalDuration, slides])
+  }, [clips, duration, style, outroText, logoImg, scrub, isRendering, totalDuration, slides])
 
   async function onUpload(e) {
     const files = Array.from(e.target.files || [])
@@ -404,7 +418,7 @@ export default function SocialReel() {
       // tabs mid-render. setTimeout keeps firing (just throttled) so it still finishes.
       function tick() {
         const elapsed = (performance.now() - startedAt) / 1000
-        renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, style, introText, outroText)
+        renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, style, outroText)
         let acc = 0
         let activeClip = null
         for (const s of slides) { if (elapsed < acc + s.dur) { activeClip = s.kind === 'clip' ? s.clip : null; break } acc += s.dur }
@@ -467,18 +481,16 @@ export default function SocialReel() {
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Intro y outro</p>
-          <Field label="Título del intro (opcional — vacío = espacio libre para ChatGPT)">
-            <input className={inputCls} placeholder="Déjalo vacío si ChatGPT pondrá el título" value={introText} onChange={(e) => setIntroText(e.target.value)} />
-          </Field>
+          <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Outro</p>
           <Field label="CTA del outro (opcional — vacío = espacio libre para ChatGPT)">
             <input className={inputCls} placeholder="Déjalo vacío si ChatGPT pondrá el CTA" value={outroText} onChange={(e) => setOutroText(e.target.value)} />
           </Field>
+          <p className="text-[11px] text-ink/40">El intro ya no es una tarjeta aparte: la primera foto o video se queda en pantalla un poco más y hace de intro.</p>
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Formato del reel</p>
-          <Field label={`Duración por foto — ${duration.toFixed(1)}s (no aplica a videos)`}>
+          <Field label={`Duración por foto — ${duration.toFixed(1)}s (la primera se queda ${(duration + INTRO_EXTRA).toFixed(1)}s como intro · no aplica a videos)`}>
             <input type="range" min="1.5" max="5" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
           </Field>
           <Field label="Estilo de transición">
