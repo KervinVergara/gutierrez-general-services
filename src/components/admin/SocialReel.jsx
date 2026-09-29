@@ -348,6 +348,8 @@ export default function SocialReel() {
   const [outroText, setOutroText] = useState('')
   const [logoImg, setLogoImg] = useState(null)
   const [scrub, setScrub] = useState(0.5)
+  const [music, setMusic] = useState(null) // { name, url }
+  const [musicVolume, setMusicVolume] = useState(0.6)
 
   const [isRendering, setIsRendering] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -377,6 +379,17 @@ export default function SocialReel() {
     e.target.value = ''
   }
   function removeClip(id) { setClips((cs) => cs.filter((c) => c.id !== id)) }
+  function onUploadMusic(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (music) URL.revokeObjectURL(music.url)
+    setMusic({ name: file.name, url: URL.createObjectURL(file) })
+    e.target.value = ''
+  }
+  function removeMusic() {
+    if (music) URL.revokeObjectURL(music.url)
+    setMusic(null)
+  }
   function moveClip(id, dir) {
     setClips((cs) => {
       const i = cs.findIndex((c) => c.id === id)
@@ -415,8 +428,32 @@ export default function SocialReel() {
     const ctx = canvas.getContext('2d')
     try { await document.fonts.load(`800 60px Manrope`); await document.fonts.ready } catch { /* fall back to default font */ }
 
+    // Background music: routed through Web Audio (not the <audio> tag's own output) so it
+    // reaches the recorded MediaStream but never plays out loud during the real-time render.
+    let audioCtx = null
+    let audioEl = null
+    if (music) {
+      audioEl = document.createElement('audio')
+      audioEl.src = music.url
+      audioEl.loop = true
+      audioEl.crossOrigin = 'anonymous'
+      document.body.appendChild(audioEl)
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const source = audioCtx.createMediaElementSource(audioEl)
+      const gain = audioCtx.createGain()
+      gain.gain.value = musicVolume
+      const dest = audioCtx.createMediaStreamDestination()
+      source.connect(gain)
+      gain.connect(dest)
+      audioCtx._dest = dest
+      try { await audioEl.play() } catch { /* autoplay blocked — reel will render without sound */ }
+    }
+
     const mimeType = pickMimeType()
-    const stream = canvas.captureStream(FPS)
+    const videoStream = canvas.captureStream(FPS)
+    const tracks = [...videoStream.getVideoTracks()]
+    if (audioCtx) tracks.push(...audioCtx._dest.stream.getAudioTracks())
+    const stream = new MediaStream(tracks)
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 8_000_000 } : undefined)
     const chunks = []
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
@@ -451,6 +488,8 @@ export default function SocialReel() {
     recorder.stop()
     clips.forEach((c) => { if (c.kind === 'video') c.videoEl.pause() })
     videoStateRef.current = {}
+    if (audioEl) { audioEl.pause(); audioEl.remove() }
+    if (audioCtx) audioCtx.close()
     const out = await finished
     setResult(out)
     setIsRendering(false)
@@ -505,6 +544,28 @@ export default function SocialReel() {
             <input className={inputCls} placeholder="Déjalo vacío si ChatGPT pondrá el CTA" value={outroText} onChange={(e) => setOutroText(e.target.value)} />
           </Field>
           <p className="text-[11px] text-ink/40">El intro ya no es una tarjeta aparte: la primera foto o video se queda en pantalla un poco más y hace de intro.</p>
+        </div>
+
+        <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Música de fondo (opcional)</p>
+          {!music ? (
+            <label className="flex items-center justify-center gap-2 h-11 px-3 rounded-lg border border-ink/20 cursor-pointer text-sm font-semibold text-ink/70 hover:border-ink">
+              <Icon name="image" size={16} /> Subir MP3 propio…
+              <input type="file" accept="audio/*" className="hidden" onChange={onUploadMusic} />
+            </label>
+          ) : (
+            <div className="grid gap-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex-1 min-w-0 text-xs text-ink/70 truncate" title={music.name}>{music.name}</span>
+                <button type="button" onClick={removeMusic} aria-label="Quitar música" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 hover:border-red-600 hover:text-red-600 shrink-0"><Icon name="trash" size={13} /></button>
+              </div>
+              <audio src={music.url} controls className="w-full h-9" />
+              <Field label={`Volumen — ${Math.round(musicVolume * 100)}%`}>
+                <input type="range" min="0" max="1" step="0.05" value={musicVolume} onChange={(e) => setMusicVolume(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
+              </Field>
+            </div>
+          )}
+          <p className="text-[11px] text-ink/40">Se repite en bucle si el video dura más que la canción. Asegúrate de que el MP3 sea libre de derechos — eso no lo verifica la herramienta.</p>
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
