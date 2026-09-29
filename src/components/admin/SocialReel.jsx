@@ -188,7 +188,9 @@ export default function SocialReel() {
   const [lang, setLang] = useState('es')
   const [introOutroOn, setIntroOutroOn] = useState(true)
   const [logoImg, setLogoImg] = useState(null)
-  const [scrub, setScrub] = useState(0)
+  // Starts past the intro's own fade-in (0–0.4s) so the default preview isn't a blank navy
+  // rectangle — the very first instant of that fade is 0% opacity by design.
+  const [scrub, setScrub] = useState(0.6)
 
   const [isRendering, setIsRendering] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -289,10 +291,10 @@ export default function SocialReel() {
               {photos.map((p, i) => (
                 <div key={p.id} className="flex items-center gap-2 rounded-lg border border-ink/10 p-1.5">
                   <img src={p.img.src} alt="" className="w-10 h-14 object-cover rounded shrink-0" />
-                  <span className="flex-1 text-xs text-ink/70 truncate">{i + 1}. {p.name}</span>
-                  <button type="button" onClick={() => movePhoto(p.id, -1)} disabled={i === 0} aria-label="Subir" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30"><Icon name="arrowRight" size={13} className="-rotate-90" /></button>
-                  <button type="button" onClick={() => movePhoto(p.id, 1)} disabled={i === photos.length - 1} aria-label="Bajar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30"><Icon name="arrowRight" size={13} className="rotate-90" /></button>
-                  <button type="button" onClick={() => removePhoto(p.id)} aria-label="Eliminar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 hover:border-red-600 hover:text-red-600"><Icon name="trash" size={13} /></button>
+                  <span className="flex-1 min-w-0 text-xs text-ink/70 truncate">{i + 1}. {p.name}</span>
+                  <button type="button" onClick={() => movePhoto(p.id, -1)} disabled={i === 0} aria-label="Subir" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="-rotate-90" /></button>
+                  <button type="button" onClick={() => movePhoto(p.id, 1)} disabled={i === photos.length - 1} aria-label="Bajar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="rotate-90" /></button>
+                  <button type="button" onClick={() => removePhoto(p.id)} aria-label="Eliminar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 hover:border-red-600 hover:text-red-600 shrink-0"><Icon name="trash" size={13} /></button>
                 </div>
               ))}
             </div>
