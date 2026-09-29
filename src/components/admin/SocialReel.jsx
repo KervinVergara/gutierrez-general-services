@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { BUSINESS, PHONE_DISPLAY } from '../../content'
+import { PHONE_DISPLAY } from '../../content'
 import Icon from '../Icon'
 import { Field, inputCls } from './shared'
-import logoWhite from '../../assets/photos/logo-white.webp'
+import logoNavy from '../../assets/photos/logo-new.webp'
 
-const WEBSITE = 'gutierrez-generalservices.web.app'
+const WEBSITE = 'gutierrezgeneralservices.com'
+const LOCATION_SHORT = 'WARSAW, IN'
+const LOCATION_FULL = 'Warsaw, Indiana'
 const NAVY = '#123b55'
 const GOLD = '#f3c64e'
+const SAND = '#f7f5ef'
+const STEEL = '#52616b'
 
-// Fixed on purpose — the whole point is "always the same format", not a picker.
+// Fixed on purpose — the whole point is "always the same format", not a picker. Matches
+// the reel format already in use on Drive (GGS/01_Contenido_final): a persistent sand
+// header/footer frame around the photo, not a separate navy intro/outro screen.
 const FORMAT = { w: 1080, h: 1920 }
-const INTRO_DUR = 1.4
-const OUTRO_DUR = 2.2
+const TOP_FRAC = 0.22
+const PHOTO_END_FRAC = 0.85
 const TRANSITION_DUR = 0.5
 const FPS = 30
 const MAX_VIDEO_CLIP = 10 // seconds, safety cap on a single trimmed clip
@@ -22,15 +28,7 @@ const STYLES = [
   { id: 'slide', label: 'Slide' },
 ]
 
-const BRAND_STYLES = [
-  { id: 'clasico', label: 'Clásico' },
-  { id: 'bold', label: 'Bold' },
-]
-
-const LABELS = {
-  es: { kicker: 'CUIDADO LOCAL · WARSAW, IN', cta: 'Cotización gratis' },
-  en: { kicker: 'LOCAL CARE · WARSAW, IN', cta: 'Get a Free Quote' },
-}
+const BADGE_LABEL = { es: 'FOTOS REALES GGS', en: 'REAL GGS PHOTOS' }
 
 let logoImgPromise = null
 function loadLogo() {
@@ -39,7 +37,7 @@ function loadLogo() {
       const img = new Image()
       img.onload = () => resolve(img)
       img.onerror = () => resolve(null)
-      img.src = logoWhite
+      img.src = logoNavy
     })
   }
   return logoImgPromise
@@ -76,10 +74,11 @@ function loadVideoFile(file) {
 function loadClip(file) {
   const id = `${Date.now()}-${Math.random()}`
   const name = file.name
+  const base = { id, name, headline: '', caption: '' }
   if (file.type.startsWith('video/')) {
-    return loadVideoFile(file).then((v) => ({ id, kind: 'video', name, ...v }))
+    return loadVideoFile(file).then((v) => ({ ...base, kind: 'video', ...v }))
   }
-  return loadImageFile(file).then((img) => ({ id, kind: 'photo', name, img }))
+  return loadImageFile(file).then((img) => ({ ...base, kind: 'photo', img }))
 }
 
 function pickMimeType() {
@@ -102,21 +101,37 @@ function naturalSize(source) {
   return { w: source.width, h: source.height }
 }
 
-// Cover-fit crop with an optional zoom-in over time (Ken Burns), centered. Works for an
-// <img> or a live <video> frame — both are valid canvas drawImage sources.
-function drawCoverZoom(ctx, source, w, h, zoomT) {
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
+  ctx.closePath()
+}
+
+// Cover-fit a photo or a live video frame into an arbitrary rect, with an optional
+// zoom-in over time (Ken Burns), centered.
+function drawCoverZoomRect(ctx, source, frame, zoomT) {
   const { w: iw, h: ih } = naturalSize(source)
   if (!iw || !ih) return
+  const { x, y, w, h } = frame
   const ir = iw / ih
   const r = w / h
   let sw, sh
   if (ir > r) { sh = ih; sw = sh * r } else { sw = iw; sh = sw / r }
-  const zoom = 1 + 0.1 * Math.max(0, Math.min(zoomT, 1))
+  const zoom = 1 + 0.08 * Math.max(0, Math.min(zoomT, 1))
   sw /= zoom
   sh /= zoom
   const sx = (iw - sw) / 2
   const sy = (ih - sh) / 2
-  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, w, h)
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y, w, h)
+  ctx.clip()
+  ctx.drawImage(source, sx, sy, sw, sh, x, y, w, h)
+  ctx.restore()
 }
 
 function wrapLines(ctx, text, maxWidth) {
@@ -146,128 +161,101 @@ function fitWrappedText(ctx, text, weight, baseSize, minSize, maxWidth, maxLines
   return { size, lines }
 }
 
-// Bold caption overlay for the opening/closing hook line, with a soft scrim behind it so it
-// reads over any photo or video frame.
-function drawOverlayText(ctx, w, h, text, pos) {
-  if (!text) return
-  const pad = w * 0.08
-  const bandH = h * 0.26
-  const bandY = pos === 'top' ? 0 : h - bandH
-  const grad = ctx.createLinearGradient(0, bandY, 0, pos === 'top' ? bandY + bandH : h)
-  const solid = 'rgba(18,59,85,0.6)'
-  const clear = 'rgba(18,59,85,0)'
-  grad.addColorStop(0, pos === 'top' ? solid : clear)
-  grad.addColorStop(1, pos === 'top' ? clear : solid)
-  ctx.fillStyle = grad
-  ctx.fillRect(0, bandY, w, bandH)
+// The persistent frame: sand header (logo, location, category, per-clip headline) and sand
+// footer (per-clip caption, contact info on the last clip only, website, gold divider),
+// with the photo/video filling the band between them. This whole thing is what changes
+// per clip and what the fade/zoom/slide transition below composites between.
+function drawReelFrame(ctx, w, h, clip, localT, dur, logoImg, lang, zoomOn, category, isLast) {
+  const topH = h * TOP_FRAC
+  const photoH = h * (PHOTO_END_FRAC - TOP_FRAC)
+  const photoY = topH
+  const bottomY = topH + photoH
+  const bottomH = h - bottomY
+  const pad = w * 0.055
 
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#fff'
-  const { size, lines } = fitWrappedText(ctx, text, 800, w * 0.058, w * 0.032, w - pad * 2, 3)
-  const lineH = size * 1.18
-  const centerY = pos === 'top' ? bandY + bandH * 0.42 : bandY + bandH * 0.58
-  const startY = centerY - ((lines.length - 1) * lineH) / 2
-  ctx.font = `800 ${Math.round(size)}px Manrope, sans-serif`
-  lines.forEach((l, i) => ctx.fillText(l, w / 2, startY + i * lineH))
-}
+  ctx.fillStyle = SAND
+  ctx.fillRect(0, 0, w, topH)
+  ctx.fillRect(0, bottomY, w, bottomH)
 
-function drawIntro(ctx, w, h, localT, logoImg, lang, brandStyle) {
-  ctx.fillStyle = NAVY
-  ctx.fillRect(0, 0, w, h)
-  const fadeIn = Math.min(localT / 0.4, 1)
-  ctx.save()
-  ctx.globalAlpha = fadeIn
-  ctx.textAlign = 'center'
-  if (brandStyle === 'bold') {
-    if (logoImg) {
-      const lw = w * 0.56
-      const lh = lw * (logoImg.height / logoImg.width)
-      ctx.drawImage(logoImg, (w - lw) / 2, h * 0.36, lw, lh)
-    }
-    ctx.fillStyle = GOLD
-    ctx.fillRect(w * 0.32, h * 0.52, w * 0.36, h * 0.004)
-    ctx.font = `800 ${Math.round(w * 0.03)}px Manrope, sans-serif`
-    ctx.fillText(LABELS[lang].kicker, w / 2, h * 0.57)
-  } else {
-    ctx.font = `800 ${Math.round(w * 0.032)}px Manrope, sans-serif`
-    ctx.fillStyle = GOLD
-    ctx.fillText(LABELS[lang].kicker, w / 2, h * 0.42)
-    if (logoImg) {
-      const lw = w * 0.5
-      const lh = lw * (logoImg.height / logoImg.width)
-      ctx.drawImage(logoImg, (w - lw) / 2, h * 0.46, lw, lh)
-    }
-  }
-  ctx.restore()
-}
+  const frame = { x: 0, y: photoY, w, h: photoH }
+  if (clip.kind === 'video' && clip.videoEl && clip.videoEl.readyState >= 2) drawCoverZoomRect(ctx, clip.videoEl, frame, 0)
+  else if (clip.kind === 'photo' && clip.img) drawCoverZoomRect(ctx, clip.img, frame, zoomOn ? localT / dur : 0)
+  else { ctx.fillStyle = '#dfeef5'; ctx.fillRect(frame.x, frame.y, frame.w, frame.h) }
 
-function drawOutro(ctx, w, h, localT, logoImg, lang, brandStyle) {
-  ctx.fillStyle = NAVY
-  ctx.fillRect(0, 0, w, h)
-  const fadeIn = Math.min(localT / 0.4, 1)
-  ctx.save()
-  ctx.globalAlpha = fadeIn
-  ctx.textAlign = 'center'
+  // Header
   if (logoImg) {
-    const lw = w * 0.42
-    const lh = lw * (logoImg.height / logoImg.width)
-    ctx.drawImage(logoImg, (w - lw) / 2, h * 0.36, lw, lh)
+    const lh = topH * 0.32
+    const lw = lh * (logoImg.width / logoImg.height)
+    ctx.drawImage(logoImg, pad, topH * 0.14, lw, lh)
   }
-  ctx.font = `700 ${Math.round(w * 0.03)}px Manrope, sans-serif`
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'
-  ctx.fillText(PHONE_DISPLAY, w / 2, h * 0.55)
-  ctx.fillText(WEBSITE, w / 2, h * 0.585)
-  if (brandStyle === 'bold') {
-    const label = LABELS[lang].cta
-    ctx.font = `800 ${Math.round(w * 0.032)}px Manrope, sans-serif`
-    const textW = ctx.measureText(label).width
-    const padX = w * 0.05
-    const pillW = textW + padX * 2
-    const pillH = w * 0.09
-    const pillX = (w - pillW) / 2
-    const pillY = h * 0.63
-    ctx.beginPath()
-    ctx.moveTo(pillX + pillH / 2, pillY)
-    ctx.arcTo(pillX + pillW, pillY, pillX + pillW, pillY + pillH, pillH / 2)
-    ctx.arcTo(pillX + pillW, pillY + pillH, pillX, pillY + pillH, pillH / 2)
-    ctx.arcTo(pillX, pillY + pillH, pillX, pillY, pillH / 2)
-    ctx.arcTo(pillX, pillY, pillX + pillW, pillY, pillH / 2)
-    ctx.closePath()
-    ctx.fillStyle = GOLD
-    ctx.fill()
+  ctx.textAlign = 'right'
+  ctx.font = `700 ${Math.round(w * 0.023)}px Manrope, sans-serif`
+  ctx.fillStyle = STEEL
+  ctx.fillText(LOCATION_SHORT, w - pad, topH * 0.26)
+
+  ctx.textAlign = 'left'
+  if (category) {
+    ctx.font = `800 ${Math.round(w * 0.02)}px Manrope, sans-serif`
+    ctx.fillStyle = STEEL
+    ctx.fillText(category.toUpperCase(), pad, topH * 0.58)
+  }
+  if (clip.headline) {
+    const { size, lines } = fitWrappedText(ctx, clip.headline, 800, w * 0.05, w * 0.03, w - pad * 2, 2)
+    ctx.font = `800 ${Math.round(size)}px Manrope, sans-serif`
     ctx.fillStyle = NAVY
-    ctx.fillText(label, w / 2, pillY + pillH * 0.66)
-  } else {
-    ctx.font = `800 ${Math.round(w * 0.036)}px Manrope, sans-serif`
-    ctx.fillStyle = GOLD
-    ctx.fillText(LABELS[lang].cta, w / 2, h * 0.66)
+    const startY = topH * 0.78 - (lines.length - 1) * size * 1.12
+    lines.forEach((l, i) => ctx.fillText(l, pad, startY + i * size * 1.12))
   }
-  ctx.restore()
+
+  // Badge on the photo
+  const badgeLabel = BADGE_LABEL[lang] || BADGE_LABEL.en
+  ctx.font = `800 ${Math.round(w * 0.019)}px Manrope, sans-serif`
+  const badgeTextW = ctx.measureText(badgeLabel).width
+  const badgePadX = w * 0.022
+  const badgeH = w * 0.044
+  const badgeW = badgeTextW + badgePadX * 2
+  const badgeX = pad
+  const badgeY = photoY + w * 0.025
+  roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2)
+  ctx.fillStyle = NAVY
+  ctx.fill()
+  ctx.fillStyle = '#fff'
+  ctx.textAlign = 'left'
+  ctx.fillText(badgeLabel, badgeX + badgePadX, badgeY + badgeH * 0.66)
+
+  // Footer
+  let by = bottomY + bottomH * 0.3
+  ctx.textAlign = 'left'
+  if (clip.caption) {
+    const { size, lines } = fitWrappedText(ctx, clip.caption, 600, w * 0.026, w * 0.016, w - pad * 2, 2)
+    ctx.font = `600 ${Math.round(size)}px Manrope, sans-serif`
+    ctx.fillStyle = STEEL
+    lines.forEach((l, i) => ctx.fillText(l, pad, by + i * size * 1.3))
+    by += lines.length * size * 1.3 + w * 0.012
+  }
+  if (isLast) {
+    ctx.font = `800 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+    ctx.fillStyle = NAVY
+    ctx.fillText(`${LOCATION_FULL} · ${PHONE_DISPLAY}`, pad, by)
+    by += w * 0.042
+  }
+  ctx.font = `800 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.fillStyle = NAVY
+  ctx.fillText(WEBSITE, pad, by)
+
+  ctx.fillStyle = GOLD
+  ctx.fillRect(pad, h - h * 0.012, w - pad * 2, Math.max(2, h * 0.0025))
 }
 
-function buildSlides(clips, photoDuration, introOutroOn) {
-  const slides = []
-  if (introOutroOn) slides.push({ kind: 'intro', dur: INTRO_DUR })
-  clips.forEach((c, i) => {
-    const dur = c.kind === 'video' ? Math.max(0.2, c.trimEnd - c.trimStart) : photoDuration
-    slides.push({ kind: 'clip', dur, clip: c, isFirst: i === 0, isLast: i === clips.length - 1 })
-  })
-  if (introOutroOn) slides.push({ kind: 'outro', dur: OUTRO_DUR })
-  return slides
+function buildSlides(clips, photoDuration) {
+  return clips.map((c, i) => ({
+    dur: c.kind === 'video' ? Math.max(0.2, c.trimEnd - c.trimStart) : photoDuration,
+    clip: c,
+    isLast: i === clips.length - 1,
+  }))
 }
 
-function drawSlide(ctx, slide, localT, w, h, logoImg, lang, zoomOn, brandStyle, startText, endText) {
-  if (slide.kind === 'intro') return drawIntro(ctx, w, h, localT, logoImg, lang, brandStyle)
-  if (slide.kind === 'outro') return drawOutro(ctx, w, h, localT, logoImg, lang, brandStyle)
-  const c = slide.clip
-  if (c.kind === 'video' && c.videoEl && c.videoEl.readyState >= 2) drawCoverZoom(ctx, c.videoEl, w, h, 0)
-  else if (c.kind === 'photo' && c.img) drawCoverZoom(ctx, c.img, w, h, zoomOn ? localT / slide.dur : 0)
-  else { ctx.fillStyle = '#dfeef5'; ctx.fillRect(0, 0, w, h) }
-  if (slide.isFirst && startText) drawOverlayText(ctx, w, h, startText, 'top')
-  if (slide.isLast && endText) drawOverlayText(ctx, w, h, endText, 'bottom')
-}
-
-function renderFrame(ctx, slides, time, w, h, logoImg, lang, style, brandStyle, startText, endText) {
+function renderFrame(ctx, slides, time, w, h, logoImg, lang, style, category) {
   ctx.clearRect(0, 0, w, h)
   let acc = 0
   let idx = slides.length - 1
@@ -283,20 +271,20 @@ function renderFrame(ctx, slides, time, w, h, logoImg, lang, style, brandStyle, 
 
   if (hasNext && localT >= transitionStart) {
     const f = Math.min((localT - transitionStart) / TRANSITION_DUR, 1)
+    const next = slides[idx + 1]
     if (style === 'slide') {
-      ctx.save(); ctx.translate(-w * f, 0); drawSlide(ctx, slide, localT, w, h, logoImg, lang, false, brandStyle, startText, endText); ctx.restore()
-      ctx.save(); ctx.translate(w * (1 - f), 0); drawSlide(ctx, slides[idx + 1], 0, w, h, logoImg, lang, false, brandStyle, startText, endText); ctx.restore()
+      ctx.save(); ctx.translate(-w * f, 0); drawReelFrame(ctx, w, h, slide.clip, localT, slide.dur, logoImg, lang, false, category, slide.isLast); ctx.restore()
+      ctx.save(); ctx.translate(w * (1 - f), 0); drawReelFrame(ctx, w, h, next.clip, 0, next.dur, logoImg, lang, false, category, next.isLast); ctx.restore()
     } else {
-      drawSlide(ctx, slide, localT, w, h, logoImg, lang, zoomOn, brandStyle, startText, endText)
+      drawReelFrame(ctx, w, h, slide.clip, localT, slide.dur, logoImg, lang, zoomOn, category, slide.isLast)
       ctx.save()
       ctx.globalAlpha = f
-      drawSlide(ctx, slides[idx + 1], 0, w, h, logoImg, lang, zoomOn, brandStyle, startText, endText)
+      drawReelFrame(ctx, w, h, next.clip, 0, next.dur, logoImg, lang, zoomOn, category, next.isLast)
       ctx.restore()
     }
   } else {
-    drawSlide(ctx, slide, localT, w, h, logoImg, lang, zoomOn, brandStyle, startText, endText)
+    drawReelFrame(ctx, w, h, slide.clip, localT, slide.dur, logoImg, lang, zoomOn, category, slide.isLast)
   }
-  return { slide, localT }
 }
 
 // Keeps each video clip's own element playing only while its slide is the active one, seeked
@@ -338,15 +326,10 @@ export default function SocialReel() {
   const [clips, setClips] = useState([])
   const [duration, setDuration] = useState(2.5)
   const [style, setStyle] = useState('fade')
-  const [brandStyle, setBrandStyle] = useState('clasico')
   const [lang, setLang] = useState('es')
-  const [introOutroOn, setIntroOutroOn] = useState(true)
-  const [startText, setStartText] = useState('')
-  const [endText, setEndText] = useState('')
+  const [category, setCategory] = useState('EXTERIOR DETAILS')
   const [logoImg, setLogoImg] = useState(null)
-  // Starts past the intro's own fade-in (0–0.4s) so the default preview isn't a blank navy
-  // rectangle — the very first instant of that fade is 0% opacity by design.
-  const [scrub, setScrub] = useState(0.6)
+  const [scrub, setScrub] = useState(0)
 
   const [isRendering, setIsRendering] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -354,7 +337,7 @@ export default function SocialReel() {
 
   useEffect(() => { loadLogo().then(setLogoImg) }, [])
 
-  const slides = buildSlides(clips, duration, introOutroOn)
+  const slides = buildSlides(clips, duration)
   const totalDuration = slides.reduce((sum, s) => sum + s.dur, 0)
 
   useEffect(() => {
@@ -365,12 +348,9 @@ export default function SocialReel() {
     const ctx = canvas.getContext('2d')
     const t = Math.min(scrub, Math.max(totalDuration - 0.001, 0))
     if (slides.length === 0) { ctx.fillStyle = '#dfeef5'; ctx.fillRect(0, 0, FORMAT.w, FORMAT.h); return }
-    const { slide, localT } = renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, lang, style, brandStyle, startText, endText)
-    if (slide.kind === 'clip' && slide.clip.kind === 'video' && slide.clip.videoEl) {
-      try { slide.clip.videoEl.currentTime = slide.clip.trimStart + localT } catch { /* ignore seek race */ }
-    }
+    renderFrame(ctx, slides, t, FORMAT.w, FORMAT.h, logoImg, lang, style, category)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips, duration, style, brandStyle, lang, introOutroOn, startText, endText, logoImg, scrub, isRendering, totalDuration, slides])
+  }, [clips, duration, style, lang, category, logoImg, scrub, isRendering, totalDuration, slides])
 
   async function onUpload(e) {
     const files = Array.from(e.target.files || [])
@@ -389,6 +369,9 @@ export default function SocialReel() {
       ;[next[i], next[j]] = [next[j], next[i]]
       return next
     })
+  }
+  function updateClipField(id, field, value) {
+    setClips((cs) => cs.map((c) => (c.id === id ? { ...c, [field]: value } : c)))
   }
   function updateTrim(id, field, value) {
     setClips((cs) => cs.map((c) => {
@@ -440,8 +423,10 @@ export default function SocialReel() {
       // tabs mid-render. setTimeout keeps firing (just throttled) so it still finishes.
       function tick() {
         const elapsed = (performance.now() - startedAt) / 1000
-        const { slide } = renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, lang, style, brandStyle, startText, endText)
-        const activeClip = slide.kind === 'clip' ? slide.clip : null
+        renderFrame(ctx, slides, Math.min(elapsed, totalDuration), FORMAT.w, FORMAT.h, logoImg, lang, style, category)
+        let acc = 0
+        let activeClip = null
+        for (const s of slides) { if (elapsed < acc + s.dur) { activeClip = s.clip; break } acc += s.dur }
         syncVideoPlayback(clips, activeClip, videoStateRef)
         setProgress(Math.min(elapsed / totalDuration, 1))
         if (elapsed < totalDuration) { previewRafRef.current = setTimeout(tick, 1000 / FPS) }
@@ -479,6 +464,10 @@ export default function SocialReel() {
                       : <img src={c.img.src} alt="" className="w-10 h-14 object-cover rounded shrink-0" />}
                     <span className="flex-1 min-w-0 text-xs text-ink/70 truncate" title={c.name}>{i + 1}. {c.name}</span>
                   </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <input placeholder="Título" value={c.headline} onChange={(e) => updateClipField(c.id, 'headline', e.target.value)} className="h-7 rounded border border-ink/15 px-1.5 text-[11px] min-w-0" />
+                    <input placeholder="Descripción" value={c.caption} onChange={(e) => updateClipField(c.id, 'caption', e.target.value)} className="h-7 rounded border border-ink/15 px-1.5 text-[11px] min-w-0" />
+                  </div>
                   {c.kind === 'video' && (
                     <div className="flex items-center gap-1.5 text-[11px] text-ink/60 flex-wrap">
                       <span>Recorte:</span>
@@ -495,40 +484,25 @@ export default function SocialReel() {
                   </div>
                 </div>
               ))}
-              <p className="text-[11px] text-ink/40">Los videos se incluyen sin audio propio — el audio y los subtítulos los agregas después en ChatGPT.</p>
+              <p className="text-[11px] text-ink/40">Título y descripción son opcionales por foto/video. Los videos van sin audio propio — el audio y los subtítulos los agregas después en ChatGPT.</p>
             </div>
           )}
         </div>
 
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Texto en pantalla</p>
-          <Field label="Texto inicial (opcional)">
-            <input className={inputCls} placeholder="Ej. 3 señales de que su césped necesita ayuda" value={startText} onChange={(e) => setStartText(e.target.value)} />
-          </Field>
-          <Field label="Texto final (opcional)">
-            <input className={inputCls} placeholder="Ej. Escríbenos hoy" value={endText} onChange={(e) => setEndText(e.target.value)} />
-          </Field>
-          <p className="text-[11px] text-ink/40">Se muestran como gancho sobre la primera y la última foto o video — cortos funcionan mejor.</p>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Formato del reel</p>
+          <Field label="Categoría (fija todo el reel)">
+            <input className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)} />
+          </Field>
           <Field label={`Duración por foto — ${duration.toFixed(1)}s (no aplica a videos)`}>
             <input type="range" min="1.5" max="5" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
           </Field>
           <Field label="Estilo de transición">
             <OptionRow options={STYLES.map((s) => s.id)} value={style} onChange={setStyle} labels={Object.fromEntries(STYLES.map((s) => [s.id, s.label]))} />
           </Field>
-          <Field label="Estilo de intro/outro">
-            <OptionRow options={BRAND_STYLES.map((s) => s.id)} value={brandStyle} onChange={setBrandStyle} labels={Object.fromEntries(BRAND_STYLES.map((s) => [s.id, s.label]))} />
-          </Field>
-          <Field label="Idioma de marca (intro/outro)">
+          <Field label="Idioma del badge sobre la foto">
             <OptionRow options={['es', 'en']} value={lang} onChange={setLang} labels={{ es: 'Español', en: 'English' }} />
           </Field>
-          <label className="flex items-center gap-2 text-sm text-ink/80">
-            <input type="checkbox" checked={introOutroOn} onChange={(e) => setIntroOutroOn(e.target.checked)} className="w-4 h-4 accent-[var(--color-gold)]" />
-            Incluir intro y outro de marca
-          </label>
           <p className="text-[11px] text-ink/40">1080×1920 vertical, siempre el mismo formato · duración total: {totalDuration.toFixed(1)}s</p>
         </div>
 
