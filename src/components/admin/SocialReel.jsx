@@ -279,7 +279,10 @@ export default function SocialReel() {
 
   return (
     <div className="grid lg:grid-cols-[380px_1fr] gap-5 items-start">
-      <div className="grid gap-3.5 order-2 lg:order-1">
+      {/* min-w-0: a grid item's default min-width is "auto" (its content's natural minimum),
+          which can override a fixed-px track and let long filenames/other content push this
+          column wider than 380px into the preview column — min-w-0 lets it actually shrink. */}
+      <div className="grid gap-3.5 order-2 lg:order-1 min-w-0">
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Fotos ({photos.length})</p>
           <label className="flex items-center justify-center gap-2 h-11 px-3 rounded-lg border border-ink/20 cursor-pointer text-sm font-semibold text-ink/70 hover:border-ink">
@@ -287,14 +290,18 @@ export default function SocialReel() {
             <input type="file" accept="image/*" multiple className="hidden" onChange={onUpload} />
           </label>
           {photos.length > 0 && (
-            <div className="grid gap-1.5">
+            <div className="grid gap-1.5 overflow-hidden">
               {photos.map((p, i) => (
-                <div key={p.id} className="flex items-center gap-2 rounded-lg border border-ink/10 p-1.5">
-                  <img src={p.img.src} alt="" className="w-10 h-14 object-cover rounded shrink-0" />
-                  <span className="flex-1 min-w-0 text-xs text-ink/70 truncate">{i + 1}. {p.name}</span>
-                  <button type="button" onClick={() => movePhoto(p.id, -1)} disabled={i === 0} aria-label="Subir" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="-rotate-90" /></button>
-                  <button type="button" onClick={() => movePhoto(p.id, 1)} disabled={i === photos.length - 1} aria-label="Bajar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="rotate-90" /></button>
-                  <button type="button" onClick={() => removePhoto(p.id)} aria-label="Eliminar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 hover:border-red-600 hover:text-red-600 shrink-0"><Icon name="trash" size={13} /></button>
+                <div key={p.id} className="grid gap-1.5 rounded-lg border border-ink/10 p-1.5 overflow-hidden">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img src={p.img.src} alt="" className="w-10 h-14 object-cover rounded shrink-0" />
+                    <span className="flex-1 min-w-0 text-xs text-ink/70 truncate" title={p.name}>{i + 1}. {p.name}</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button type="button" onClick={() => movePhoto(p.id, -1)} disabled={i === 0} aria-label="Subir" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="-rotate-90" /></button>
+                    <button type="button" onClick={() => movePhoto(p.id, 1)} disabled={i === photos.length - 1} aria-label="Bajar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 disabled:opacity-30 hover:border-ink/30 shrink-0"><Icon name="arrowRight" size={13} className="rotate-90" /></button>
+                    <button type="button" onClick={() => removePhoto(p.id)} aria-label="Eliminar" className="grid place-items-center w-8 h-8 rounded-md border border-ink/15 hover:border-red-600 hover:text-red-600 shrink-0"><Icon name="trash" size={13} /></button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -304,7 +311,7 @@ export default function SocialReel() {
         <div className="rounded-2xl bg-white border border-ink/10 p-4 grid gap-3.5">
           <p className="text-xs font-extrabold uppercase tracking-wide text-ink/70">Formato del reel</p>
           <Field label={`Duración por foto — ${duration.toFixed(1)}s`}>
-            <input type="range" min="1.5" max="5" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="accent-[var(--color-gold)]" />
+            <input type="range" min="1.5" max="5" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full accent-[var(--color-gold)]" />
           </Field>
           <Field label="Estilo de transición">
             <OptionRow options={STYLES.map((s) => s.id)} value={style} onChange={setStyle} labels={Object.fromEntries(STYLES.map((s) => [s.id, s.label]))} />
