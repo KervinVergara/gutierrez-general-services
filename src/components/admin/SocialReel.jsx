@@ -19,6 +19,11 @@ const TRANSITION_DUR = 0.5
 const FPS = 30
 const MAX_VIDEO_CLIP = 10 // seconds, safety cap on a single trimmed clip
 
+// Shared with the outro card so its logo and "Warsaw, Indiana" line land in the exact
+// same spot as every body slide — "para que todo se vea igual".
+const TOP_BAND_FRAC = 0.24
+const BOTTOM_BAND_FRAC = 0.07
+
 const STYLES = [
   { id: 'fade', label: 'Fade' },
   { id: 'zoom', label: 'Zoom' },
@@ -155,29 +160,41 @@ function fitWrappedText(ctx, text, weight, baseSize, minSize, maxWidth, maxLines
   return { size, lines }
 }
 
-function drawFooterContact(ctx, w, h, y) {
+// Phone + website stacked above "Warsaw, Indiana" — the location line lands at the exact
+// same y as every body slide's, with the same font/color, so the outro's footer reads as
+// a taller version of the same footer rather than a different design.
+function drawOutroFooter(ctx, w, h) {
+  const bottomBandH = h * BOTTOM_BAND_FRAC
+  const locationY = h - bottomBandH * 0.32
+  const websiteY = locationY - w * 0.048
+  const phoneY = websiteY - w * 0.048
   ctx.textAlign = 'center'
   ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
   ctx.fillStyle = STEEL
-  ctx.fillText(`${LOCATION_FULL} · ${PHONE_DISPLAY}`, w / 2, y)
+  ctx.fillText(PHONE_DISPLAY, w / 2, phoneY)
   ctx.font = `800 ${Math.round(w * 0.028)}px Manrope, sans-serif`
   ctx.fillStyle = NAVY
-  ctx.fillText(WEBSITE, w / 2, y + w * 0.045)
+  ctx.fillText(WEBSITE, w / 2, websiteY)
+  ctx.font = `700 ${Math.round(w * 0.026)}px Manrope, sans-serif`
+  ctx.fillStyle = STEEL
+  ctx.fillText(LOCATION_FULL, w / 2, locationY)
 }
 
-// Intro/outro card: sand background, logo top-center, a reserved center area for text —
-// left BLANK by default (empty string) so the space stays clean for titles/CTAs added
-// afterward in ChatGPT; typing something here just bakes it in instead.
+// Outro card: sand background, logo top-center at the exact same size/position as a body
+// slide's, a reserved center area for text — left BLANK by default (empty string) so the
+// space stays clean for a CTA added afterward in ChatGPT — and phone/website/location at
+// the bottom, matching the body slides' footer position.
 function drawTitleCard(ctx, w, h, localT, logoImg, text) {
   ctx.fillStyle = SAND
   ctx.fillRect(0, 0, w, h)
+  const topBandH = h * TOP_BAND_FRAC
   const fadeIn = Math.min(localT / 0.35, 1)
   ctx.save()
   ctx.globalAlpha = fadeIn
   if (logoImg) {
-    const lh = h * 0.06
+    const lh = topBandH * 0.3
     const lw = lh * (logoImg.width / logoImg.height)
-    ctx.drawImage(logoImg, (w - lw) / 2, h * 0.08, lw, lh)
+    ctx.drawImage(logoImg, (w - lw) / 2, topBandH * 0.12, lw, lh)
   }
   if (text) {
     const pad = w * 0.1
@@ -189,7 +206,7 @@ function drawTitleCard(ctx, w, h, localT, logoImg, text) {
     ctx.font = `800 ${Math.round(size)}px Manrope, sans-serif`
     lines.forEach((l, i) => ctx.fillText(l, w / 2, startY + i * lineH))
   }
-  drawFooterContact(ctx, w, h, h * 0.9)
+  drawOutroFooter(ctx, w, h)
   ctx.restore()
   ctx.fillStyle = GOLD
   ctx.fillRect(w * 0.08, h - h * 0.012, w * 0.84, Math.max(2, h * 0.0025))
@@ -203,8 +220,8 @@ function drawBodySlide(ctx, w, h, clip, localT, dur, zoomOn, logoImg) {
   ctx.fillStyle = SAND
   ctx.fillRect(0, 0, w, h)
 
-  const topBandH = h * 0.24
-  const bottomBandH = h * 0.07
+  const topBandH = h * TOP_BAND_FRAC
+  const bottomBandH = h * BOTTOM_BAND_FRAC
   const pad = w * 0.06
   const cardX = pad
   const cardY = topBandH
